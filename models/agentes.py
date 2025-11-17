@@ -5,11 +5,21 @@ from typing import TYPE_CHECKING, Optional, List
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from sqlalchemy import String, Text, ForeignKey
 
+# ✅ Imports necesarios en RUNTIME (herencias y uso directo)
+from app.db.base import Base
+from app.db.mixins import (
+    UUIDPKMixin, 
+    AuditMixin, 
+    IdentificacionMixin, 
+    ContactoDireccionMixin, 
+    TitularidadMixin
+)
+
+# ✅ Imports solo para TYPE CHECKING (anotaciones)
 if TYPE_CHECKING:
-    from app.db.base import Base
     from .inmuebles import Inmueble
     from .catalogos import TipoPersona, RolTecnico
-    from .transmisiones import Transmision, Inmatriculacion
+    from .transmisiones import Transmision, Inmatriculacion, TransmisionAnunciante
     from .actuaciones import ActuacionTecnico
     from .geografia import Localidad, ComunidadAutonoma
 

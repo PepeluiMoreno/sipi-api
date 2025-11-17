@@ -4,11 +4,11 @@ from typing import TYPE_CHECKING
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from sqlalchemy import String, Text, Integer, ForeignKey
 
+from app.db.base import Base
+from app.db.mixins import UUIDPKMixin, AuditMixin
 
 if TYPE_CHECKING:
-    from app.db.base import Base
-    from app.db.mixins import UUIDPKMixin, AuditMixin
-    from .inmuebles import Inmueble
+   from .inmuebles import Inmueble
 
 class FuenteHistoriografica(UUIDPKMixin, AuditMixin, Base):
     __tablename__ = "fuentes_historiograficas"

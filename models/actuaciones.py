@@ -5,10 +5,10 @@ from typing import TYPE_CHECKING, Optional
 from decimal import Decimal
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from sqlalchemy import String, Text, ForeignKey, Numeric
+from app.db.base import Base
+from app.db.mixins import UUIDPKMixin, AuditMixin
 
 if TYPE_CHECKING:
-    from app.db.base import Base
-    from app.db.mixins import UUIDPKMixin, AuditMixin
     from .inmuebles import Inmueble
     from .agentes import Tecnico
     from .catalogos import RolTecnico

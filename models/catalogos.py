@@ -3,11 +3,10 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from sqlalchemy import String, Text
-
+from app.db.base import Base
+from app.db.mixins import UUIDPKMixin, AuditMixin
 
 if TYPE_CHECKING:
-    from app.db.base import Base
-    from app.db.mixins import UUIDPKMixin, AuditMixin
     from .agentes import Tecnico
     from .transmisiones import Transmision, Inmatriculacion
     from .inmuebles import Inmueble

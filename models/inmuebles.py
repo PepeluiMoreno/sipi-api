@@ -8,10 +8,12 @@ from sqlalchemy import String, Text, Boolean, ForeignKey, Numeric, DateTime
 from sqlalchemy.dialects.postgresql import JSONB
 from geoalchemy2 import Geometry
 
+# ✅ Imports en RUNTIME
+from app.db.base import Base
+from app.db.mixins import UUIDPKMixin, AuditMixin
 
+# ✅ Imports solo para TYPE CHECKING
 if TYPE_CHECKING:
-    from app.db.base import Base
-    from app.db.mixins import UUIDPKMixin, AuditMixin
     from .geografia import Localidad, Provincia, ComunidadAutonoma
     from .agentes import Diocesis
     from .catalogos import TipoInmueble, EstadoConservacion, EstadoTratamiento, TipoVia

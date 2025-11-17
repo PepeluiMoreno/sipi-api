@@ -4,10 +4,10 @@ from typing import TYPE_CHECKING
 from datetime import datetime
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from sqlalchemy import String, Text, DateTime, Boolean, ForeignKey
+from app.db.base import Base
+from app.db.mixins import UUIDPKMixin, AuditMixin
 
 if TYPE_CHECKING:
-    from app.db.base import Base
-    from app.db.mixins import UUIDPKMixin, AuditMixin
     from .inmuebles import Inmueble
     from .catalogos import FiguraProteccion
     from .agentes import Administracion
