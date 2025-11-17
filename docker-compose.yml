@@ -1,0 +1,96 @@
+
+services:
+  db:
+    image: postgres:16
+    container_name: sipi-db
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-sipi}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-sipi}
+      POSTGRES_DB: ${POSTGRES_DB:-sipi}
+    volumes:
+      - sipi_pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: pg_isready -U ${POSTGRES_USER:-sipi} -d ${POSTGRES_DB:-sipi}
+      interval: 5s
+      timeout: 3s
+      retries: 20
+    ports:
+      - "${POSTGRES_PORT:-5432}:5432"
+    restart: unless-stopped
+    networks:
+      - sipi-network
+
+  graphql:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: sipi-graphql
+    env_file:
+      - .env
+    depends_on:
+      db:
+        condition: service_healthy
+    ports:
+      - "${GRAPHQL_PORT:-8000}:${GRAPHQL_PORT:-8000}"
+    restart: unless-stopped
+    networks:
+      - sipi-network
+    volumes:
+      - ./logs:/app/logs
+      - ./app:/app/app          # Live-reload código
+      - ./alembic:/app/alembic  # Edita migraciones
+
+  n8n:
+    image: n8nio/n8n:latest
+    container_name: sipi-n8n
+    restart: unless-stopped
+    profiles: ["n8n"]
+    environment:
+      DATABASE_URL: ${DATABASE_URL:-postgresql://sipi:sipi@db:5432/sipi}
+      N8N_HOST: ${N8N_HOST:-0.0.0.0}
+      N8N_PORT: ${N8N_PORT:-5678}
+      N8N_PROTOCOL: ${N8N_PROTOCOL:-http}
+      WEBHOOK_URL: ${WEBHOOK_URL:-http://localhost:5678/webhook}
+      N8N_BASIC_AUTH_ACTIVE: ${N8N_BASIC_AUTH_ACTIVE:-true}
+      N8N_BASIC_AUTH_USER: ${N8N_BASIC_AUTH_USER:-admin}
+      N8N_BASIC_AUTH_PASSWORD: ${N8N_BASIC_AUTH_PASSWORD}
+      N8N_ENCRYPTION_KEY: ${N8N_ENCRYPTION_KEY}
+      GENERIC_TIMEZONE: ${GENERIC_TIMEZONE:-Europe/Madrid}
+      TZ: ${GENERIC_TIMEZONE:-Europe/Madrid}
+    ports:
+      - "${N8N_PORT:-5678}:${N8N_PORT:-5678}"
+    volumes:
+      - sipi_n8n_data:/home/node/.n8n
+      - ./ETL/workflows:/data/workflows:ro
+      - ./ETL/data:/data/data
+    depends_on:
+      - db
+    networks:
+      - sipi-network
+
+  pgadmin:
+    image: dpage/pgadmin4:latest
+    container_name: sipi-pgadmin
+    environment:
+      PGADMIN_DEFAULT_EMAIL: ${PGADMIN_DEFAULT_EMAIL:-admin@admin.com}
+      PGADMIN_DEFAULT_PASSWORD: ${PGADMIN_DEFAULT_PASSWORD:-admin}
+    volumes:
+      - sipi_pgadmin_data:/var/lib/pgadmin
+    ports:
+      - "8080:80"
+    depends_on:
+      db:
+        condition: service_healthy
+    restart: unless-stopped
+    profiles: ["pgadmin"]
+    networks:
+      - sipi-network
+
+networks:
+  sipi-network:
+    driver: bridge
+
+volumes:
+  sipi_pgdata:
+  sipi_n8n_data:
+  sipi_pgadmin_data:
