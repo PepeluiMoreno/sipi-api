@@ -7,8 +7,7 @@ from sqlalchemy import String, Text, ForeignKey
 
 if TYPE_CHECKING:
     from app.db.base import Base
-    from app.db.mixins import UUIDPKMixin, AuditMixin, IdentificacionMixin, ContactoDireccionMixin, TitularidadMixin
-)   from .inmuebles import Inmueble
+    from .inmuebles import Inmueble
     from .catalogos import TipoPersona, RolTecnico
     from .transmisiones import Transmision, Inmatriculacion
     from .actuaciones import ActuacionTecnico
