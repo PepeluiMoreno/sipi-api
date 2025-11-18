@@ -11,46 +11,62 @@ from app.graphql.mapper.enhanced_mapper import EnhancedSQLAlchemyMapper
 from app.graphql.mapper.crud import CRUDResolver
 from app.core.config import GRAPHQL_MAX_DEPTH
 
+# Importar configuración de pluralización
+try:
+    from app.graphql.config.spanish import PLURALES_INVARIABLES, PLURALES_EXCEPCIONES
+    print(f"📋 Config español: {len(PLURALES_INVARIABLES)} invariables, {len(PLURALES_EXCEPCIONES)} excepciones")
+except ImportError:
+    print("⚠️  Archivo de config español no encontrado, usando valores por defecto")
+    PLURALES_INVARIABLES = {'crisis', 'tesis', 'sintesis', 'analisis', 'diocesis'}
+    PLURALES_EXCEPCIONES = {}
+
 mapper = EnhancedSQLAlchemyMapper()
 
 def pluralize_spanish(word: str) -> str:
-    """Pluraliza palabras en español correctamente"""
+    """
+    Pluraliza palabras en español usando reglas lingüísticas.
+    Lee palabras invariables y excepciones desde config.
+    """
     word_lower = word.lower()
     
-    # Palabras invariables
-    invariables = {'diocesis', 'analisis', 'crisis', 'tesis', 'sintesis'}
-    if word_lower in invariables:
+    # Consultar excepciones primero
+    if word_lower in PLURALES_EXCEPCIONES:
+        return PLURALES_EXCEPCIONES[word_lower]
+    
+    # Palabras invariables (desde config)
+    if word_lower in PLURALES_INVARIABLES or any(word_lower.endswith(inv) for inv in PLURALES_INVARIABLES):
         return word_lower
     
-    # Casos especiales
-    especiales = {
-        'rol': 'roles',
-        'inmueble': 'inmuebles',
-        'administracion': 'administraciones',
-        'actuacion': 'actuaciones',
-        'transmision': 'transmisiones',
-        'inmatriculacion': 'inmatriculaciones',
-        'subvencion': 'subvenciones',
-        'proteccion': 'protecciones',
-        'certificacion': 'certificaciones',
-    }
-    if word_lower in especiales:
-        return especiales[word_lower]
+    # Regla 1: Termina en -ción → -ciones
+    if word_lower.endswith('cion'):
+        return word_lower + 'es'
     
-    # Termina en vocal no acentuada → añadir 's'
-    if word_lower[-1] in 'aeiou' and len(word_lower) > 1:
-        return word_lower + 's'
+    # Regla 2: Termina en -sión → -siones  
+    if word_lower.endswith('sion'):
+        return word_lower + 'es'
     
-    # Termina en 'z' → cambiar a 'ces'
-    if word_lower[-1] == 'z':
+    # Regla 3: Termina en -z → -ces
+    if word_lower.endswith('z'):
         return word_lower[:-1] + 'ces'
     
-    # Termina en 'ción' → cambiar a 'ciones'
-    if word_lower.endswith('cion'):
-        return word_lower[:-2] + 'es'
+    # Regla 4: Termina en vocal átona (a, e, i, o, u) → +s
+    if len(word_lower) > 1 and word_lower[-1] in 'aeiou':
+        return word_lower + 's'
     
-    # Termina en consonante → añadir 'es'
-    return word_lower + 'es'
+    # Regla 5: Termina en -í o -ú (vocal tónica) → +es
+    if word_lower.endswith(('í', 'ú')):
+        return word_lower + 'es'
+    
+    # Regla 6: Termina en consonante (excepto -s, -x) → +es
+    if word_lower[-1] not in 'aeiousx':
+        return word_lower + 'es'
+    
+    # Regla 7: Ya termina en -s (invariable por defecto)
+    if word_lower.endswith('s'):
+        return word_lower
+    
+    # Por defecto: +s
+    return word_lower + 's'
 
 def load_models_from_folder(folder: str) -> List[Type]:
     """Carga todos los modelos SQLAlchemy desde una carpeta"""
@@ -143,7 +159,7 @@ def generate_resolvers(models: List[Type]) -> tuple:
             
         model_name = model.__name__
         name_prefix = model_name.lower()
-        name_plural = pluralize_spanish(model_name)  # ✅ Pluralización correcta
+        name_plural = pluralize_spanish(model_name)
         
         print(f"  🔧 {model_name} → {name_prefix} / {name_plural}")
         
@@ -159,82 +175,85 @@ def generate_resolvers(models: List[Type]) -> tuple:
             continue
         
         # ==================== QUERIES ====================
+        # ✅ Crear funciones con anotaciones correctas usando setattr
         
         # Query: obtener uno por ID
-        def make_get_one(crud_inst, ret_type):
-            async def resolver(info: Info, id: strawberry.ID) -> Optional[ret_type]:
+        def make_get_one_func(crud_inst, ret_type):
+            async def resolver(info: Info, id: strawberry.ID):
                 db = info.context["db"]
                 return await crud_inst.get(db, id)
+            # ✅ Añadir anotación de retorno manualmente
+            resolver.__annotations__['return'] = Optional[ret_type]
             return async_safe_resolver(resolver)
         
         # Query: obtener lista paginada
-        def make_get_many(crud_inst, paginated_ret_type):
+        def make_get_many_func(crud_inst, pag_type):
             async def resolver(
                 info: Info,
                 filters: Optional[List[FilterInput]] = None,
                 sort: Optional[List[SortInput]] = None,
                 pagination: Optional[PaginationInput] = None,
-            ) -> paginated_ret_type:
+            ):
                 db = info.context["db"]
                 result = await crud_inst.list(db, filters, sort, pagination)
-                # Convertir resultado a tipo paginado
-                return paginated_ret_type(
-                    items=result.items,
-                    page_info=result.page_info
-                )
+                return pag_type(items=result.items, page_info=result.page_info)
+            # ✅ Añadir anotación de retorno manualmente
+            resolver.__annotations__['return'] = pag_type
             return async_safe_resolver(resolver)
         
-        # ✅ Usar nombre singular y plural correcto
         queries[f"{name_prefix}"] = strawberry.field(
-            resolver=make_get_one(crud, strawberry_type)
+            resolver=make_get_one_func(crud, strawberry_type)
         )
         queries[f"{name_plural}"] = strawberry.field(
-            resolver=make_get_many(crud, paginated_type)
+            resolver=make_get_many_func(crud, paginated_type)
         )
         
         # ==================== MUTATIONS ====================
         
         # Mutation: crear
-        def make_create(crud_inst, inp_type, ret_type):
-            async def resolver(info: Info, data: inp_type) -> ret_type:
+        def make_create_func(crud_inst, inp_type, ret_type):
+            async def resolver(info: Info, data: inp_type):
                 db = info.context["db"]
                 return await crud_inst.create(db, data.__dict__)
+            resolver.__annotations__['return'] = ret_type
             return async_safe_resolver(resolver)
         
         # Mutation: actualizar
-        def make_update(crud_inst, inp_type, ret_type):
-            async def resolver(info: Info, id: strawberry.ID, data: inp_type) -> Optional[ret_type]:
+        def make_update_func(crud_inst, inp_type, ret_type):
+            async def resolver(info: Info, id: strawberry.ID, data: inp_type):
                 db = info.context["db"]
                 return await crud_inst.update(db, id, data.__dict__)
+            resolver.__annotations__['return'] = Optional[ret_type]
             return async_safe_resolver(resolver)
         
         # Mutation: eliminar
-        def make_delete(crud_inst):
+        def make_delete_func(crud_inst):
             async def resolver(info: Info, id: strawberry.ID) -> bool:
                 db = info.context["db"]
                 return await crud_inst.delete(db, id)
             return async_safe_resolver(resolver)
         
         mutations[f"create{model_name}"] = strawberry.mutation(
-            resolver=make_create(crud, create_input, strawberry_type)
+            resolver=make_create_func(crud, create_input, strawberry_type)
         )
         mutations[f"update{model_name}"] = strawberry.mutation(
-            resolver=make_update(crud, update_input, strawberry_type)
+            resolver=make_update_func(crud, update_input, strawberry_type)
         )
         mutations[f"delete{model_name}"] = strawberry.mutation(
-            resolver=make_delete(crud)
+            resolver=make_delete_func(crud)
         )
         
         # Mutation: restore (solo si tiene soft delete)
         if hasattr(model, "deleted_at"):
-            def make_restore(crud_inst, ret_type):
-                async def resolver(info: Info, id: strawberry.ID) -> Optional[ret_type]:
+            def make_restore_func(crud_inst, ret_type):
+                async def resolver(info: Info, id: strawberry.ID):
                     db = info.context["db"]
                     return await crud_inst.restore(db, id)
+                resolver.__annotations__['return'] = Optional[ret_type]
                 return async_safe_resolver(resolver)
             
             mutations[f"restore{model_name}"] = strawberry.mutation(
-                resolver=make_restore(crud, strawberry_type)
+                resolver=make_restore_func(crud, strawberry_type)
             )
     
     print(f"  ✅ Resolvers generados\n")

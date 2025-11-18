@@ -2,33 +2,56 @@
 from __future__ import annotations
 from datetime import datetime
 from decimal import Decimal
+import enum
 from typing import TYPE_CHECKING, Optional
 from sqlalchemy.orm import Mapped, mapped_column, relationship
-from sqlalchemy import String, Text, Boolean, ForeignKey, Numeric, DateTime
+from sqlalchemy import String, Text, Boolean, ForeignKey, Numeric, DateTime, Enum
 from sqlalchemy.dialects.postgresql import JSONB
 from geoalchemy2 import Geometry
+import strawberry
 
-# ✅ Imports en RUNTIME
 from app.db.base import Base
 from app.db.mixins import UUIDPKMixin, AuditMixin
 
-# ✅ Imports solo para TYPE CHECKING
 if TYPE_CHECKING:
     from .geografia import Localidad, Provincia, ComunidadAutonoma
     from .agentes import Diocesis
-    from .catalogos import TipoInmueble, EstadoConservacion, EstadoTratamiento, TipoVia
+    from .catalogos import TipoInmueble, EstadoConservacion, EstadoTratamiento, TipoVia, TipoDenominacion
     from .transmisiones import Transmision, Inmatriculacion
     from .actuaciones import Actuacion
     from .documentos import InmuebleDocumento
     from .historiografia import CitaHistoriografica
     from .proteccion import InmuebleFiguraProteccion
 
+# ============================================================================
+# ENUMS
+# ============================================================================
+
+@strawberry.enum
+class IdiomaInmueble(str, enum.Enum):
+    """Idiomas para denominaciones de inmuebles (ISO 639-1)"""
+    CASTELLANO = "es"
+    CATALAN = "ca"
+    GALLEGO = "gl"
+    EUSKERA = "eu"
+    OCCITANO = "oc"  # Aranés
+    LATIN = "la"
+    ARAGONES = "an"
+    ASTURIANO = "ast"
+    PORTUGUES = "pt"
+    FRANCES = "fr"
+    INGLES = "en"
+
+# ============================================================================
+# MODELOS
+# ============================================================================
+
 class Inmueble(UUIDPKMixin, AuditMixin, Base):
     """Modelo principal de inmuebles patrimoniales"""
     __tablename__ = "inmuebles"
     
     # Identificación
-    nombre: Mapped[Optional[str]] = mapped_column(String(255), index=True)
+    nombre: Mapped[Optional[str]] = mapped_column(String(255), index=True)  # Denominación principal (legacy)
     descripcion: Mapped[Optional[str]] = mapped_column(Text)
     
     # Dirección (normalizada y geocodificada)
@@ -62,6 +85,7 @@ class Inmueble(UUIDPKMixin, AuditMixin, Base):
     estado_tratamiento: Mapped[Optional["EstadoTratamiento"]] = relationship("EstadoTratamiento", back_populates="inmuebles")
     
     # Relaciones 1:N
+    denominaciones: Mapped[list["InmuebleDenominacion"]] = relationship("InmuebleDenominacion", back_populates="inmueble", cascade="all, delete-orphan")
     transmisiones: Mapped[list["Transmision"]] = relationship("Transmision", back_populates="inmueble", cascade="all, delete-orphan")
     actuaciones: Mapped[list["Actuacion"]] = relationship("Actuacion", back_populates="inmueble", cascade="all, delete-orphan")
     documentos: Mapped[list["InmuebleDocumento"]] = relationship("InmuebleDocumento", back_populates="inmueble", cascade="all, delete-orphan")
@@ -72,6 +96,57 @@ class Inmueble(UUIDPKMixin, AuditMixin, Base):
     inmatriculacion: Mapped[Optional["Inmatriculacion"]] = relationship("Inmatriculacion", back_populates="inmueble", uselist=False, cascade="all, delete-orphan")
     osm_ext: Mapped[Optional["InmuebleOSMExt"]] = relationship("InmuebleOSMExt", back_populates="inmueble", uselist=False, cascade="all, delete-orphan")
     wd_ext: Mapped[Optional["InmuebleWDExt"]] = relationship("InmuebleWDExt", back_populates="inmueble", uselist=False, cascade="all, delete-orphan")
+    
+    # Propiedades calculadas
+    @property
+    def denominacion_principal(self) -> Optional[str]:
+        """Obtiene la denominación marcada como principal"""
+        principal = next((d for d in self.denominaciones if d.es_principal), None)
+        return principal.denominacion if principal else self.nombre
+    
+    @property
+    def denominaciones_alternativas(self) -> list["InmuebleDenominacion"]:
+        """Obtiene todas las denominaciones que no son principales"""
+        return [d for d in self.denominaciones if not d.es_principal]
+
+
+class InmuebleDenominacion(UUIDPKMixin, AuditMixin, Base):
+    """Denominaciones múltiples de un inmueble"""
+    __tablename__ = "inmuebles_denominaciones"
+    
+    # Relación con inmueble
+    inmueble_id: Mapped[str] = mapped_column(String(36), ForeignKey("inmuebles.id"), index=True)
+    
+    # Denominación
+    denominacion: Mapped[str] = mapped_column(String(500), index=True)
+    tipo_denominacion_id: Mapped[Optional[str]] = mapped_column(String(36), ForeignKey("tipos_denominacion.id"), index=True)
+    
+    # Características
+    es_principal: Mapped[bool] = mapped_column(Boolean, default=False, index=True)
+    idioma: Mapped[Optional[IdiomaInmueble]] = mapped_column(Enum(IdiomaInmueble), index=True)
+    
+    # Vigencia temporal
+    fecha_inicio: Mapped[Optional[datetime]] = mapped_column(DateTime)
+    fecha_fin: Mapped[Optional[datetime]] = mapped_column(DateTime)
+    
+    # Metadatos
+    fuente: Mapped[Optional[str]] = mapped_column(String(255))  # BIC, Catastro, OSM, Wikidata, etc.
+    notas: Mapped[Optional[str]] = mapped_column(Text)
+    
+    # Relaciones
+    inmueble: Mapped["Inmueble"] = relationship("Inmueble", back_populates="denominaciones")
+    tipo_denominacion: Mapped[Optional["TipoDenominacion"]] = relationship("TipoDenominacion", back_populates="inmuebles_denominaciones")
+    
+    @property
+    def esta_vigente(self) -> bool:
+        """Verifica si la denominación está actualmente vigente"""
+        ahora = datetime.now()
+        if self.fecha_inicio and ahora < self.fecha_inicio:
+            return False
+        if self.fecha_fin and ahora > self.fecha_fin:
+            return False
+        return True
+
 
 class InmuebleOSMExt(UUIDPKMixin, AuditMixin, Base):
     """Datos extendidos de OpenStreetMap"""
@@ -109,6 +184,7 @@ class InmuebleOSMExt(UUIDPKMixin, AuditMixin, Base):
     
     # Relación
     inmueble: Mapped["Inmueble"] = relationship("Inmueble", back_populates="osm_ext", uselist=False)
+
 
 class InmuebleWDExt(UUIDPKMixin, AuditMixin, Base):
     """Datos extendidos de Wikidata"""
