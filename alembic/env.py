@@ -5,7 +5,7 @@ import asyncio
 from logging.config import fileConfig
 
 from alembic import context
-from sqlalchemy import pool
+from sqlalchemy import pool, inspect as sqla_inspect
 from sqlalchemy.ext.asyncio import create_async_engine
 
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
@@ -34,28 +34,52 @@ except Exception as e:
 
 def include_object_filter(object, name, type_, reflected, compare_to):
     """
-    SOLO incluir schemas que gestionamos nosotros
-    Excluir TODO lo demás (PostGIS, Tiger, sistema)
+    Solo incluir tablas que REALMENTE son nuestras.
+    Excluir TODO lo demás (PostGIS, Tiger, sistema).
     """
-    # ✅ SOLO estos schemas son nuestros
-    our_schemas = {'public', 'n8n', 'auditoria'}
     
-    # ✅ Tablas de sistema PostGIS en public que NO gestionamos
-    postgis_system_tables = {
-        'spatial_ref_sys', 'geometry_columns', 'geography_columns',
-        'raster_columns', 'raster_overviews', 'topology', 'layer',
-    }
-    
+    # Si es una tabla
     if type_ == "table":
-        # Obtener el schema de la tabla
+        # Obtener schema
         table_schema = getattr(object, 'schema', None) or 'public'
         
-        # ✅ Solo incluir nuestros schemas
-        if table_schema not in our_schemas:
+        # ✅ SOLO schema public (excluir tiger, tiger_data, topology, etc)
+        if table_schema != 'public':
             return False
         
-        # ✅ En public, excluir tablas de sistema PostGIS
-        if table_schema == 'public' and name.lower() in postgis_system_tables:
+        # ✅ Lista de prefijos de tablas de PostGIS/Tiger que NO tocamos
+        excluded_prefixes = (
+            'spatial_', 'geography_', 'geometry_', 'raster_',
+            'tabblock', 'tract', 'bg', 'county', 'state',
+            'place', 'zcta5', 'faces', 'edges', 'featnames',
+            'addr', 'zip_', 'pagc_', 'loader_'
+        )
+        
+        # ✅ Tablas específicas de PostGIS que NO tocamos
+        excluded_tables = {
+            'spatial_ref_sys', 'geometry_columns', 'geography_columns',
+            'raster_columns', 'raster_overviews', 'topology', 'layer',
+            'geocode_settings', 'geocode_settings_default',
+            'direction_lookup', 'secondary_unit_lookup',
+            'state_lookup', 'street_type_lookup', 'place_lookup',
+            'county_lookup', 'countysub_lookup', 'cousub',
+            'addrfeat',
+        }
+        
+        name_lower = name.lower()
+        
+        # Excluir por prefijo
+        if name_lower.startswith(excluded_prefixes):
+            return False
+        
+        # Excluir por nombre exacto
+        if name_lower in excluded_tables:
+            return False
+        
+        # ✅ Solo incluir tablas que están en NUESTROS metadatos
+        # Esto es lo más seguro: si no está definida en nuestros modelos, ignorarla
+        if reflected and compare_to is None:
+            # Es una tabla en la BD pero NO en nuestros modelos
             return False
     
     return True
@@ -81,10 +105,10 @@ def run_migrations_online():
         context.configure(
             connection=connection,
             target_metadata=target_metadata,
-            include_schemas=True,
+            include_schemas=False,  # ✅ NO incluir múltiples schemas
             include_object=include_object_filter,
             compare_type=True,
-            compare_server_default=True,
+            compare_server_default=False,  # ✅ NO comparar defaults (evita cambios innecesarios)
         )
         with context.begin_transaction():
             context.run_migrations()

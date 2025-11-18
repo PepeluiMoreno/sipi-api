@@ -43,7 +43,7 @@ class EnhancedSQLAlchemyMapper:
                 
                 fields[attr.key] = field_type
         
-        # Añadir propiedades y métodos
+        # Añadir propiedades mapeables
         properties = self._extract_properties(model)
         fields.update(properties)
         
@@ -87,8 +87,14 @@ class EnhancedSQLAlchemyMapper:
         """Extrae propiedades y métodos del modelo"""
         properties = {}
         
+        # ✅ SOLO ignorar metadata de SQLAlchemy
+        ignored_properties = {'metadata', 'registry'}
+        
         for attr_name in dir(model):
             if attr_name.startswith('_'):
+                continue
+            
+            if attr_name in ignored_properties:
                 continue
             
             try:
@@ -108,14 +114,25 @@ class EnhancedSQLAlchemyMapper:
         try:
             func = attr.fget if isinstance(attr, property) else attr
             
+            # ✅ Si tiene anotación, usarla
             if hasattr(func, '__annotations__') and 'return' in func.__annotations__:
                 return func.__annotations__['return']
             
+            # ✅ Inferir por nombre
             name = getattr(func, '__name__', '').lower()
-            if name.startswith(('is_', 'has_', 'tiene_')):
+            
+            if name.startswith(('is_', 'has_', 'tiene_', 'esta_')):
                 return bool
+            
             if 'count' in name or 'total' in name:
                 return int
+            
+            # ✅ Para propiedades sin anotación que retornan listas/objetos
+            if 'titulares' in name or name.endswith('_list') or name.endswith('s'):
+                return str  # Representar como string en GraphQL
+            
+            if 'actual' in name or 'current' in name:
+                return Optional[str]  # Representar como string nullable
             
             return str
         except:

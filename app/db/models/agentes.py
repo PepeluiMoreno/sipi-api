@@ -4,6 +4,7 @@ from datetime import datetime
 from typing import TYPE_CHECKING, Optional, List
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from sqlalchemy import String, Text, ForeignKey
+
 from app.db.base import Base
 from app.db.mixins import (
     UUIDPKMixin, 
@@ -13,13 +14,12 @@ from app.db.mixins import (
     TitularidadMixin
 )
 
-# ✅ Imports solo para TYPE CHECKING (anotaciones)
 if TYPE_CHECKING:
     from .inmuebles import Inmueble
     from .catalogos import TipoPersona, RolTecnico
     from .transmisiones import Transmision, Inmatriculacion, TransmisionAnunciante
     from .actuaciones import ActuacionTecnico
-    from .geografia import Localidad, ComunidadAutonoma
+    from .geografia import Localidad, ComunidadAutonoma, Provincia
 
 # ============================================================================
 # BASES COMUNES
@@ -59,8 +59,11 @@ class Tecnico(UUIDPKMixin, AuditMixin, IdentificacionMixin, ContactoDireccionMix
     """Técnico profesional (arquitecto, ingeniero, etc.)"""
     __tablename__ = "tecnicos"
     
+    # Foreign Keys
     rol_tecnico_id: Mapped[Optional[str]] = mapped_column(String(36), ForeignKey("roles_tecnico.id"), index=True)
     colegio_profesional_id: Mapped[Optional[str]] = mapped_column(String(36), ForeignKey("colegios_profesionales.id"), index=True)
+    
+    # Campos adicionales
     numero_colegiado: Mapped[Optional[str]] = mapped_column(String(50), index=True)
     fecha_colegiacion: Mapped[Optional[datetime]] = mapped_column()
     
@@ -73,15 +76,22 @@ class Tecnico(UUIDPKMixin, AuditMixin, IdentificacionMixin, ContactoDireccionMix
 # ADMINISTRACIONES Y ORGANISMOS
 # ============================================================================
 
-class Administracion(UUIDPKMixin, AuditMixin, ContactoDireccionMixin, TitularidadMixin["AdministracionTitular"], Base):
+class Administracion(UUIDPKMixin, AuditMixin, ContactoDireccionMixin, TitularidadMixin, Base):  # ✅ SIN corchetes
     """Administración pública (estatal, autonómica, local)"""
     __tablename__ = "administraciones"
     
     nombre: Mapped[str] = mapped_column(String(255), unique=True, index=True)
     ambito: Mapped[Optional[str]] = mapped_column(String(100))
     
+    # Foreign Keys
+    comunidad_autonoma_id: Mapped[Optional[str]] = mapped_column(String(36), ForeignKey("comunidades_autonomas.id"), index=True)
+    provincia_id: Mapped[Optional[str]] = mapped_column(String(36), ForeignKey("provincias.id"), index=True)
+    localidad_id: Mapped[Optional[str]] = mapped_column(String(36), ForeignKey("localidades.id"), index=True)
+    
     # Relaciones
-    comunidad_autonoma: Mapped["ComunidadAutonoma"] = relationship("ComunidadAutonoma", back_populates="administraciones")
+    comunidad_autonoma: Mapped[Optional["ComunidadAutonoma"]] = relationship("ComunidadAutonoma", back_populates="administraciones")
+    provincia: Mapped[Optional["Provincia"]] = relationship("Provincia", back_populates="administraciones")
+    localidad: Mapped[Optional["Localidad"]] = relationship("Localidad", back_populates="administraciones")
 
 class AdministracionTitular(TitularBase):
     """Responsable de una administración"""
@@ -106,7 +116,7 @@ class ColegioProfesional(UUIDPKMixin, AuditMixin, ContactoDireccionMixin, Base):
 # ENTIDADES ECLESIÁSTICAS
 # ============================================================================
 
-class Diocesis(UUIDPKMixin, AuditMixin, ContactoDireccionMixin, TitularidadMixin["DiocesisTitular"], Base):
+class Diocesis(UUIDPKMixin, AuditMixin, ContactoDireccionMixin, TitularidadMixin, Base):  # ✅ SIN corchetes
     """Diócesis católica"""
     __tablename__ = "diocesis"
     
@@ -129,15 +139,18 @@ class DiocesisTitular(TitularBase):
 # ENTIDADES REGISTRALES Y NOTARIALES
 # ============================================================================
 
-class Notaria(UUIDPKMixin, AuditMixin, ContactoDireccionMixin, TitularidadMixin["NotariaTitular"], Base):
+class Notaria(UUIDPKMixin, AuditMixin, ContactoDireccionMixin, TitularidadMixin, Base):  # ✅ SIN corchetes
     """Notaría"""
     __tablename__ = "notarias"
     
     nombre: Mapped[str] = mapped_column(String(255), index=True)
     
+    # Foreign Keys
+    localidad_id: Mapped[Optional[str]] = mapped_column(String(36), ForeignKey("localidades.id"), index=True)
+    
     # Relaciones
-    transmisiones: Mapped[list["Transmision"]] = relationship("Transmision", back_populates="notaria")
     localidad: Mapped[Optional["Localidad"]] = relationship("Localidad", back_populates="notarias")
+    transmisiones: Mapped[list["Transmision"]] = relationship("Transmision", back_populates="notaria")
 
 class NotariaTitular(TitularBase):
     """Notario titular de una notaría"""
@@ -148,9 +161,11 @@ class NotariaTitular(TitularBase):
     # Relaciones
     notaria: Mapped["Notaria"] = relationship("Notaria", back_populates="titulares")
 
-class RegistroPropiedad(UUIDPKMixin, AuditMixin, IdentificacionMixin, ContactoDireccionMixin, TitularidadMixin["RegistroPropiedadTitular"], Base):
-    __tablename__ = 'registros_propiedad'
+class RegistroPropiedad(UUIDPKMixin, AuditMixin, IdentificacionMixin, ContactoDireccionMixin, TitularidadMixin, Base):  # ✅ SIN corchetes
+    """Registro de la Propiedad"""
+    __tablename__ = "registros_propiedad"
     
+    # Foreign Keys
     localidad_id: Mapped[Optional[str]] = mapped_column(String(36), ForeignKey("localidades.id"), index=True)
     
     # Relaciones
@@ -158,8 +173,9 @@ class RegistroPropiedad(UUIDPKMixin, AuditMixin, IdentificacionMixin, ContactoDi
     transmisiones: Mapped[list["Transmision"]] = relationship("Transmision", back_populates="registro_propiedad")
     inmatriculaciones: Mapped[list["Inmatriculacion"]] = relationship("Inmatriculacion", back_populates="registro_propiedad")
 
-class RegistroPropiedadTitular(TitularBase):  # ✅ Cambiar nombre
-    __tablename__ = "registros_titulares"  # La tabla puede seguir llamándose igual
+class RegistroPropiedadTitular(TitularBase):
+    """Registrador de la Propiedad"""
+    __tablename__ = "registros_titulares"
     
     registro_propiedad_id: Mapped[str] = mapped_column(String(36), ForeignKey("registros_propiedad.id"), index=True)
     
@@ -176,6 +192,9 @@ class AgenciaInmobiliaria(UUIDPKMixin, AuditMixin, ContactoDireccionMixin, Base)
     
     nombre: Mapped[str] = mapped_column(String(255), index=True)
     
+    # Foreign Keys
+    localidad_id: Mapped[Optional[str]] = mapped_column(String(36), ForeignKey("localidades.id"), index=True)
+    
     # Relaciones
-    transmisiones_anunciadas: Mapped[list["TransmisionAnunciante"]] = relationship("TransmisionAnunciante", back_populates="agencia_inmobiliaria")
     localidad: Mapped[Optional["Localidad"]] = relationship("Localidad", back_populates="agencias_inmobiliarias")
+    transmisiones_anunciadas: Mapped[list["TransmisionAnunciante"]] = relationship("TransmisionAnunciante", back_populates="agencia_inmobiliaria")

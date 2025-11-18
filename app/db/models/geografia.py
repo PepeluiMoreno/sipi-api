@@ -1,5 +1,5 @@
 # models/geografia.py
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Optional
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from sqlalchemy import String, ForeignKey
 from app.db.base import Base
@@ -29,6 +29,7 @@ class Provincia(UUIDPKMixin, AuditMixin, Base):
     comunidad_autonoma: Mapped["ComunidadAutonoma"] = relationship("ComunidadAutonoma", back_populates="provincias")
     localidades: Mapped[list["Localidad"]] = relationship("Localidad", back_populates="provincia", cascade="all, delete-orphan")
     inmuebles: Mapped[list["Inmueble"]] = relationship("Inmueble", back_populates="provincia")
+    administraciones: Mapped[list["Administracion"]] = relationship("Administracion", back_populates="provincia")  # ✅ AÑADIDA
 
 class Localidad(UUIDPKMixin, AuditMixin, Base):
     __tablename__ = "localidades"
@@ -42,3 +43,4 @@ class Localidad(UUIDPKMixin, AuditMixin, Base):
     registros_propiedad: Mapped[list["RegistroPropiedad"]] = relationship("RegistroPropiedad", back_populates="localidad")
     agencias_inmobiliarias: Mapped[list["AgenciaInmobiliaria"]] = relationship("AgenciaInmobiliaria", back_populates="localidad")
     inmuebles: Mapped[list["Inmueble"]] = relationship("Inmueble", back_populates="localidad")
+    administraciones: Mapped[list["Administracion"]] = relationship("Administracion", back_populates="localidad")  # ✅ AÑADIDA

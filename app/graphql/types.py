@@ -2,7 +2,6 @@
 import strawberry
 from typing import Generic, TypeVar, List, Optional
 from enum import Enum
-from strawberry.scalars import JSON
 
 T = TypeVar("T")
 
@@ -39,8 +38,8 @@ class FilterOperator(Enum):
 class FilterInput:
     field: str
     operator: FilterOperator = FilterOperator.EQ
-    value: Optional[strawberry.scalars.JSON] = None  # ✅ Cambio: Any → JSON
-    values: Optional[List[strawberry.scalars.JSON]] = None  # ✅ Cambio: Any → JSON
+    value: Optional[str] = None  # ✅ Cambiar Any → str (GraphQL lo convertirá)
+    values: Optional[List[str]] = None  # ✅ Cambiar List[Any] → List[str]
 
 @strawberry.input
 class SortInput:
@@ -51,7 +50,3 @@ class SortInput:
 class PaginationInput:
     page: int = 1
     page_size: int = 20
-    
-    def __post_init__(self):
-        self.page = max(1, self.page)
-        self.page_size = min(max(1, self.page_size), 100)

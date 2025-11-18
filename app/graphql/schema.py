@@ -13,6 +13,45 @@ from app.core.config import GRAPHQL_MAX_DEPTH
 
 mapper = EnhancedSQLAlchemyMapper()
 
+def pluralize_spanish(word: str) -> str:
+    """Pluraliza palabras en español correctamente"""
+    word_lower = word.lower()
+    
+    # Palabras invariables
+    invariables = {'diocesis', 'analisis', 'crisis', 'tesis', 'sintesis'}
+    if word_lower in invariables:
+        return word_lower
+    
+    # Casos especiales
+    especiales = {
+        'rol': 'roles',
+        'inmueble': 'inmuebles',
+        'administracion': 'administraciones',
+        'actuacion': 'actuaciones',
+        'transmision': 'transmisiones',
+        'inmatriculacion': 'inmatriculaciones',
+        'subvencion': 'subvenciones',
+        'proteccion': 'protecciones',
+        'certificacion': 'certificaciones',
+    }
+    if word_lower in especiales:
+        return especiales[word_lower]
+    
+    # Termina en vocal no acentuada → añadir 's'
+    if word_lower[-1] in 'aeiou' and len(word_lower) > 1:
+        return word_lower + 's'
+    
+    # Termina en 'z' → cambiar a 'ces'
+    if word_lower[-1] == 'z':
+        return word_lower[:-1] + 'ces'
+    
+    # Termina en 'ción' → cambiar a 'ciones'
+    if word_lower.endswith('cion'):
+        return word_lower[:-2] + 'es'
+    
+    # Termina en consonante → añadir 'es'
+    return word_lower + 'es'
+
 def load_models_from_folder(folder: str) -> List[Type]:
     """Carga todos los modelos SQLAlchemy desde una carpeta"""
     models = []
@@ -53,40 +92,60 @@ def generate_resolvers(models: List[Type]) -> tuple:
     type_registry: Dict[str, Type] = {}
     paginated_registry: Dict[str, Type] = {}
     
-    print(f"🔍 Mapeando modelos a tipos Strawberry...")
+    print(f"\n{'='*70}")
+    print(f"🔍 Mapeando {len(models)} modelos a tipos Strawberry...")
+    print(f"📋 Modelos encontrados: {[m.__name__ for m in models]}")
+    print(f"{'='*70}\n")
     
     for model in models:
         try:
             model_name = model.__name__
-            print(f"  📝 {model_name}...", end=" ")
+            print(f"📝 Procesando {model_name}...")
             
             # Crear tipo base
+            print(f"  → Creando tipo Strawberry...")
             strawberry_type = mapper.type(model)
+            print(f"  → Tipo creado: {strawberry_type}")
+            
             type_registry[model_name] = strawberry_type
             
             # Crear tipo paginado
+            print(f"  → Creando tipo paginado...")
             paginated_type = create_paginated_type(strawberry_type, model_name)
             paginated_registry[model_name] = paginated_type
             
-            print("✅")
+            print(f"  ✅ {model_name} mapeado correctamente\n")
+            
         except Exception as e:
-            print(f"❌ {e}")
+            print(f"  ❌ ERROR en {model_name}: {type(e).__name__}: {e}")
             import traceback
             traceback.print_exc()
+            print()
             continue
     
-    print(f"✅ {len(type_registry)} tipos mapeados correctamente")
+    print(f"\n{'='*70}")
+    print(f"✅ {len(type_registry)}/{len(models)} tipos mapeados correctamente")
+    print(f"📋 Tipos exitosos: {list(type_registry.keys())}")
+    print(f"{'='*70}\n")
     
     if not type_registry:
+        print("\n❌ NINGÚN MODELO SE PUDO MAPEAR")
+        print("Revisa los errores arriba para ver qué falló")
         raise ValueError("❌ No se pudo mapear ningún modelo")
     
     # Generar resolvers para cada modelo
+    print(f"🔨 Generando resolvers...")
+    
     for model in models:
         if model.__name__ not in type_registry:
+            print(f"  ⏭️  Saltando {model.__name__} (no se pudo mapear)")
             continue
             
         model_name = model.__name__
         name_prefix = model_name.lower()
+        name_plural = pluralize_spanish(model_name)  # ✅ Pluralización correcta
+        
+        print(f"  🔧 {model_name} → {name_prefix} / {name_plural}")
         
         crud = CRUDResolver(model, mapper)
         strawberry_type = type_registry[model_name]
@@ -96,7 +155,7 @@ def generate_resolvers(models: List[Type]) -> tuple:
             create_input = mapper.input_type(model, "Create")
             update_input = mapper.input_type(model, "Update", optional=True)
         except Exception as e:
-            print(f"⚠️  No se pudo crear inputs para {model_name}: {e}")
+            print(f"    ⚠️  No se pudo crear inputs para {model_name}: {e}")
             continue
         
         # ==================== QUERIES ====================
@@ -125,10 +184,11 @@ def generate_resolvers(models: List[Type]) -> tuple:
                 )
             return async_safe_resolver(resolver)
         
+        # ✅ Usar nombre singular y plural correcto
         queries[f"{name_prefix}"] = strawberry.field(
             resolver=make_get_one(crud, strawberry_type)
         )
-        queries[f"{name_prefix}s"] = strawberry.field(
+        queries[f"{name_plural}"] = strawberry.field(
             resolver=make_get_many(crud, paginated_type)
         )
         
@@ -177,21 +237,34 @@ def generate_resolvers(models: List[Type]) -> tuple:
                 resolver=make_restore(crud, strawberry_type)
             )
     
+    print(f"  ✅ Resolvers generados\n")
+    
     # Crear tipos Query y Mutation
+    print(f"🏗️  Creando tipos GraphQL Query y Mutation...")
     Query = strawberry.type(type("Query", (), queries))
     Mutation = strawberry.type(type("Mutation", (), mutations))
+    print(f"  ✅ Tipos creados\n")
     
     return Query, Mutation
 
 def create_schema(models_folder: str = "app/db/models") -> strawberry.Schema:
     """Crea y retorna el schema GraphQL completo"""
+    print(f"\n{'='*70}")
+    print(f"📂 INICIANDO GENERACIÓN DE SCHEMA GRAPHQL")
+    print(f"{'='*70}\n")
+    
     print(f"📂 Cargando modelos desde: {models_folder}")
     models = load_models_from_folder(models_folder)
     
-    print(f"🔨 Generando schema GraphQL...")
+    print(f"\n🔨 Generando schema GraphQL...")
     Query, Mutation = generate_resolvers(models)
     
-    print(f"🚀 GraphQL Schema creado con {len(models)} modelos")
+    print(f"{'='*70}")
+    print(f"🚀 GraphQL Schema creado exitosamente")
+    print(f"   • Modelos: {len(models)}")
+    print(f"   • Tipos GraphQL generados")
+    print(f"{'='*70}\n")
+    
     return strawberry.Schema(
         query=Query,
         mutation=Mutation,
