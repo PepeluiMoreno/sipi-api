@@ -98,6 +98,7 @@ class Inmueble(UUIDPKMixin, AuditMixin, Base):
     wd_ext: Mapped[Optional["InmuebleWDExt"]] = relationship("InmuebleWDExt", back_populates="inmueble", uselist=False, cascade="all, delete-orphan")
     
     # Propiedades calculadas
+       
     @property
     def denominacion_principal(self) -> Optional[str]:
         """Obtiene la denominación marcada como principal"""
@@ -105,9 +106,64 @@ class Inmueble(UUIDPKMixin, AuditMixin, Base):
         return principal.denominacion if principal else self.nombre
     
     @property
-    def denominaciones_alternativas(self) -> list["InmuebleDenominacion"]:
-        """Obtiene todas las denominaciones que no son principales"""
-        return [d for d in self.denominaciones if not d.es_principal]
+    def tiene_denominaciones_alternativas(self) -> bool:
+        """¿Tiene denominaciones alternativas?"""
+        return any(not d.es_principal for d in self.denominaciones)
+    
+    @property
+    def denominaciones_alternativas_lista(self) -> list[str]:
+        """Lista de denominaciones alternativas (solo nombres)"""
+        return [d.denominacion for d in self.denominaciones if not d.es_principal]
+    
+    @property
+    def denominaciones_lista(self) -> list[str]:
+        """Lista de TODAS las denominaciones (principal + alternativas)"""
+        return [d.denominacion for d in self.denominaciones]
+    
+    @property
+    def tiene_datos_osm(self) -> bool:
+        """¿Tiene datos de OpenStreetMap?"""
+        return self.osm_ext is not None
+    
+    @property
+    def tiene_datos_wikidata(self) -> bool:
+        """¿Tiene datos de Wikidata?"""
+        return self.wd_ext is not None
+    
+    @property
+    def tiene_transmisiones(self) -> bool:
+        """¿Tiene transmisiones registradas?"""
+        return len(self.transmisiones) > 0
+    
+    @property
+    def tiene_actuaciones(self) -> bool:
+        """¿Tiene actuaciones registradas?"""
+        return len(self.actuaciones) > 0
+    
+    @property
+    def tiene_documentos(self) -> bool:
+        """¿Tiene documentos asociados?"""
+        return len(self.documentos) > 0
+    
+    @property
+    def tiene_proteccion(self) -> bool:
+        """¿Tiene figuras de protección?"""
+        return len(self.figuras_proteccion) > 0 or self.es_bic
+    
+    @property
+    def nivel_proteccion(self) -> str:
+        """Nivel de protección: 'BIC', 'Protegido', 'Sin protección'"""
+        if self.es_bic:
+            return "BIC"
+        elif len(self.figuras_proteccion) > 0:
+            return "Protegido"
+        return "Sin protección"
+    
+    @property
+    def esta_geocodificado(self) -> bool:
+        """¿Tiene coordenadas GPS?"""
+        return self.latitud is not None and self.longitud is not None
+
 
 
 class InmuebleDenominacion(UUIDPKMixin, AuditMixin, Base):
@@ -119,7 +175,7 @@ class InmuebleDenominacion(UUIDPKMixin, AuditMixin, Base):
     
     # Denominación
     denominacion: Mapped[str] = mapped_column(String(500), index=True)
-    tipo_denominacion_id: Mapped[Optional[str]] = mapped_column(String(36), ForeignKey("tipos_denominacion.id"), index=True)
+   
     
     # Características
     es_principal: Mapped[bool] = mapped_column(Boolean, default=False, index=True)
@@ -129,13 +185,9 @@ class InmuebleDenominacion(UUIDPKMixin, AuditMixin, Base):
     fecha_inicio: Mapped[Optional[datetime]] = mapped_column(DateTime)
     fecha_fin: Mapped[Optional[datetime]] = mapped_column(DateTime)
     
-    # Metadatos
-    fuente: Mapped[Optional[str]] = mapped_column(String(255))  # BIC, Catastro, OSM, Wikidata, etc.
-    notas: Mapped[Optional[str]] = mapped_column(Text)
     
     # Relaciones
     inmueble: Mapped["Inmueble"] = relationship("Inmueble", back_populates="denominaciones")
-    tipo_denominacion: Mapped[Optional["TipoDenominacion"]] = relationship("TipoDenominacion", back_populates="inmuebles_denominaciones")
     
     @property
     def esta_vigente(self) -> bool:
