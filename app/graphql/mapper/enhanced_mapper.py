@@ -1,3 +1,5 @@
+
+# app/graphql/mapper/enhanced_mapper.py
 """Enhanced SQLAlchemy to Strawberry Mapper"""
 from typing import Type, Dict, Any, Callable, List, Optional
 import strawberry
@@ -26,11 +28,20 @@ class EnhancedSQLAlchemyMapper(StrawberrySQLAlchemyMapper):
         for attr in mapper.attrs:
             if hasattr(attr, 'columns'):
                 column = attr.columns[0]
+                
+                # Skip primary keys in Create inputs
                 if column.primary_key and prefix.lower() == "create":
                     continue
                 
-                field_type = self._python_to_strawberry(column.type.python_type)
-                if optional or column.nullable or column.default:
+                # ✅ Manejar tipos sin python_type (PostGIS, etc)
+                try:
+                    python_type = column.type.python_type
+                    field_type = self._python_to_strawberry(python_type)
+                except (AttributeError, NotImplementedError):
+                    # Tipos sin python_type (Geography, Geometry, etc.) → str
+                    field_type = str
+                
+                if optional or column.nullable or column.default is not None:
                     field_type = Optional[field_type]
                 
                 fields[attr.key] = field_type

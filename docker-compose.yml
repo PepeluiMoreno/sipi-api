@@ -1,32 +1,69 @@
-
 services:
   db:
-    image: postgres:16
+    image: postgis/postgis:16-3.4
     container_name: sipi-db
     environment:
       POSTGRES_USER: ${POSTGRES_USER:-sipi}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-sipi}
       POSTGRES_DB: ${POSTGRES_DB:-sipi}
+      # Configuración PostgreSQL
+      POSTGRES_INITDB_ARGS: "-E UTF8 --locale=C.UTF-8"
+      # Usar C.UTF-8 que está disponible en todas las imágenes
+    command:
+      - "postgres"
+      - "-c"
+      - "shared_preload_libraries=pg_stat_statements"
+      - "-c"
+      - "max_connections=200"
+      - "-c"
+      - "shared_buffers=256MB"
+      - "-c"
+      - "effective_cache_size=1GB"
+      - "-c"
+      - "work_mem=16MB"
+      - "-c"
+      - "maintenance_work_mem=128MB"
+      - "-c"
+      - "log_statement=mod"
+      - "-c"
+      - "log_duration=on"
+      - "-c"
+      - "log_min_duration_statement=1000"
     volumes:
       - sipi_pgdata:/var/lib/postgresql/data
+      - ./scripts/init-db.sh:/docker-entrypoint-initdb.d/init-db.sh:ro
     healthcheck:
-      test: pg_isready -U ${POSTGRES_USER:-sipi} -d ${POSTGRES_DB:-sipi}
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-sipi} -d ${POSTGRES_DB:-sipi}"]
       interval: 5s
-      timeout: 3s
-      retries: 20
+      timeout: 5s
+      retries: 10
+      start_period: 10s
     ports:
       - "${POSTGRES_PORT:-5432}:5432"
     restart: unless-stopped
     networks:
       - sipi-network
+    shm_size: 256mb
 
   graphql:
     build:
       context: .
       dockerfile: Dockerfile
+      args:
+        PYTHON_VERSION: ${PYTHON_VERSION:-3.12}
     container_name: sipi-graphql
     env_file:
       - .env
+    environment:
+      # Variables de entorno explícitas
+      DATABASE_URL: ${DATABASE_URL:-postgresql+asyncpg://sipi:sipi@db:5432/sipi}
+      GRAPHQL_HOST: ${GRAPHQL_HOST:-0.0.0.0}
+      GRAPHQL_PORT: ${GRAPHQL_PORT:-8000}
+      ENV: ${ENV:-development}
+      LOG_LEVEL: ${LOG_LEVEL:-INFO}
+      # Configuración Python
+      PYTHONUNBUFFERED: 1
+      PYTHONDONTWRITEBYTECODE: 1
     depends_on:
       db:
         condition: service_healthy
@@ -36,9 +73,28 @@ services:
     networks:
       - sipi-network
     volumes:
-      - ./logs:/app/logs
-      - ./app:/app/app          # Live-reload código
-      - ./alembic:/app/alembic  # Edita migraciones
+      # Logs persistentes
+      - ./logs:/code/logs
+      # Live-reload en desarrollo
+      - ./app:/code/app
+      - ./alembic:/code/alembic
+      - ./alembic.ini:/code/alembic.ini
+      # Excluir __pycache__ para evitar conflictos
+      - /code/app/__pycache__
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:${GRAPHQL_PORT:-8000}/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    deploy:
+      resources:
+        limits:
+          cpus: '2'
+          memory: 2G
+        reservations:
+          cpus: '0.5'
+          memory: 512M
 
   n8n:
     image: n8nio/n8n:latest
@@ -46,17 +102,34 @@ services:
     restart: unless-stopped
     profiles: ["n8n"]
     environment:
-      DATABASE_URL: ${DATABASE_URL:-postgresql://sipi:sipi@db:5432/sipi}
+      # Database
+      DB_TYPE: postgresdb
+      DB_POSTGRESDB_HOST: db
+      DB_POSTGRESDB_PORT: 5432
+      DB_POSTGRESDB_DATABASE: ${POSTGRES_DB:-sipi}
+      DB_POSTGRESDB_USER: ${POSTGRES_USER:-sipi}
+      DB_POSTGRESDB_PASSWORD: ${POSTGRES_PASSWORD:-sipi}
+      DB_POSTGRESDB_SCHEMA: n8n
+      # Server
       N8N_HOST: ${N8N_HOST:-0.0.0.0}
       N8N_PORT: ${N8N_PORT:-5678}
       N8N_PROTOCOL: ${N8N_PROTOCOL:-http}
-      WEBHOOK_URL: ${WEBHOOK_URL:-http://localhost:5678/webhook}
+      WEBHOOK_URL: ${WEBHOOK_URL:-http://localhost:5678/}
+      # Auth
       N8N_BASIC_AUTH_ACTIVE: ${N8N_BASIC_AUTH_ACTIVE:-true}
       N8N_BASIC_AUTH_USER: ${N8N_BASIC_AUTH_USER:-admin}
-      N8N_BASIC_AUTH_PASSWORD: ${N8N_BASIC_AUTH_PASSWORD}
+      N8N_BASIC_AUTH_PASSWORD: ${N8N_BASIC_AUTH_PASSWORD:-changeme}
+      # Security
       N8N_ENCRYPTION_KEY: ${N8N_ENCRYPTION_KEY}
+      # Locale
       GENERIC_TIMEZONE: ${GENERIC_TIMEZONE:-Europe/Madrid}
       TZ: ${GENERIC_TIMEZONE:-Europe/Madrid}
+      # Ejecutor
+      EXECUTIONS_PROCESS: main
+      EXECUTIONS_MODE: regular
+      # Logs
+      N8N_LOG_LEVEL: ${N8N_LOG_LEVEL:-info}
+      N8N_LOG_OUTPUT: console,file
     ports:
       - "${N8N_PORT:-5678}:${N8N_PORT:-5678}"
     volumes:
@@ -64,20 +137,30 @@ services:
       - ./ETL/workflows:/data/workflows:ro
       - ./ETL/data:/data/data
     depends_on:
-      - db
+      db:
+        condition: service_healthy
     networks:
       - sipi-network
+    healthcheck:
+      test: ["CMD", "wget", "--spider", "-q", "http://localhost:${N8N_PORT:-5678}/healthz"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
 
   pgadmin:
     image: dpage/pgadmin4:latest
     container_name: sipi-pgadmin
     environment:
-      PGADMIN_DEFAULT_EMAIL: ${PGADMIN_DEFAULT_EMAIL:-admin@admin.com}
+      PGADMIN_DEFAULT_EMAIL: ${PGADMIN_DEFAULT_EMAIL:-admin@sipi.local}
       PGADMIN_DEFAULT_PASSWORD: ${PGADMIN_DEFAULT_PASSWORD:-admin}
+      PGADMIN_CONFIG_SERVER_MODE: 'False'
+      PGADMIN_CONFIG_MASTER_PASSWORD_REQUIRED: 'False'
     volumes:
       - sipi_pgadmin_data:/var/lib/pgadmin
+      - ./scripts/pgadmin-servers.json:/pgadmin4/servers.json:ro
     ports:
-      - "8080:80"
+      - "${PGADMIN_PORT:-8080}:80"
     depends_on:
       db:
         condition: service_healthy
@@ -85,12 +168,26 @@ services:
     profiles: ["pgadmin"]
     networks:
       - sipi-network
+    healthcheck:
+      test: ["CMD", "wget", "--spider", "-q", "http://localhost/misc/ping"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
 
 networks:
   sipi-network:
     driver: bridge
+    ipam:
+      config:
+        - subnet: 172.20.0.0/16
 
 volumes:
   sipi_pgdata:
+    name: sipi_pgdata
+    driver: local
   sipi_n8n_data:
+    name: sipi_n8n_data
+    driver: local
   sipi_pgadmin_data:
+    name: sipi_pgadmin_data
+    driver: local

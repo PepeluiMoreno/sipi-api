@@ -10,6 +10,7 @@ if TYPE_CHECKING:
     from .agentes import Tecnico
     from .transmisiones import Transmision, Inmatriculacion
     from .inmuebles import Inmueble
+    from .documentos import InmuebleDocumento  # ✅ Añadir
 
 class CatalogoBase(UUIDPKMixin, AuditMixin, Base):
     """Base para catálogos simples (nombre + descripción)"""
@@ -40,6 +41,9 @@ class TipoCertificacionPropiedad(CatalogoBase):
 
 class TipoDocumento(CatalogoBase):
     __tablename__ = "tipos_documento"
+    inmuebles_documentos: Mapped[list["InmuebleDocumento"]] = relationship("InmuebleDocumento", back_populates="tipo_documento")  # ✅ Añadir
+    actuaciones_documentos: Mapped[list["ActuacionDocumento"]] = relationship("ActuacionDocumento", back_populates="tipo_documento") 
+    transmisiones_documentos: Mapped[list["TransmisionDocumento"]] = relationship("TransmisionDocumento", back_populates="tipo_documento")
 
 class TipoInmueble(CatalogoBase):
     __tablename__ = "tipos_inmueble"
@@ -56,6 +60,7 @@ class TipoPersona(CatalogoBase):
 
 class TipoTransmision(CatalogoBase):
     __tablename__ = "tipos_transmision"
+    transmisiones: Mapped[list["Transmision"]] = relationship("Transmision", back_populates="tipo_transmision")
 
 class TipoVia(CatalogoBase):
     __tablename__ = "tipos_via"

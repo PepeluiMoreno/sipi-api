@@ -1,0 +1,20 @@
+# Dockerfile.postgres
+# PostgreSQL con PostGIS y locale español
+
+FROM postgis/postgis:16-3.4
+
+# Instalar locales españoles
+RUN apt-get update && \
+    apt-get install -y locales && \
+    sed -i '/es_ES.UTF-8/s/^# //g' /etc/locale.gen && \
+    locale-gen es_ES.UTF-8 && \
+    update-locale LANG=es_ES.UTF-8 && \
+    apt-get clean && \
+    rm -rf /var/lib/apt/lists/*
+
+# Configurar locale por defecto
+ENV LANG=es_ES.UTF-8
+ENV LANGUAGE=es_ES:es
+ENV LC_ALL=es_ES.UTF-8
+
+# El resto de la configuración viene de la imagen base

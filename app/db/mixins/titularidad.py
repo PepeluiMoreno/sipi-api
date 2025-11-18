@@ -1,35 +1,41 @@
 # app/db/mixins/titularidad.py
 from typing import TypeVar, Generic, List, Optional
 from sqlalchemy.orm import Mapped, relationship, declared_attr
-from app.db.base import Base
-from app.db.mixins import UUIDPKMixin, AuditMixin
+import re
 
 T = TypeVar('T')
 
+def camel_to_snake(name: str) -> str:
+    """Convierte CamelCase a snake_case"""
+    name = re.sub('(.)([A-Z][a-z]+)', r'\1_\2', name)
+    return re.sub('([a-z0-9])([A-Z])', r'\1_\2', name).lower()
+
 class TitularidadMixin(Generic[T]):
     """
-    Mixin para entidades con titulares temporales (obispos, notarios, etc.)
+    Mixin para entidades con titulares temporales
     
     USO EN MODELO PRINCIPAL:
     class Notaria(Base, TitularidadMixin["NotariaTitular"]):
-        DENOMINACION_TITULARIDAD = "notario"
         # ... campos ...
         
     USO EN MODELO TITULAR:
-    class NotariaTitular(UUIDPKMixin, AuditMixin, Base):
+    class NotariaTitular(TitularBase):
         notaria_id: Mapped[str] = ForeignKey("notarias.id")
-        fecha_inicio: Mapped[datetime]
-        fecha_fin: Mapped[Optional[datetime]]
-    """
+        notaria: Mapped["Notaria"] = relationship("Notaria", back_populates="titulares")
     
-    DENOMINACION_TITULARIDAD: str = None  # "notario", "registrador", etc.
+    ACCESO:
+    - notaria.titulares → Lista completa histórica
+    - notaria.titular_actual → El titular actual (sin fecha_fin)
+    - notaria.tiene_titular → bool
+    - notaria.titulares_anteriores → Los históricos
+    """
     
     @declared_attr
     def titulares(cls) -> Mapped[List[T]]:
-        """Relación con todos los titulares"""
+        """Relación con todos los titulares (histórico completo)"""
         return relationship(
             f"{cls.__name__}Titular",
-            back_populates=cls.DENOMINACION_TITULARIDAD,
+            back_populates=camel_to_snake(cls.__name__),  # ✅ Convertir a snake_case
             cascade="all, delete-orphan",
             lazy="selectin"
         )
@@ -37,12 +43,10 @@ class TitularidadMixin(Generic[T]):
     @property
     def titular_actual(self) -> Optional[T]:
         """Titular actual (sin fecha_fin)"""
-        if not hasattr(self, "_titular_actual_cache"):
-            self._titular_actual_cache = next(
-                (t for t in self.titulares if getattr(t, "fecha_fin", None) is None),
-                None
-            )
-        return self._titular_actual_cache
+        return next(
+            (t for t in self.titulares if t.fecha_fin is None),
+            None
+        )
     
     @property
     def tiene_titular(self) -> bool:
@@ -52,4 +56,4 @@ class TitularidadMixin(Generic[T]):
     @property
     def titulares_anteriores(self) -> List[T]:
         """Lista de titulares históricos (con fecha_fin)"""
-        return [t for t in self.titulares if getattr(t, "fecha_fin", None) is not None]
+        return [t for t in self.titulares if t.fecha_fin is not None]

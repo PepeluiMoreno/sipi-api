@@ -1,8 +1,10 @@
+# crud.py
 """CRUD Resolver with Advanced Filters"""
 from typing import Type, List, Optional, Any
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, func, asc, desc
 from sqlalchemy.exc import NoResultFound
+from datetime import datetime, timezone  # ✅ IMPORT CORREGIDO
 from app.graphql.types import FilterInput, SortInput, PaginationInput, PaginatedResult, PageInfo
 
 class CRUDResolver:
@@ -58,7 +60,6 @@ class CRUDResolver:
             if not column:
                 continue
             
-            # ✅ Obtener el valor del enum de Strawberry
             op = f.operator.value if hasattr(f.operator, 'value') else f.operator
             value = f.value
             values = f.values or []
@@ -133,11 +134,10 @@ class CRUDResolver:
             return False
         
         if hasattr(instance, 'deleted_at'):
-            from datetime import datetime
-            instance.deleted_at = datetime.utcnow()
+            instance.deleted_at = datetime.now(timezone.utc)  # ✅ CORREGIDO
         else:
-            # ✅ CORRECCIÓN: delete no es async
-            session.delete(instance)
+            # ✅ CORREGIDO: await necesario en SQLAlchemy 2.0+
+            await session.delete(instance)
         
         await session.commit()
         return True

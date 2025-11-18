@@ -28,6 +28,7 @@ class Provincia(UUIDPKMixin, AuditMixin, Base):
     # Relaciones
     comunidad_autonoma: Mapped["ComunidadAutonoma"] = relationship("ComunidadAutonoma", back_populates="provincias")
     localidades: Mapped[list["Localidad"]] = relationship("Localidad", back_populates="provincia", cascade="all, delete-orphan")
+    inmuebles: Mapped[list["Inmueble"]] = relationship("Inmueble", back_populates="provincia")
 
 class Localidad(UUIDPKMixin, AuditMixin, Base):
     __tablename__ = "localidades"
@@ -40,3 +41,4 @@ class Localidad(UUIDPKMixin, AuditMixin, Base):
     notarias: Mapped[list["Notaria"]] = relationship("Notaria", back_populates="localidad")
     registros_propiedad: Mapped[list["RegistroPropiedad"]] = relationship("RegistroPropiedad", back_populates="localidad")
     agencias_inmobiliarias: Mapped[list["AgenciaInmobiliaria"]] = relationship("AgenciaInmobiliaria", back_populates="localidad")
+    inmuebles: Mapped[list["Inmueble"]] = relationship("Inmueble", back_populates="localidad")

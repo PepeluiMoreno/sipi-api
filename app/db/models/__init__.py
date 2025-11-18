@@ -6,7 +6,7 @@ from app.db.mixins import UUIDPKMixin, AuditMixin
 from .agentes import (
     Adquiriente, Administracion, AdministracionTitular, AgenciaInmobiliaria,
     ColegioProfesional, Diocesis, DiocesisTitular, Notaria, NotariaTitular,
-    Tecnico, RegistroPropiedad, RegistroTitular, Transmitente
+    Tecnico, RegistroPropiedad, RegistroPropiedadTitular, Transmitente
 )
 
 # Catálogos
@@ -48,7 +48,7 @@ __all__ = [
     # Agentes
     'Adquiriente', 'Administracion', 'AdministracionTitular', 'AgenciaInmobiliaria',
     'ColegioProfesional', 'Diocesis', 'DiocesisTitular', 'Notaria', 'NotariaTitular',
-    'Tecnico', 'RegistroPropiedad', 'RegistroTitular', 'Transmitente',
+    'Tecnico', 'RegistroPropiedad', 'RegistroPropiedadTitular', 'Transmitente',
     # Catálogos
     'EstadoConservacion', 'EstadoTratamiento', 'FiguraProteccion', 'RolTecnico',
     'TipoCertificacionPropiedad', 'TipoDocumento', 'TipoInmueble', 'TipoMimeDocumento',

@@ -1,28 +1,30 @@
+"""SQLAlchemy Async Session Factory"""
 from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine, async_sessionmaker
 from sqlalchemy.pool import AsyncAdaptedQueuePool
-import os
-
-DATABASE_URL = os.getenv("DATABASE_URL", "postgresql+asyncpg://sipi:sipi@db:5432/sipi")
+from app.core.config import settings
 
 engine = create_async_engine(
-    DATABASE_URL,
+    settings.DATABASE_URL,
     poolclass=AsyncAdaptedQueuePool,
-    pool_size=20,
-    max_overflow=10,
-    pool_timeout=30,
+    pool_size=settings.POOL_SIZE,
+    max_overflow=settings.POOL_MAX_OVERFLOW,
+    pool_timeout=settings.POOL_TIMEOUT,
     pool_pre_ping=True,
-    pool_recycle=3600,
-    echo=False,
+    pool_recycle=settings.POOL_RECYCLE,
+    echo=settings.SQLALCHEMY_ECHO,
 )
 
-AsyncSessionLocal = async_sessionmaker(
+# NOMBRE CORRECTO que app.py espera
+async_session_maker = async_sessionmaker(
     engine,
     class_=AsyncSession,
     expire_on_commit=False,
 )
 
+AsyncSessionLocal = async_session_maker  # Alias opcional
+
 async def get_async_db():
-    async with AsyncSessionLocal() as session:
+    async with async_session_maker() as session:
         try:
             yield session
         finally:

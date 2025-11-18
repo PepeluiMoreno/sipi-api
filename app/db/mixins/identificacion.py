@@ -1,9 +1,11 @@
 # app/db/mixins/identificacion.py
 import enum
+import strawberry
 from typing import Optional
 from sqlalchemy import String, Enum
 from sqlalchemy.orm import Mapped, mapped_column
 
+@strawberry.enum
 class TipoIdentificacion(str, enum.Enum):
     """Tipos de documento de identidad"""
     DNI = "dni"
