@@ -8,7 +8,6 @@ from alembic import context
 from sqlalchemy import pool
 from sqlalchemy.ext.asyncio import create_async_engine
 
-# Hacer que el proyecto sea importable
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
 config = context.config
@@ -16,16 +15,13 @@ config = context.config
 if config.config_file_name is not None:
     fileConfig(config.config_file_name)
 
-# Obtener la URL de la base de datos
 database_url = os.getenv("DATABASE_URL")
 if not database_url:
     database_url = config.get_main_option("sqlalchemy.url")
 
-# Convertir postgresql:// → postgresql+asyncpg://
 if database_url.startswith("postgresql://"):
     database_url = database_url.replace("postgresql://", "postgresql+asyncpg://", 1)
 
-# Importar Base
 try:
     from app.db.base import Base
     target_metadata = Base.metadata
@@ -38,42 +34,28 @@ except Exception as e:
 
 def include_object_filter(object, name, type_, reflected, compare_to):
     """
-    Excluir tablas del sistema y de PostGIS del autogenerate
+    SOLO incluir schemas que gestionamos nosotros
+    Excluir TODO lo demás (PostGIS, Tiger, sistema)
     """
-    # Schemas de PostGIS y sistema que NO debemos tocar
-    excluded_schemas = {'tiger', 'tiger_data', 'topology', 'pg_catalog', 'information_schema'}
+    # ✅ SOLO estos schemas son nuestros
+    our_schemas = {'public', 'n8n', 'auditoria'}
     
-    # Prefijos de tablas de PostGIS
-    postgis_prefixes = ('spatial_', 'geography_', 'geometry_', 'raster_')
-    
-    # Tablas específicas de PostGIS y Tiger Geocoder
-    postgis_tables = {
-        # PostGIS core
-        'topology', 'layer',
+    # ✅ Tablas de sistema PostGIS en public que NO gestionamos
+    postgis_system_tables = {
         'spatial_ref_sys', 'geometry_columns', 'geography_columns',
-        'raster_columns', 'raster_overviews',
-        # Tiger geocoder
-        'featnames', 'edges', 'faces', 'addr', 'addrfeat',
-        'bg', 'county', 'county_lookup', 'countysub_lookup', 'cousub',
-        'direction_lookup', 'geocode_settings', 'geocode_settings_default',
-        'loader_lookuptables', 'loader_platform', 'loader_variables',
-        'pagc_gaz', 'pagc_lex', 'pagc_rules', 'place', 'place_lookup',
-        'secondary_unit_lookup', 'state', 'state_lookup', 'street_type_lookup',
-        'tabblock', 'tract', 'zcta5', 'zip_lookup', 'zip_lookup_all',
-        'zip_lookup_base', 'zip_state', 'zip_state_loc',
+        'raster_columns', 'raster_overviews', 'topology', 'layer',
     }
     
     if type_ == "table":
-        # Ignorar por schema
-        if hasattr(object, 'schema') and object.schema in excluded_schemas:
+        # Obtener el schema de la tabla
+        table_schema = getattr(object, 'schema', None) or 'public'
+        
+        # ✅ Solo incluir nuestros schemas
+        if table_schema not in our_schemas:
             return False
         
-        # Ignorar por nombre exacto
-        if name.lower() in postgis_tables:
-            return False
-        
-        # Ignorar por prefijo
-        if name.lower().startswith(postgis_prefixes):
+        # ✅ En public, excluir tablas de sistema PostGIS
+        if table_schema == 'public' and name.lower() in postgis_system_tables:
             return False
     
     return True
@@ -84,7 +66,6 @@ def run_migrations_offline():
 
 
 def run_migrations_online():
-    # Crear motor ASYNC
     connectable = create_async_engine(
         database_url,
         poolclass=pool.NullPool,

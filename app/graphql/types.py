@@ -1,7 +1,8 @@
 """Core GraphQL Types"""
 import strawberry
-from typing import Generic, TypeVar, List, Optional, Any
+from typing import Generic, TypeVar, List, Optional
 from enum import Enum
+from strawberry.scalars import JSON
 
 T = TypeVar("T")
 
@@ -19,7 +20,6 @@ class PaginatedResult(Generic[T]):
     items: List[T]
     page_info: PageInfo
 
-# ✅ Usar @strawberry.enum para GraphQL
 @strawberry.enum
 class FilterOperator(Enum):
     EQ = "eq"
@@ -39,8 +39,8 @@ class FilterOperator(Enum):
 class FilterInput:
     field: str
     operator: FilterOperator = FilterOperator.EQ
-    value: Optional[Any] = None
-    values: Optional[List[Any]] = None
+    value: Optional[strawberry.scalars.JSON] = None  # ✅ Cambio: Any → JSON
+    values: Optional[List[strawberry.scalars.JSON]] = None  # ✅ Cambio: Any → JSON
 
 @strawberry.input
 class SortInput:
