@@ -60,7 +60,7 @@ __all__ = [
     # Actuaciones
     'Actuacion', 'ActuacionTecnico',
     # Transmisiones
-    'Transmision', 'Inmatriculacion', 'TransmisionAnunciante',
+    'Transmision', 'Inmatriculacion', 'TransmisionAnunciante', 'Adquiriente', 'Transmitente',
     # Inmuebles
     'Inmueble', 'InmuebleOSMExt', 'InmuebleWDExt',
     # Historiografía

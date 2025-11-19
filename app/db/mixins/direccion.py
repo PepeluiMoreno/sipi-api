@@ -5,8 +5,8 @@ from sqlalchemy import String, ForeignKey, Float
 from sqlalchemy.orm import Mapped, mapped_column, relationship, declared_attr
 
 if TYPE_CHECKING:
-    from app.models.geografia import Provincia, Localidad, ComunidadAutonoma
-    from app.models.catalogos import TipoVia
+    from app.db.models.geografia import Provincia, Localidad, ComunidadAutonoma
+    from app.db.models.catalogos import TipoVia
 
 class DireccionMixin:
     """Mixin para datos de dirección geográfica"""

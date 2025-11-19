@@ -4,6 +4,7 @@ from .identificacion import TipoIdentificacion, IdentificacionMixin
 from .contacto import ContactoMixin, ContactoDireccionMixin
 from .direccion import DireccionMixin
 from .titularidad import TitularidadMixin
+from .documento import DocumentoMixin
 
 __all__ = [
     "UUIDPKMixin",
@@ -13,5 +14,6 @@ __all__ = [
     "ContactoMixin",
     "ContactoDireccionMixin",
     "DireccionMixin",
-    "TitularidadMixin"
+    "TitularidadMixin",
+    "DocumentoMixin",
 ]

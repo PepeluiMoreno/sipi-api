@@ -7,20 +7,24 @@ import strawberry
 from strawberry.types import Info
 from app.graphql.types import FilterInput, SortInput, PaginationInput, PageInfo
 from app.graphql.decorators import async_safe_resolver
-from app.graphql.mapper.enhanced_mapper import EnhancedSQLAlchemyMapper
+
 from app.graphql.mapper.crud import CRUDResolver
 from app.core.config import GRAPHQL_MAX_DEPTH
 
+from app.graphql.mapper.enhanced_mapper import EnhancedSQLAlchemyMapper
+from app.graphql.mapper import SQLAlchemyMapper
+ 
 # Importar configuración de pluralización
 try:
-    from app.graphql.config.spanish import PLURALES_INVARIABLES, PLURALES_EXCEPCIONES
+    from app.graphql.spanish import PLURALES_INVARIABLES, PLURALES_EXCEPCIONES
     print(f"📋 Config español: {len(PLURALES_INVARIABLES)} invariables, {len(PLURALES_EXCEPCIONES)} excepciones")
 except ImportError:
     print("⚠️  Archivo de config español no encontrado, usando valores por defecto")
     PLURALES_INVARIABLES = {'crisis', 'tesis', 'sintesis', 'analisis', 'diocesis'}
     PLURALES_EXCEPCIONES = {}
 
-mapper = EnhancedSQLAlchemyMapper()
+#mapper = EnhancedSQLAlchemyMapper()
+mapper = SQLAlchemyMapper()
 
 def pluralize_spanish(word: str) -> str:
     """

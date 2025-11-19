@@ -17,3 +17,4 @@ htmlcov/
 alembic/versions/*.pyc
 Dockerfile
 docker-compose*.yml
+seeding/
