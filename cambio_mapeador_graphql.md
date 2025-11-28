@@ -30,7 +30,7 @@ Se elimina el directorio completo `app/graphql/mapper/` (incluyendo `enhanced_ma
 ```python
 # Extracto de enhanced_mapper.py, línea 153
 # Lógica de inferencia basada en el nombre
-if name.startswith(('is_', 'has_', 'tiene_', 'esta_')):
+if name.startswith(("is_", "has_", "tiene_", "esta_")):
     return bool
 ```
 > **Problema:** Si una propiedad se llama `get_is_active`, esta lógica falla. La librería estándar utiliza la introspección de SQLAlchemy, que es mucho más fiable.
@@ -63,22 +63,53 @@ mapper = StrawberrySQLAlchemyMapper()
 
 La migración **mantiene** la funcionalidad de generación de CRUD y **mejora** el mapeo de tipos y relaciones.
 
+### A. Manejo de Propiedades Calculadas (`@property`)
+
+Tu mapeador original intentaba inferir el tipo de retorno de las propiedades calculadas (como `nivel_proteccion` en `Inmueble`) basándose en heurísticas. Esta inferencia es el punto más frágil de tu código.
+
+La librería estándar requiere una declaración explícita, lo que resulta en un código más limpio y robusto:
+
+| Código Anterior (Inferencia Frágil) | Código Nuevo (Declaración Explícita y Robusta) |
+| :--- | :--- |
+| ```python
+# Extraído de enhanced_mapper.py
+# Lógica de inferencia de tipos
+if name.startswith(("is_", "has_", "tiene_", "esta_")):
+    return bool
+# ...
+return ann # Confiar en otros tipos anotados
+``` | ```python
+# Ejemplo de cómo se integraría en el tipo Inmueble
+@strawberry.type
+class InmuebleType(mapper.type(Inmueble)): # Hereda del tipo mapeado
+    # Se añade la propiedad calculada como un campo de Strawberry
+    @strawberry.field
+    def nivel_proteccion(self, info: Info) -> str:
+        return self.nivel_proteccion
+``` |
+
+**Ventaja del Nuevo Enfoque:**
+
+*   **Claridad:** El tipo GraphQL se define de forma explícita, sin depender de la lógica de inferencia.
+*   **Robustez:** El tipo de retorno (`str` en este caso) se define mediante *type-hints* de Python, que son verificados por herramientas de análisis estático, eliminando la fragilidad de la inferencia basada en nombres.
+
+### B. Mapeo de Relaciones
+
+Con la librería estándar, si tu modelo `Actuacion` tiene una relación `documentos = relationship("Documento")`, el tipo GraphQL generado para `Actuacion` incluirá automáticamente un campo `documentos` que resuelve a una lista de tipos `Documento`.
+
+**Esto elimina la necesidad de escribir *resolvers* manuales para la navegación de datos en el esquema.**
+
 | Funcionalidad | Estado en `main` | Estado en `feat/strawberry-sqlalchemy` |
 | :--- | :--- | :--- |
 | **Generación de Tipos** | Funcional, pero frágil. | **Funcional y Robusta.** |
 | **Generación de Inputs (Create/Update)** | Funcional. | **Funcional y Estándar.** Se usa `partial=True` para `Update` en lugar de la lógica personalizada. |
 | **Generación de Queries/Mutations CRUD** | Funcional (gestionado por `CRUDResolver`). | **Funcional.** El `CRUDResolver` no necesita cambios, ya que solo requiere el tipo generado por el mapeador. |
 | **Manejo de Relaciones** | Manual o requiere lógica adicional. | **Automático.** La librería mapea automáticamente las relaciones de SQLAlchemy. |
-
-### Ejemplo de Mejora: Mapeo de Relaciones
-
-Con la librería estándar, si tu modelo `Actuacion` tiene una relación `documentos = relationship("Documento")`, el tipo GraphQL generado para `Actuacion` incluirá automáticamente un campo `documentos` que resuelve a una lista de tipos `Documento`.
-
-**Esto elimina la necesidad de escribir *resolvers* manuales para la navegación de datos en el esquema.**
+| **Propiedades (@property)** | Inferencia frágil basada en heurísticas. | Declaración explícita y robusta en el tipo Strawberry. |
 
 ## Conclusión
 
-La migración a **`strawberry-sqlalchemy-mapper`** es un paso crucial para la madurez del proyecto. Elimina código personalizado complejo y lo reemplaza con una solución estándar de la comunidad, lo que resulta en un esquema de GraphQL más robusto, fácil de mantener y con mejor soporte para las características avanzadas de SQLAlchemy, como el mapeo automático de relaciones.
+La migración a **`strawberry-sqlalchemy-mapper`** es un paso crucial para la madurez del proyecto. Elimina código personalizado complejo y lo reemplaza con una solución estándar de la comunidad, lo que resulta en un esquema de GraphQL más robusto, fácil de mantener y con mejor soporte para las características avanzadas de SQLAlchemy, como el mapeo automático de relaciones y la declaración explícita de propiedades calculadas.
 
 Se recomienda fusionar la rama `feat/strawberry-sqlalchemy` después de una revisión exitosa.
 
