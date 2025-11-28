@@ -11,8 +11,8 @@ from app.graphql.decorators import async_safe_resolver
 from app.graphql.mapper.crud import CRUDResolver
 from app.core.config import GRAPHQL_MAX_DEPTH
 
-from app.graphql.mapper.enhanced_mapper import EnhancedSQLAlchemyMapper
-from app.graphql.mapper import SQLAlchemyMapper
+from strawberry_sqlalchemy_mapper import SQLAlchemyMapper as StrawberrySQLAlchemyMapper
+# from app.graphql.mapper import SQLAlchemyMapper # Custom mapper removed
  
 # Importar configuración de pluralización
 try:
@@ -23,8 +23,8 @@ except ImportError:
     PLURALES_INVARIABLES = {'crisis', 'tesis', 'sintesis', 'analisis', 'diocesis'}
     PLURALES_EXCEPCIONES = {}
 
-#mapper = EnhancedSQLAlchemyMapper()
-mapper = SQLAlchemyMapper()
+# mapper = EnhancedSQLAlchemyMapper() # Custom mapper removed
+mapper = StrawberrySQLAlchemyMapper()
 
 def pluralize_spanish(word: str) -> str:
     """
@@ -124,7 +124,7 @@ def generate_resolvers(models: List[Type]) -> tuple:
             
             # Crear tipo base
             print(f"  → Creando tipo Strawberry...")
-            strawberry_type = mapper.type(model)
+            strawberry_type = mapper.type(model, name=model_name)
             print(f"  → Tipo creado: {strawberry_type}")
             
             type_registry[model_name] = strawberry_type
@@ -172,8 +172,8 @@ def generate_resolvers(models: List[Type]) -> tuple:
         paginated_type = paginated_registry[model_name]
         
         try:
-            create_input = mapper.input_type(model, "Create")
-            update_input = mapper.input_type(model, "Update", optional=True)
+            create_input = mapper.input_type(model, name=f"{model_name}CreateInput")
+            update_input = mapper.input_type(model, name=f"{model_name}UpdateInput", partial=True)
         except Exception as e:
             print(f"    ⚠️  No se pudo crear inputs para {model_name}: {e}")
             continue
