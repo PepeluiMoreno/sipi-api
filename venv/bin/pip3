@@ -1,4 +1,4 @@
-#!/home/ubuntu/sipi-api/venv/bin/python3
+#!/home/jose/dev/SIPI-API/venv/bin/python
 # -*- coding: utf-8 -*-
 import re
 import sys
