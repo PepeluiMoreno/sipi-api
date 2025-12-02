@@ -10,7 +10,7 @@ if TYPE_CHECKING:
     from .inmuebles import Inmueble
     from .actuaciones import Actuacion
     from .transmisiones import Transmision
-    from .catalogos import TipoDocumento, TipoLicencia, FuenteDocumental
+    from .tipologias import TipoDocumento, TipoLicencia, FuenteDocumental
 
 class Documento(UUIDPKMixin, AuditMixin, DocumentoMixin, Base):
     __tablename__ = "documentos"

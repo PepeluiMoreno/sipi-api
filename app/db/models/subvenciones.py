@@ -9,7 +9,7 @@ from app.db.mixins import UUIDPKMixin, AuditMixin
 
 if TYPE_CHECKING:
     from .actuaciones import Actuacion
-    from .agentes import Administracion
+    from .actores import Administracion
 
 class ActuacionSubvencion(UUIDPKMixin, AuditMixin, Base):
     __tablename__ = "actuaciones_subvenciones"

@@ -10,9 +10,9 @@ from sqlalchemy.orm import Session
 from sqlalchemy import func
 
 from app.db.sessions.sync_session import SessionLocal
-from app.db.models.catalogos import (
+from app.db.models.tipologias import (
     TipoInmueble,
-    EstadoConservacion,
+    TipoEstadoConservacion,
     TipoDocumento
 )
 
@@ -209,12 +209,12 @@ class CatalogSeeder:
         
         # Crear estados estándar
         for nombre, descripcion in estados_standard:
-            existing = self.db.query(EstadoConservacion).filter(
-                func.lower(EstadoConservacion.nombre) == nombre.lower()
+            existing = self.db.query(TipoEstadoConservacion).filter(
+                func.lower(TipoEstadoConservacion.nombre) == nombre.lower()
             ).first()
             
             if not existing:
-                estado = EstadoConservacion(
+                estado = TipoEstadoConservacion(
                     nombre=nombre,
                     descripcion=descripcion
                 )
@@ -227,12 +227,12 @@ class CatalogSeeder:
             if estado_osm in mapeo_osm:
                 nombre, descripcion = mapeo_osm[estado_osm]
                 
-                existing = self.db.query(EstadoConservacion).filter(
-                    func.lower(EstadoConservacion.nombre) == nombre.lower()
+                existing = self.db.query(TipoEstadoConservacion).filter(
+                    func.lower(TipoEstadoConservacion.nombre) == nombre.lower()
                 ).first()
                 
                 if not existing:
-                    estado = EstadoConservacion(
+                    estado = TipoEstadoConservacion(
                         nombre=nombre,
                         descripcion=descripcion
                     )
@@ -311,7 +311,7 @@ class CatalogSeeder:
         
         # Contar registros
         count_tipos = self.db.query(TipoInmueble).count()
-        count_estados = self.db.query(EstadoConservacion).count()
+        count_estados = self.db.query(TipoEstadoConservacion).count()
         count_docs = self.db.query(TipoDocumento).count()
         
         print(f"\n✅ Tipos de Inmueble: {count_tipos}")

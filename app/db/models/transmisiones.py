@@ -11,8 +11,8 @@ from app.db.mixins import UUIDPKMixin, AuditMixin
 
 if TYPE_CHECKING:
     from .inmuebles import Inmueble
-    from .agentes import Adquiriente, Transmitente, Notaria, RegistroPropiedad, AgenciaInmobiliaria
-    from .catalogos import TipoTransmision, TipoCertificacionPropiedad
+    from .actores import Adquiriente, Transmitente, Notaria, RegistroPropiedad, AgenciaInmobiliaria
+    from .tipologias import TipoTransmision, TipoCertificacionPropiedad
     from .documentos import TransmisionDocumento
 
 class Transmision(UUIDPKMixin, AuditMixin, Base):

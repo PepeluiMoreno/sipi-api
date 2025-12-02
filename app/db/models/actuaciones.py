@@ -10,8 +10,8 @@ from app.db.mixins import UUIDPKMixin, AuditMixin
 
 if TYPE_CHECKING:
     from .inmuebles import Inmueble
-    from .agentes import Tecnico
-    from .catalogos import RolTecnico
+    from .actores import Tecnico
+    from .tipologias import TipoRolTecnico
     from .documentos import ActuacionDocumento
     from .subvenciones import ActuacionSubvencion
 
@@ -51,4 +51,4 @@ class ActuacionTecnico(UUIDPKMixin, AuditMixin, Base):
     # Relaciones
     actuacion: Mapped["Actuacion"] = relationship("Actuacion", back_populates="tecnicos")
     tecnico: Mapped["Tecnico"] = relationship("Tecnico", back_populates="actuaciones")
-    rol_tecnico: Mapped["RolTecnico"] = relationship("RolTecnico", lazy="joined")
+    rol_tecnico: Mapped["TipoRolTecnico"] = relationship("TipoRolTecnico", lazy="joined")

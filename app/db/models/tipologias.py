@@ -1,4 +1,4 @@
-# models/catalogos.py
+# models/ Tipologias.py
 from __future__ import annotations
 from typing import TYPE_CHECKING
 from sqlalchemy.orm import Mapped, mapped_column, relationship
@@ -8,40 +8,40 @@ from app.db.mixins import UUIDPKMixin, AuditMixin
 
 if TYPE_CHECKING:
     from .documentos import Documento
-    from .agentes import Tecnico
+    from .actores import Tecnico
     from .transmisiones import Transmision, Inmatriculacion
     from .inmuebles import Inmueble
 
-class CatalogoBase(UUIDPKMixin, AuditMixin, Base):
+class  TipologiaBase(UUIDPKMixin, AuditMixin, Base):
     __abstract__ = True
     nombre: Mapped[str] = mapped_column(String(100), unique=True, index=True)
     descripcion: Mapped[str | None] = mapped_column(Text, nullable=True)
 
-class EstadoConservacion(CatalogoBase):
+class TipoEstadoConservacion( TipologiaBase):
     __tablename__ = "estados_conservacion"
     inmuebles: Mapped[list["Inmueble"]] = relationship("Inmueble", back_populates="estado_conservacion")
 
-class EstadoTratamiento(CatalogoBase):
+class TipoEstadoTratamiento( TipologiaBase):
     __tablename__ = "estados_tratamiento"
     inmuebles: Mapped[list["Inmueble"]] = relationship("Inmueble", back_populates="estado_tratamiento")
 
-class FiguraProteccion(CatalogoBase):
+class TipoFiguraProteccion( TipologiaBase):
     __tablename__ = "figuras_proteccion"
 
-class RolTecnico(CatalogoBase):
+class TipoRolTecnico( TipologiaBase):
     __tablename__ = "roles_tecnico"
     tecnicos: Mapped[list["Tecnico"]] = relationship("Tecnico", back_populates="rol_tecnico")
 
-class TipoCertificacionPropiedad(CatalogoBase):
+class TipoCertificacionPropiedad( TipologiaBase):
     __tablename__ = "tipos_certificacion_propiedad"
     transmisiones: Mapped[list["Transmision"]] = relationship("Transmision", back_populates="tipo_certificacion_propiedad")
     inmatriculaciones: Mapped[list["Inmatriculacion"]] = relationship("Inmatriculacion", back_populates="tipo_certificacion_propiedad")
 
-class TipoDocumento(CatalogoBase):
+class TipoDocumento( TipologiaBase):
     __tablename__ = "tipos_documento"
     documentos: Mapped[list["Documento"]] = relationship("Documento", back_populates="tipo_documento")
 
-class TipoInmueble(CatalogoBase):
+class TipoInmueble( TipologiaBase):
     __tablename__ = "tipos_inmueble"
     inmuebles: Mapped[list["Inmueble"]] = relationship("Inmueble", back_populates="tipo_inmueble")
 
@@ -51,14 +51,14 @@ class TipoMimeDocumento(UUIDPKMixin, AuditMixin, Base):
     extension: Mapped[str] = mapped_column(String(10))
     descripcion: Mapped[str | None] = mapped_column(Text, nullable=True)
 
-class TipoPersona(CatalogoBase):
+class TipoPersona( TipologiaBase):
     __tablename__ = "tipos_persona"
 
-class TipoTransmision(CatalogoBase):
+class TipoTransmision( TipologiaBase):
     __tablename__ = "tipos_transmision"
     transmisiones: Mapped[list["Transmision"]] = relationship("Transmision", back_populates="tipo_transmision")
 
-class TipoVia(CatalogoBase):
+class TipoVia( TipologiaBase):
     __tablename__ = "tipos_via"
 
 

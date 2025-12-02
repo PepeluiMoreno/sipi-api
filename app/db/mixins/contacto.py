@@ -5,9 +5,8 @@ from sqlalchemy.orm import Mapped, mapped_column
 from .direccion import DireccionMixin
 
 class ContactoMixin:
-    """Datos de contacto estándar"""
-    
-    email: Mapped[Optional[str]] = mapped_column(String(255), index=True)
+    email_personal: Mapped[Optional[str]] = mapped_column(String(255), index=True)
+    email_corporativo: Mapped[Optional[str]] = mapped_column(String(255), index=True)
     telefono: Mapped[Optional[str]] = mapped_column(String(20))
     telefono_movil: Mapped[Optional[str]] = mapped_column(String(20))
     fax: Mapped[Optional[str]] = mapped_column(String(20))
@@ -15,5 +14,4 @@ class ContactoMixin:
     notas: Mapped[Optional[str]] = mapped_column(String(500))
 
 class ContactoDireccionMixin(ContactoMixin, DireccionMixin):
-    """Mixin combinado: contacto + dirección"""
     pass

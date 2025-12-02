@@ -6,7 +6,7 @@ from app.db.base import Base
 from app.db.mixins import UUIDPKMixin, AuditMixin
 
 if TYPE_CHECKING:
-    from .agentes import Notaria, RegistroPropiedad, Administracion, AgenciaInmobiliaria
+    from .actores import Notaria, RegistroPropiedad, Administracion, AgenciaInmobiliaria
     from .inmuebles import Inmueble
 
 class ComunidadAutonoma(UUIDPKMixin, AuditMixin, Base):

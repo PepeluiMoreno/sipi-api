@@ -2,16 +2,16 @@
 from app.db.base import Base
 from app.db.mixins import UUIDPKMixin, AuditMixin
 
-# Agentes
-from .agentes import (
+# actores
+from .actores import (
     Adquiriente, Administracion, AdministracionTitular, AgenciaInmobiliaria,
     ColegioProfesional, Diocesis, DiocesisTitular, Notaria, NotariaTitular,
     Tecnico, RegistroPropiedad, RegistroPropiedadTitular, Transmitente
 )
 
 # Catálogos
-from .catalogos import (
-    EstadoConservacion, EstadoTratamiento, FiguraProteccion, RolTecnico,
+from .tipologias import (
+    TipoEstadoConservacion, TipoEstadoTratamiento, TipoFiguraProteccion, TipoRolTecnico,
     TipoCertificacionPropiedad, TipoDocumento, TipoInmueble, TipoMimeDocumento,
     TipoPersona, TipoTransmision, TipoVia
 )
@@ -35,7 +35,7 @@ from .inmuebles import Inmueble, InmuebleOSMExt, InmuebleWDExt
 from .historiografia import FuenteHistoriografica, CitaHistoriografica
 
 # Protección
-from .proteccion import InmuebleFiguraProteccion
+from .proteccion import InmuebleTipoFiguraProteccion
 
 # Subvenciones
 from .subvenciones import ActuacionSubvencion, SubvencionAdministracion
@@ -45,12 +45,12 @@ from .users import Usuario, Rol, usuario_rol
 
 __all__ = [
     'Base', 'UUIDPKMixin', 'AuditMixin',
-    # Agentes
+    # actores
     'Adquiriente', 'Administracion', 'AdministracionTitular', 'AgenciaInmobiliaria',
     'ColegioProfesional', 'Diocesis', 'DiocesisTitular', 'Notaria', 'NotariaTitular',
     'Tecnico', 'RegistroPropiedad', 'RegistroPropiedadTitular', 'Transmitente',
     # Catálogos
-    'EstadoConservacion', 'EstadoTratamiento', 'FiguraProteccion', 'RolTecnico',
+    'TipoEstadoConservacion', 'TipoEstadoTratamiento', 'TipoFiguraProteccion', 'TipoRolTecnico',
     'TipoCertificacionPropiedad', 'TipoDocumento', 'TipoInmueble', 'TipoMimeDocumento',
     'TipoPersona', 'TipoTransmision', 'TipoVia',
     # Geografía
@@ -66,7 +66,7 @@ __all__ = [
     # Historiografía
     'FuenteHistoriografica', 'CitaHistoriografica',
     # Protección
-    'InmuebleFiguraProteccion',
+    'InmuebleTipoFiguraProteccion',
     # Subvenciones
     'ActuacionSubvencion', 'SubvencionAdministracion',
     # Usuarios

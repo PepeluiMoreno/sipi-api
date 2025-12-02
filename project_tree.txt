@@ -20,8 +20,8 @@
 │   │   │   └── titularidad.py
 │   │   ├── models
 │   │   │   ├── actuaciones.py
-│   │   │   ├── agentes.py
-│   │   │   ├── catalogos.py
+│   │   │   ├── actores.py
+│   │   │   ├──  Tipologias.py
 │   │   │   ├── documentos.py
 │   │   │   ├── geografia.py
 │   │   │   ├── historiografia.py

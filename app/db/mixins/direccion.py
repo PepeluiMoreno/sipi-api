@@ -6,7 +6,7 @@ from sqlalchemy.orm import Mapped, mapped_column, relationship, declared_attr
 
 if TYPE_CHECKING:
     from app.db.models.geografia import Provincia, Localidad, ComunidadAutonoma
-    from app.db.models.catalogos import TipoVia
+    from app.db.models.tipologias import TipoVia
 
 class DireccionMixin:
     """Mixin para datos de dirección geográfica"""
