@@ -7,9 +7,10 @@ ENV PYTHONPATH=/code
 ENV PYTHONDONTWRITEBYTECODE=1 \
     PYTHONUNBUFFERED=1
 
-# Solo gcc para compilar dependencias
+# gcc para compilar dependencias + curl para healthcheck
 RUN apt-get update && apt-get install -y \
     gcc \
+    curl \
     && rm -rf /var/lib/apt/lists/*
 
 # Instalar dependencias primero
