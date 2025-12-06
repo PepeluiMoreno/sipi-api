@@ -3,9 +3,9 @@
 
 from __future__ import annotations
 from datetime import datetime
-from typing import TYPE_CHECKING, Optional, List
+from typing import TYPE_CHECKING, Optional
 from sqlalchemy.orm import Mapped, mapped_column, relationship
-from sqlalchemy import String, Text, ForeignKey
+from sqlalchemy import String,  ForeignKey
 
 from app.db.base import Base
 from app.db.mixins import (
@@ -31,8 +31,8 @@ class PersonaMixin(IdentificacionMixin):
     """Base para personas físicas y jurídicas"""
     tipo_persona_id: Mapped[Optional[str]] = mapped_column(String(36), ForeignKey("tipos_persona.id"), index=True)
 
-class TitularBase(UUIDPKMixin, AuditMixin, Base):
-    """Base para tablas de titulares temporales"""
+class TitularBase(UUIDPKMixin, AuditMixin, IdentificacionMixin, Base):
+    """Base para tablas de titulares temporales (personas físicas)"""
     __abstract__ = True
     
     fecha_inicio: Mapped[datetime] = mapped_column(index=True)
@@ -147,27 +147,25 @@ class Notaria(UUIDPKMixin, AuditMixin, ContactoDireccionMixin, Base):
     
     nombre: Mapped[str] = mapped_column(String(255), index=True)
     
-    # ✅ NO REDUNDANCIA: localidad_id viene del mixin ContactoDireccionMixin -> DireccionMixin
-    # ✅ SOLO definimos la relación con back_populates para bidireccionalidad
-    # La relación base del mixin usa lazy="joined", la sobrescribimos para añadir back_populates
-    @declared_attr
-    def localidad(cls) -> Mapped[Optional["Localidad"]]:
-        return relationship("Localidad", back_populates="notarias", lazy="joined")
-    
+    # La relación localidad ya viene del mixin ContactoDireccionMixin
     transmisiones: Mapped[list["Transmision"]] = relationship("Transmision", back_populates="notaria")
 
-class RegistroPropiedad(UUIDPKMixin, AuditMixin, IdentificacionMixin, ContactoDireccionMixin, Base):
+class RegistroPropiedad(UUIDPKMixin, AuditMixin, IdentificacionMixin, ContactoDireccionMixin, TitularidadMixin, Base):
     """Registro de la Propiedad"""
     __tablename__ = "registros_propiedad"
     
-    # ✅ NO REDUNDANCIA: localidad_id viene del mixin
-    # ✅ SOLO sobrescribimos la relación para añadir back_populates
-    @declared_attr
-    def localidad(cls) -> Mapped[Optional["Localidad"]]:
-        return relationship("Localidad", back_populates="registros_propiedad", lazy="joined")
-    
+    # La relación localidad ya viene del mixin ContactoDireccionMixin
     transmisiones: Mapped[list["Transmision"]] = relationship("Transmision", back_populates="registro_propiedad")
     inmatriculaciones: Mapped[list["Inmatriculacion"]] = relationship("Inmatriculacion", back_populates="registro_propiedad")
+
+class RegistroPropiedadTitular(TitularBase):
+    """Registrador de la Propiedad (persona física titular del registro)"""
+    __tablename__ = "registros_propiedad_titulares"
+    
+    registro_propiedad_id: Mapped[str] = mapped_column(String(36), ForeignKey("registros_propiedad.id"), index=True)
+    
+    # Relaciones
+    registro_propiedad: Mapped["RegistroPropiedad"] = relationship("RegistroPropiedad", back_populates="titulares")
 
 # ============================================================================
 # ENTIDADES COMERCIALES
@@ -179,9 +177,5 @@ class AgenciaInmobiliaria(UUIDPKMixin, AuditMixin, ContactoDireccionMixin, Base)
     
     nombre: Mapped[str] = mapped_column(String(255), index=True)
     
-    # ✅ SOLO relación, el campo localidad_id viene del mixin
-    @declared_attr
-    def localidad(cls) -> Mapped[Optional["Localidad"]]:
-        return relationship("Localidad", back_populates="agencias_inmobiliarias", lazy="joined")
-    
+    # La relación localidad ya viene del mixin ContactoDireccionMixin
     transmisiones_anunciadas: Mapped[list["TransmisionAnunciante"]] = relationship("TransmisionAnunciante", back_populates="agencia_inmobiliaria")

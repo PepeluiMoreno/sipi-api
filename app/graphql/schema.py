@@ -11,7 +11,10 @@ from app.graphql.decorators import async_safe_resolver
 from app.graphql.mapper.crud import CRUDResolver
 from app.core.config import GRAPHQL_MAX_DEPTH
 
-from strawberry_sqlalchemy_mapper import SQLAlchemyMapper as StrawberrySQLAlchemyMapper
+from strawberry_sqlalchemy_mapper import StrawberrySQLAlchemyMapper
+
+mapper = StrawberrySQLAlchemyMapper()
+
 # from app.graphql.mapper import SQLAlchemyMapper # Custom mapper removed
  
 # Importar configuración de pluralización
@@ -124,7 +127,14 @@ def generate_resolvers(models: List[Type]) -> tuple:
             
             # Crear tipo base
             print(f"  → Creando tipo Strawberry...")
-            strawberry_type = mapper.type(model, name=model_name)
+            
+            # ✅ CORRECTO para v0.7.0: usar decorador en clase dinámica
+            @mapper.type(model)
+            @strawberry.type(name=model_name)
+            class DynamicType:
+                pass
+            
+            strawberry_type = DynamicType
             print(f"  → Tipo creado: {strawberry_type}")
             
             type_registry[model_name] = strawberry_type
@@ -135,7 +145,7 @@ def generate_resolvers(models: List[Type]) -> tuple:
             paginated_registry[model_name] = paginated_type
             
             print(f"  ✅ {model_name} mapeado correctamente\n")
-            
+        
         except Exception as e:
             print(f"  ❌ ERROR en {model_name}: {type(e).__name__}: {e}")
             import traceback

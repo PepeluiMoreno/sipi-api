@@ -49,14 +49,49 @@ if [ $retry -eq $max_retries ]; then
     exit 1
 fi
 
-# Si no hay migraciones, crear la inicial
-if [ ! "$(ls -A alembic/versions/*.py 2>/dev/null)" ]; then
-    echo "📝 Creando migración inicial..."
+# Verificar si hay tablas en la base de datos
+echo "🔍 Verificando estado de la base de datos..."
+has_tables=$(python -c "
+import sys
+try:
+    import asyncio
+    from sqlalchemy.ext.asyncio import create_async_engine
+    
+    async def check_tables():
+        try:
+            engine = create_async_engine('$DATABASE_URL')
+            async with engine.connect() as conn:
+                result = await conn.execute(__import__('sqlalchemy').text(
+                    \"SELECT COUNT(*) FROM information_schema.tables WHERE table_schema = 'public' AND table_type = 'BASE TABLE'\"
+                ))
+                count = result.scalar()
+            await engine.dispose()
+            return count > 0
+        except:
+            return False
+    
+    sys.exit(0 if asyncio.run(check_tables()) else 1)
+except Exception as e:
+    sys.exit(1)
+" 2>/dev/null && echo "1" || echo "0")
+
+# Si no hay tablas, crear migración inicial
+if [ "$has_tables" = "0" ]; then
+    echo "📝 Base de datos vacía. Creando migración inicial..."
+    
+    # Limpiar migraciones antiguas si existen
+    rm -f /code/alembic/versions/*.py
+    
+    # Crear migración inicial
+    cd /code
     alembic revision --autogenerate -m "Initial schema"
+else
+    echo "✅ La base de datos ya tiene tablas"
 fi
 
-# Aplicar migraciones
+# Aplicar migraciones pendientes
 echo "⬆️  Aplicando migraciones..."
+cd /code
 alembic upgrade head
 
 # Arrancar API

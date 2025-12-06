@@ -5,7 +5,7 @@ from app.db.mixins import UUIDPKMixin, AuditMixin
 # actores
 from .actores import (
     Adquiriente, Administracion, AdministracionTitular, AgenciaInmobiliaria,
-    ColegioProfesional, Diocesis, DiocesisTitular, Notaria, NotariaTitular,
+    ColegioProfesional, Diocesis, DiocesisTitular, Notaria,
     Tecnico, RegistroPropiedad, RegistroPropiedadTitular, Transmitente
 )
 
@@ -34,8 +34,6 @@ from .inmuebles import Inmueble, InmuebleOSMExt, InmuebleWDExt
 # Historiografía
 from .historiografia import FuenteHistoriografica, CitaHistoriografica
 
-# Protección
-from .proteccion import InmuebleTipoFiguraProteccion
 
 # Subvenciones
 from .subvenciones import ActuacionSubvencion, SubvencionAdministracion
@@ -47,7 +45,7 @@ __all__ = [
     'Base', 'UUIDPKMixin', 'AuditMixin',
     # actores
     'Adquiriente', 'Administracion', 'AdministracionTitular', 'AgenciaInmobiliaria',
-    'ColegioProfesional', 'Diocesis', 'DiocesisTitular', 'Notaria', 'NotariaTitular',
+    'ColegioProfesional', 'Diocesis', 'DiocesisTitular', 'Notaria', 
     'Tecnico', 'RegistroPropiedad', 'RegistroPropiedadTitular', 'Transmitente',
     # Catálogos
     'TipoEstadoConservacion', 'TipoEstadoTratamiento', 'TipoFiguraProteccion', 'TipoRolTecnico',

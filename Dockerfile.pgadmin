@@ -1,0 +1,7 @@
+FROM dpage/pgadmin4:latest
+
+# Copiar configuración de servidores
+COPY scripts/pgadmin-servers.json /pgadmin4/servers.json
+
+# Establecer permisos
+RUN chmod 644 /pgadmin4/servers.json

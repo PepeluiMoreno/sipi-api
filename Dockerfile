@@ -1,30 +1,36 @@
 FROM python:3.11-slim
 
-# ✅ Usar /code en lugar de /app
 WORKDIR /code
 
-ENV PYTHONPATH=/code
-ENV PYTHONDONTWRITEBYTECODE=1 \
+# Variables de entorno
+ENV PYTHONPATH=/code \
+    PYTHONDONTWRITEBYTECODE=1 \
     PYTHONUNBUFFERED=1
 
-# gcc para compilar dependencias + curl para healthcheck
+# Instalar dependencias del sistema
 RUN apt-get update && apt-get install -y \
     gcc \
     curl \
     && rm -rf /var/lib/apt/lists/*
 
-# Instalar dependencias primero
+# Copiar e instalar dependencias de Python
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
-# Copiar código
-COPY . . 
+# Copiar todo el código de la aplicación
+COPY . .
 
-RUN chmod +x /code/entrypoint.sh /code/wait-for-db.sh
-EXPOSE ${GRAPHQL_PORT:-8000}
+# Crear directorio para logs
+RUN mkdir -p /code/logs
 
+# Establecer permisos de ejecución
+RUN chmod +x /code/scripts/entrypoint.sh /code/scripts/wait-for-db.sh
 
+# Puerto de la aplicación
+EXPOSE 8000
+
+# Healthcheck
 HEALTHCHECK --interval=30s --timeout=5s --start-period=60s --retries=3 \
-    CMD curl -f http://${GRAPHQL_HOST:-0.0.0.0}:${GRAPHQL_PORT:-8000}/graphql || exit 1
+    CMD curl -f http://localhost:8000/graphql || exit 1
 
-ENTRYPOINT ["/code/entrypoint.sh"]
+ENTRYPOINT ["/code/scripts/entrypoint.sh"]
