@@ -128,10 +128,13 @@ def generate_resolvers(models: List[Type]) -> tuple:
             # Crear tipo base
             print(f"  → Creando tipo Strawberry...")
             
-            # ✅ CORRECTO para v0.7.0: usar decorador en clase dinámica
-            @mapper.type(model)
+            # ✅ Solución: usar mapper.type(model) como clase base para la herencia dinámica.
+            # Esto fuerza la inyección de campos (incluyendo relaciones) antes de que
+            # strawberry.type decore la clase, resolviendo el problema de las relaciones.
+            BaseType = mapper.type(model)
+            
             @strawberry.type(name=model_name)
-            class DynamicType:
+            class DynamicType(BaseType):
                 pass
             
             strawberry_type = DynamicType
