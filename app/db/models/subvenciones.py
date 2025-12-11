@@ -6,11 +6,7 @@ from sqlalchemy.orm import Mapped, mapped_column, relationship
 from sqlalchemy import String, Text, Numeric, ForeignKey
 from app.db.base import Base
 from app.db.mixins import UUIDPKMixin, AuditMixin
-
-if TYPE_CHECKING:
-    from .actuaciones import Actuacion
-    from .actores import Administracion
-
+  
 class ActuacionSubvencion(UUIDPKMixin, AuditMixin, Base):
     __tablename__ = "actuaciones_subvenciones"
     
@@ -35,4 +31,4 @@ class SubvencionAdministracion(UUIDPKMixin, AuditMixin, Base):
     
     # Relaciones
     subvencion: Mapped["ActuacionSubvencion"] = relationship("ActuacionSubvencion", back_populates="administraciones")
-    administracion: Mapped["Administracion"] = relationship("Administracion")
+    administracion: Mapped["Administracion"] = relationship("Administracion", back_populates="subvenciones")

@@ -2,22 +2,22 @@
 from app.db.base import Base
 from app.db.mixins import UUIDPKMixin, AuditMixin
 
-# actores
+# Actores
 from .actores import (
     Adquiriente, Administracion, AdministracionTitular, AgenciaInmobiliaria,
     ColegioProfesional, Diocesis, DiocesisTitular, Notaria,
     Tecnico, RegistroPropiedad, RegistroPropiedadTitular, Transmitente
 )
 
-# Catálogos
+# Tipologías
 from .tipologias import (
-    TipoEstadoConservacion, TipoEstadoTratamiento, TipoFiguraProteccion, TipoRolTecnico,
+    TipoEstadoConservacion, TipoEstadoTratamiento, TipoRolTecnico,
     TipoCertificacionPropiedad, TipoDocumento, TipoInmueble, TipoMimeDocumento,
-    TipoPersona, TipoTransmision, TipoVia
+    TipoPersona, TipoTransmision, TipoVia, TipoLicencia, FuenteDocumental
 )
 
 # Geografía
-from .geografia import ComunidadAutonoma, Provincia, Localidad
+from .geografia import ComunidadAutonoma, Provincia, Municipio
 
 # Documentos
 from .documentos import Documento, InmuebleDocumento, ActuacionDocumento, TransmisionDocumento
@@ -26,47 +26,53 @@ from .documentos import Documento, InmuebleDocumento, ActuacionDocumento, Transm
 from .actuaciones import Actuacion, ActuacionTecnico
 
 # Transmisiones
-from .transmisiones import Transmision, Inmatriculacion, TransmisionAnunciante
+from .transmisiones import Transmision, TransmisionAnunciante
 
-# Inmuebles
-from .inmuebles import Inmueble, InmuebleOSMExt, InmuebleWDExt
+# Inmuebles (incluye InmuebleCita)
+from .inmuebles import (
+    Inmueble, Inmatriculacion, InmuebleDenominacion, 
+    InmuebleOSMExt, InmuebleWDExt, InmuebleCita
+)
 
 # Historiografía
-from .historiografia import FuenteHistoriografica, CitaHistoriografica
+from .historiografia import FuenteHistoriografica
 
+# Figuras de Protección
+from .figuras_proteccion import FiguraProteccion, NivelProteccion
 
 # Subvenciones
 from .subvenciones import ActuacionSubvencion, SubvencionAdministracion
 
 # Usuarios
-from .users import Usuario, Rol, usuario_rol
+from .users import Usuario, Rol
 
 __all__ = [
     'Base', 'UUIDPKMixin', 'AuditMixin',
-    # actores
+    # Actores
     'Adquiriente', 'Administracion', 'AdministracionTitular', 'AgenciaInmobiliaria',
-    'ColegioProfesional', 'Diocesis', 'DiocesisTitular', 'Notaria', 
+    'ColegioProfesional', 'Diocesis', 'DiocesisTitular', 'Notaria',
     'Tecnico', 'RegistroPropiedad', 'RegistroPropiedadTitular', 'Transmitente',
-    # Catálogos
-    'TipoEstadoConservacion', 'TipoEstadoTratamiento', 'TipoFiguraProteccion', 'TipoRolTecnico',
+    # Tipologías
+    'TipoEstadoConservacion', 'TipoEstadoTratamiento', 'TipoRolTecnico',
     'TipoCertificacionPropiedad', 'TipoDocumento', 'TipoInmueble', 'TipoMimeDocumento',
-    'TipoPersona', 'TipoTransmision', 'TipoVia',
+    'TipoPersona', 'TipoTransmision', 'TipoVia', 'TipoLicencia', 'FuenteDocumental',
     # Geografía
-    'ComunidadAutonoma', 'Provincia', 'Localidad',
+    'ComunidadAutonoma', 'Provincia', 'Municipio',
     # Documentos
     'Documento', 'InmuebleDocumento', 'ActuacionDocumento', 'TransmisionDocumento',
     # Actuaciones
     'Actuacion', 'ActuacionTecnico',
     # Transmisiones
-    'Transmision', 'Inmatriculacion', 'TransmisionAnunciante', 'Adquiriente', 'Transmitente',
+    'Transmision', 'TransmisionAnunciante',
     # Inmuebles
-    'Inmueble', 'InmuebleOSMExt', 'InmuebleWDExt',
+    'Inmueble', 'Inmatriculacion', 'InmuebleDenominacion',
+    'InmuebleOSMExt', 'InmuebleWDExt', 'InmuebleCita',
     # Historiografía
-    'FuenteHistoriografica', 'CitaHistoriografica',
-    # Protección
-    'InmuebleTipoFiguraProteccion',
+    'FuenteHistoriografica',
+    # Figuras de Protección
+    'FiguraProteccion', 'NivelProteccion',
     # Subvenciones
     'ActuacionSubvencion', 'SubvencionAdministracion',
     # Usuarios
-    'Usuario', 'Rol', 'usuario_rol'
+    'Usuario', 'Rol'
 ]

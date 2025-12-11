@@ -1,16 +1,12 @@
 # models/users.py
+from __future__ import annotations
 from datetime import datetime, timezone  # ✅ CORREGIDO
 from typing import Optional, TYPE_CHECKING
 from sqlalchemy import String, Text, Boolean, DateTime, ForeignKey, Table, Column
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.db.base import Base
-
-if TYPE_CHECKING:
-    from app.db.mixins import UUIDPKMixin, AuditMixin, IdentificacionMixin, ContactoMixin
-else:
-    # ✅ Import en runtime para evitar problemas
-    from app.db.mixins import UUIDPKMixin, AuditMixin, IdentificacionMixin, ContactoMixin
+from app.db.mixins import UUIDPKMixin, AuditMixin, IdentificacionMixin, ContactoMixin
 
 # Tabla de asociación muchos-a-muchos
 usuario_rol = Table(

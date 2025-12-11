@@ -9,12 +9,6 @@ from app.db.base import Base
 from app.db.mixins import UUIDPKMixin, AuditMixin
 
 
-if TYPE_CHECKING:
-    from .inmuebles import Inmueble
-    from .actores import Adquiriente, Transmitente, Notaria, RegistroPropiedad, AgenciaInmobiliaria
-    from .tipologias import TipoTransmision, TipoCertificacionPropiedad
-    from .documentos import TransmisionDocumento
-
 class Transmision(UUIDPKMixin, AuditMixin, Base):
     __tablename__ = "transmisiones"
     
@@ -40,19 +34,6 @@ class Transmision(UUIDPKMixin, AuditMixin, Base):
     tipo_certificacion_propiedad: Mapped[Optional["TipoCertificacionPropiedad"]] = relationship("TipoCertificacionPropiedad", back_populates="transmisiones")
     documentos: Mapped[list["TransmisionDocumento"]] = relationship("TransmisionDocumento", back_populates="transmision", cascade="all, delete-orphan")
     anunciantes: Mapped[list["TransmisionAnunciante"]] = relationship("TransmisionAnunciante", back_populates="transmision", cascade="all, delete-orphan")
-
-class Inmatriculacion(UUIDPKMixin, AuditMixin, Base):
-    __tablename__ = "inmatriculaciones"
-    
-    inmueble_id: Mapped[str] = mapped_column(String(36), ForeignKey("inmuebles.id"), unique=True, nullable=False)
-    registro_propiedad_id: Mapped[Optional[str]] = mapped_column(String(36), ForeignKey("registros_propiedad.id"), index=True)
-    tipo_certificacion_propiedad_id: Mapped[Optional[str]] = mapped_column(String(36), ForeignKey("tipos_certificacion_propiedad.id"), index=True)
-    fecha: Mapped[Optional[datetime]] = mapped_column(index=True)
-    
-    # Relaciones
-    inmueble: Mapped["Inmueble"] = relationship("Inmueble", back_populates="inmatriculacion", uselist=False)
-    registro_propiedad: Mapped[Optional["RegistroPropiedad"]] = relationship("RegistroPropiedad", back_populates="inmatriculaciones")
-    tipo_certificacion_propiedad: Mapped[Optional["TipoCertificacionPropiedad"]] = relationship("TipoCertificacionPropiedad", back_populates="inmatriculaciones")
 
 class TransmisionAnunciante(UUIDPKMixin, AuditMixin, Base):
     __tablename__ = "transmision_anunciantes"

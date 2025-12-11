@@ -1,46 +1,96 @@
 # models/geografia.py
+
+from __future__ import annotations
 from typing import TYPE_CHECKING, Optional
 from sqlalchemy.orm import Mapped, mapped_column, relationship
-from sqlalchemy import String, ForeignKey
+from sqlalchemy import String, Boolean, ForeignKey, Index
+
 from app.db.base import Base
 from app.db.mixins import UUIDPKMixin, AuditMixin
 
-if TYPE_CHECKING:
-    from .actores import Notaria, RegistroPropiedad, Administracion, AgenciaInmobiliaria
-    from .inmuebles import Inmueble
-
 class ComunidadAutonoma(UUIDPKMixin, AuditMixin, Base):
+    """Comunidad Autónoma de España"""
     __tablename__ = "comunidades_autonomas"
     
-    nombre: Mapped[str] = mapped_column(String(100), unique=True, index=True)
+    codigo: Mapped[str] = mapped_column(String(2), unique=True, index=True, nullable=False)
+    codigo_ine: Mapped[str] = mapped_column(String(2), unique=True, index=True, nullable=False)
+    nombre: Mapped[str] = mapped_column(String(100), index=True, nullable=False)
+    nombre_oficial: Mapped[str] = mapped_column(String(150), nullable=False)
+    capital: Mapped[Optional[str]] = mapped_column(String(100))
+    activo: Mapped[bool] = mapped_column(Boolean, default=True, index=True, nullable=False)
     
     # Relaciones
     provincias: Mapped[list["Provincia"]] = relationship("Provincia", back_populates="comunidad_autonoma", cascade="all, delete-orphan")
+    municipios: Mapped[list["Municipio"]] = relationship("Municipio", back_populates="comunidad_autonoma")
     inmuebles: Mapped[list["Inmueble"]] = relationship("Inmueble", back_populates="comunidad_autonoma")
+    figuras_proteccion: Mapped[list["FiguraProteccion"]] = relationship("FiguraProteccion", back_populates="comunidad_autonoma")
     administraciones: Mapped[list["Administracion"]] = relationship("Administracion", back_populates="comunidad_autonoma")
+    
+    __table_args__ = (
+        Index('ix_ccaa_codigo', 'codigo'),
+        Index('ix_ccaa_codigo_ine', 'codigo_ine'),
+        Index('ix_ccaa_nombre', 'nombre'),
+        Index('ix_ccaa_activo', 'activo'),
+    )
+    
+    def __repr__(self) -> str:
+        return f"<ComunidadAutonoma {self.codigo} - {self.nombre}>"
+
 
 class Provincia(UUIDPKMixin, AuditMixin, Base):
+    """Provincia española"""
     __tablename__ = "provincias"
     
-    nombre: Mapped[str] = mapped_column(String(100), index=True)
-    comunidad_autonoma_id: Mapped[str] = mapped_column(String(36), ForeignKey("comunidades_autonomas.id"), index=True)
+    codigo: Mapped[str] = mapped_column(String(2), unique=True, index=True, nullable=False)
+    codigo_iso: Mapped[str] = mapped_column(String(3), unique=True, index=True, nullable=False)
+    nombre: Mapped[str] = mapped_column(String(100), index=True, nullable=False)
+    nombre_oficial: Mapped[Optional[str]] = mapped_column(String(150))
+    capital: Mapped[Optional[str]] = mapped_column(String(100))
+    comunidad_autonoma_id: Mapped[str] = mapped_column(String(36), ForeignKey("comunidades_autonomas.id"), index=True, nullable=False)
+    activo: Mapped[bool] = mapped_column(Boolean, default=True, index=True)
     
     # Relaciones
     comunidad_autonoma: Mapped["ComunidadAutonoma"] = relationship("ComunidadAutonoma", back_populates="provincias")
-    localidades: Mapped[list["Localidad"]] = relationship("Localidad", back_populates="provincia", cascade="all, delete-orphan")
+    municipios: Mapped[list["Municipio"]] = relationship("Municipio", back_populates="provincia", cascade="all, delete-orphan")
     inmuebles: Mapped[list["Inmueble"]] = relationship("Inmueble", back_populates="provincia")
-    administraciones: Mapped[list["Administracion"]] = relationship("Administracion", back_populates="provincia")  # ✅ AÑADIDA
-
-class Localidad(UUIDPKMixin, AuditMixin, Base):
-    __tablename__ = "localidades"
+    administraciones: Mapped[list["Administracion"]] = relationship("Administracion", back_populates="provincia")
     
-    nombre: Mapped[str] = mapped_column(String(100), index=True)
-    provincia_id: Mapped[str] = mapped_column(String(36), ForeignKey("provincias.id"), index=True)
+    __table_args__ = (
+        Index('ix_provincia_codigo', 'codigo'),
+        Index('ix_provincia_codigo_iso', 'codigo_iso'),
+        Index('ix_provincia_nombre', 'nombre'),
+        Index('ix_provincia_ccaa', 'comunidad_autonoma_id'),
+        Index('ix_provincia_activo', 'activo'),
+    )
+    
+    def __repr__(self) -> str:
+        return f"<Provincia {self.codigo_iso} - {self.nombre}>"
+
+
+class Municipio(UUIDPKMixin, AuditMixin, Base):
+    """Municipio español"""
+    __tablename__ = "municipios"
+    
+    codigo_ine: Mapped[str] = mapped_column(String(5), unique=True, index=True, nullable=False)
+    nombre: Mapped[str] = mapped_column(String(150), index=True, nullable=False)
+    nombre_oficial: Mapped[Optional[str]] = mapped_column(String(200))
+    provincia_id: Mapped[str] = mapped_column(String(36), ForeignKey("provincias.id"), index=True, nullable=False)
+    comunidad_autonoma_id: Mapped[str] = mapped_column(String(36), ForeignKey("comunidades_autonomas.id"), index=True, nullable=False)
+    activo: Mapped[bool] = mapped_column(Boolean, default=True, index=True)
     
     # Relaciones
-    provincia: Mapped["Provincia"] = relationship("Provincia", back_populates="localidades")
-    notarias: Mapped[list["Notaria"]] = relationship("Notaria", back_populates="localidad")
-    registros_propiedad: Mapped[list["RegistroPropiedad"]] = relationship("RegistroPropiedad", back_populates="localidad")
-    agencias_inmobiliarias: Mapped[list["AgenciaInmobiliaria"]] = relationship("AgenciaInmobiliaria", back_populates="localidad")
-    inmuebles: Mapped[list["Inmueble"]] = relationship("Inmueble", back_populates="localidad")
-    administraciones: Mapped[list["Administracion"]] = relationship("Administracion", back_populates="localidad")  # ✅ AÑADIDA
+    provincia: Mapped["Provincia"] = relationship("Provincia", back_populates="municipios")
+    comunidad_autonoma: Mapped["ComunidadAutonoma"] = relationship("ComunidadAutonoma", back_populates="municipios")
+    inmuebles: Mapped[list["Inmueble"]] = relationship("Inmueble", back_populates="municipio")
+    administraciones: Mapped[list["Administracion"]] = relationship("Administracion", back_populates="municipio")
+    adquirientes: Mapped[list["Adquiriente"]] = relationship("Adquiriente", back_populates="municipio")
+    transmitentes: Mapped[list["Transmitente"]] = relationship("Transmitente", back_populates="municipio")
+    tecnicos: Mapped[list["Tecnico"]] = relationship("Tecnico", back_populates="municipio")
+    notarias: Mapped[list["Notaria"]] = relationship("Notaria", back_populates="municipio")
+    registros_propiedad: Mapped[list["RegistroPropiedad"]] = relationship("RegistroPropiedad", back_populates="municipio")
+    colegios_profesionales: Mapped[list["ColegioProfesional"]] = relationship("ColegioProfesional", back_populates="municipio")
+    agencias_inmobiliarias: Mapped[list["AgenciaInmobiliaria"]] = relationship("AgenciaInmobiliaria", back_populates="municipio")
+    diocesis: Mapped[list["Diocesis"]] = relationship("Diocesis", back_populates="municipio")
+    
+    def __repr__(self) -> str:
+        return f"<Municipio {self.codigo_ine} - {self.nombre}>"

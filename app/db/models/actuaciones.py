@@ -8,13 +8,6 @@ from sqlalchemy import String, Text, ForeignKey, Numeric
 from app.db.base import Base
 from app.db.mixins import UUIDPKMixin, AuditMixin
 
-if TYPE_CHECKING:
-    from .inmuebles import Inmueble
-    from .actores import Tecnico
-    from .tipologias import TipoRolTecnico
-    from .documentos import ActuacionDocumento
-    from .subvenciones import ActuacionSubvencion
-
 class Actuacion(UUIDPKMixin, AuditMixin, Base):
     """Intervenciones/actuaciones realizadas sobre un inmueble"""
     __tablename__ = "actuaciones"

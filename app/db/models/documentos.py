@@ -6,12 +6,6 @@ from sqlalchemy import String, Text, ForeignKey
 from app.db.base import Base
 from app.db.mixins import UUIDPKMixin, AuditMixin, DocumentoMixin
 
-if TYPE_CHECKING:
-    from .inmuebles import Inmueble
-    from .actuaciones import Actuacion
-    from .transmisiones import Transmision
-    from .tipologias import TipoDocumento, TipoLicencia, FuenteDocumental
-
 class Documento(UUIDPKMixin, AuditMixin, DocumentoMixin, Base):
     __tablename__ = "documentos"
     tipo_documento_id: Mapped[str] = mapped_column(String(36), ForeignKey("tipos_documento.id", ondelete="RESTRICT"), index=True)

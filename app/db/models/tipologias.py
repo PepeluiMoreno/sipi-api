@@ -6,11 +6,6 @@ from sqlalchemy import String, Text, Boolean, Integer, ForeignKey
 from app.db.base import Base
 from app.db.mixins import UUIDPKMixin, AuditMixin
 
-if TYPE_CHECKING:
-    from .documentos import Documento
-    from .actores import Tecnico
-    from .transmisiones import Transmision, Inmatriculacion
-    from .inmuebles import Inmueble
 
 class  TipologiaBase(UUIDPKMixin, AuditMixin, Base):
     __abstract__ = True
@@ -24,9 +19,6 @@ class TipoEstadoConservacion( TipologiaBase):
 class TipoEstadoTratamiento( TipologiaBase):
     __tablename__ = "estados_tratamiento"
     inmuebles: Mapped[list["Inmueble"]] = relationship("Inmueble", back_populates="estado_tratamiento")
-
-class TipoFiguraProteccion( TipologiaBase):
-    __tablename__ = "figuras_proteccion"
 
 class TipoRolTecnico( TipologiaBase):
     __tablename__ = "roles_tecnico"
@@ -86,6 +78,7 @@ class TipoLicencia(UUIDPKMixin, AuditMixin, Base):
     recomendada: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False, index=True)
     obsoleta: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False, index=True)
     documentos: Mapped[list["Documento"]] = relationship("Documento", back_populates="tipo_licencia")
+    fuentes_documentales: Mapped[list["FuenteDocumental"]] = relationship("FuenteDocumental", back_populates="licencia_predeterminada", foreign_keys="[FuenteDocumental.licencia_predeterminada_id]")
     
     @property
     def badge_text(self) -> str:
@@ -115,7 +108,7 @@ class FuenteDocumental(UUIDPKMixin, AuditMixin, Base):
     color_hex: Mapped[str | None] = mapped_column(String(7), nullable=True)
     orden: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
     activa: Mapped[bool] = mapped_column(Boolean, default=True, nullable=False, index=True)
-    licencia_predeterminada: Mapped["TipoLicencia"] = relationship("TipoLicencia", foreign_keys=[licencia_predeterminada_id])
+    licencia_predeterminada: Mapped["TipoLicencia"] = relationship("TipoLicencia", foreign_keys=[licencia_predeterminada_id], back_populates="fuentes_documentales")
     documentos: Mapped[list["Documento"]] = relationship("Documento", back_populates="fuente_documental")
     
     @property

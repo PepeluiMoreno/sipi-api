@@ -1,23 +1,23 @@
-"""Core GraphQL Types"""
 import strawberry
-from typing import Generic, TypeVar, List, Optional
+from typing import List, Optional, Generic, TypeVar
 from enum import Enum
 
-T = TypeVar("T")
-
-@strawberry.type
+# PageInfo SIN decorador (se registra en schema.py)
 class PageInfo:
+    total: int
     page: int
     page_size: int
-    total: int
     total_pages: int
     has_next: bool
-    has_prev: bool
+    has_previous: bool
 
-@strawberry.type
+# PaginatedResult genérico para uso interno
+T = TypeVar('T')
+
 class PaginatedResult(Generic[T]):
-    items: List[T]
-    page_info: PageInfo
+    def __init__(self, items: List[T], page_info: PageInfo):
+        self.items = items
+        self.page_info = page_info
 
 @strawberry.enum
 class FilterOperator(Enum):
@@ -38,8 +38,8 @@ class FilterOperator(Enum):
 class FilterInput:
     field: str
     operator: FilterOperator = FilterOperator.EQ
-    value: Optional[str] = None  # ✅ Cambiar Any → str (GraphQL lo convertirá)
-    values: Optional[List[str]] = None  # ✅ Cambiar List[Any] → List[str]
+    value: Optional[str] = None
+    values: Optional[List[str]] = None
 
 @strawberry.input
 class SortInput:

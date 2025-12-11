@@ -1,0 +1,290 @@
+RBAC GRANULAR PARA SIPI - RESUMEN DEL SISTEMA
+
+OBJETIVO
+========
+Implementar Role-Based Access Control con permisos granulares por recurso+acción, verificación dinámica en runtime sin restart.
+
+MODELOS DE BASE DE DATOS (NUEVOS)
+==================================
+
+Permiso
+-------
+- codigo: string (PK) - Ejemplos: "inmueble.create", "usuario.delete"
+- recurso: string - Ejemplos: "inmueble", "usuario"
+- accion: string - Ejemplos: "create", "delete", "approve"
+- descripcion: string - Ejemplo: "Crear inmuebles"
+
+RolPermiso (many-to-many)
+--------------------------
+- rol_id: FK(Rol)
+- permiso_id: FK(Permiso)
+
+MODELOS EXISTENTES (YA TIENES)
+===============================
+- Usuario (con relación many-to-many a Rol)
+- Rol (con campo nombre)
+- usuario_rol (tabla asociación con fecha_asignacion, asignado_por)
+
+ARCHIVOS A CREAR/MODIFICAR
+===========================
+
+1. app/graphql/permissions.py (NUEVO)
+--------------------------------------
+Contenido:
+- Clase IsAuthenticated: Verifica que user existe en context
+- Clase HasPermission: 
+  * Constructor recibe permission como string (ej: "inmueble.create")
+  * Método has_permission: consulta BD para verificar si usuario tiene ese permiso
+  * Query: user → usuario_rol → rol → rol_permiso → permiso
+  * Retorna True si encuentra el permiso, False si no
+
+Código conceptual de HasPermission:
+def has_permission(self, source, info, **kwargs):
+    user = info.context.get("user")
+    if not user:
+        return False
+    return db.query(Permiso).join(RolPermiso).join(Rol).join(usuario_rol).filter(
+        usuario_rol.c.usuario_id == user.id,
+        Permiso.codigo == self.permission
+    ).first() is not None
+
+2. app/graphql/context.py (NUEVO)
+----------------------------------
+Contenido:
+- Función get_context que extrae JWT del header Authorization
+- Valida token con verify_token
+- Carga Usuario desde BD usando el user_id del token
+- Retorna diccionario con user y db session: {"user": usuario, "db": db}
+
+3. app/core/security.py (NUEVO O MODIFICAR)
+--------------------------------------------
+Contenido:
+- create_access_token(user_id: str) → str: Genera JWT con user_id
+- verify_token(token: str) → dict: Decodifica JWT y retorna payload
+- hash_password(password: str) → str: Hash bcrypt
+- verify_password(plain: str, hashed: str) → bool: Verifica password
+
+4. app/graphql/schema.py (MODIFICAR)
+-------------------------------------
+En la función generate_resolvers(), añadir permission_classes a cada resolver:
+
+QUERIES:
+- name_prefix (get one): permission_classes=[HasPermission(f"{model_name.lower()}.view")]
+- name_plural (get many): permission_classes=[HasPermission(f"{model_name.lower()}.view")]
+
+MUTATIONS:
+- create{ModelName}: permission_classes=[HasPermission(f"{model_name.lower()}.create")]
+- update{ModelName}: permission_classes=[HasPermission(f"{model_name.lower()}.update")]
+- delete{ModelName}: permission_classes=[HasPermission(f"{model_name.lower()}.delete")]
+
+CATÁLOGO DE PERMISOS
+====================
+
+INMUEBLES
+---------
+inmueble.view
+inmueble.create
+inmueble.update
+inmueble.delete
+inmueble.export
+inmueble.cambiar_figura_proteccion
+inmueble.asignar_diocesis
+
+TRANSMISIONES
+-------------
+transmision.view
+transmision.create
+transmision.approve
+transmision.reject
+transmision.view_precio
+
+INMATRICULACIONES
+-----------------
+inmatriculacion.view
+inmatriculacion.create
+inmatriculacion.update
+inmatriculacion.validate_registro
+inmatriculacion.view_finca_registral
+
+DOCUMENTOS
+----------
+documento.view
+documento.upload
+documento.delete
+documento.download
+documento.view_metadata
+
+USUARIOS
+--------
+usuario.view
+usuario.create
+usuario.update
+usuario.delete
+usuario.assign_roles
+usuario.view_audit_log
+
+ACTUACIONES
+-----------
+actuacion.view
+actuacion.create
+actuacion.approve_presupuesto
+actuacion.assign_tecnico
+actuacion.close
+
+FIGURAS PROTECCIÓN
+------------------
+figura_proteccion.view
+figura_proteccion.create
+figura_proteccion.update
+figura_proteccion.delete
+figura_proteccion.activate
+figura_proteccion.deactivate
+
+DIÓCESIS
+--------
+diocesis.view
+diocesis.create
+diocesis.update
+diocesis.view_patrimonio_completo
+diocesis.assign_obispo
+
+SUBVENCIONES
+------------
+subvencion.view
+subvencion.create
+subvencion.approve
+subvencion.view_financiacion
+
+REPORTES
+--------
+reporte.patrimonio_diocesano
+reporte.transmisiones_anual
+reporte.actuaciones_pendientes
+reporte.export_boe
+
+TIPOLOGÍAS (ROL: CONFIGURADOR)
+-------------------------------
+tipo_inmueble.view / create / update / delete
+tipo_documento.view / create / update / delete
+tipo_transmision.view / create / update / delete
+tipo_via.view / create / update / delete
+tipo_certificacion_propiedad.view / create / update / delete
+estado_conservacion.view / create / update / delete
+estado_tratamiento.view / create / update / delete
+
+GEOGRAFÍA (ROL: CONFIGURADOR)
+------------------------------
+comunidad_autonoma.view / create / update / delete
+provincia.view / create / update / delete
+municipio.view / create / update / delete
+
+ROLES TÍPICOS
+=============
+
+admin
+-----
+Todos los permisos del sistema
+
+editor
+------
+inmueble.view / create / update / delete
+actuacion.view / create / update
+transmision.view / create
+documento.view / upload / download
+
+viewer
+------
+Solo permisos .view en recursos principales:
+inmueble.view
+actuacion.view
+transmision.view
+documento.view
+
+configurador
+------------
+Todos los permisos de tipologías, geografía y figuras de protección
+tipo_*.view / create / update / delete
+comunidad_autonoma.view / create / update / delete
+provincia.view / create / update / delete
+municipio.view / create / update / delete
+figura_proteccion.view / create / update / delete / activate / deactivate
+
+diocesis_manager
+----------------
+diocesis.view
+diocesis.view_patrimonio_completo (solo su diócesis)
+inmueble.view (filtrado por su diócesis)
+
+VENTAJAS DEL ENFOQUE DINÁMICO
+==============================
+
+1. Cambios en permisos tienen efecto inmediato (sin restart del servidor)
+2. Asignar/quitar roles a usuarios tiene efecto inmediato
+3. Sistema ultra-granular (formato recurso.accion)
+4. Totalmente auditable (saber qué rol tiene qué permiso en cualquier momento)
+5. Flexible (componer permisos por rol a medida)
+6. Lee de BD en cada request, no de decoradores hardcoded
+
+FLUJO DE VERIFICACIÓN EN CADA REQUEST
+======================================
+
+1. Request GraphQL llega con JWT en header Authorization
+2. get_context() extrae y valida el token
+3. Carga el Usuario desde BD usando user_id del token
+4. Resolver de GraphQL se ejecuta
+5. HasPermission.has_permission() verifica en BD:
+   - Query: user → usuario_rol → rol → rol_permiso → permiso
+   - Busca si existe el permiso.codigo solicitado
+6. Si el permiso existe → continúa la ejecución
+7. Si el permiso NO existe → error 403 Forbidden
+
+DIFERENCIA VS ENFOQUE ESTÁTICO
+===============================
+
+Enfoque estático (NO elegido):
+- Decoradores hardcoded: @IsAdmin, @IsEditor, @IsConfigurador
+- Requiere restart si se crea un nuevo rol
+- No se puede cambiar permisos sin modificar código
+
+Enfoque dinámico (ELEGIDO):
+- HasPermission("inmueble.create") verifica en BD
+- Crear nuevo rol "auditor" → funciona inmediatamente
+- Cambiar permisos de un rol → efecto inmediato
+- Sin modificar código fuente
+
+IMPLEMENTACIÓN EN SCHEMA.PY
+============================
+
+En lugar de hardcodear permission_classes=[IsAdmin()], se genera dinámicamente:
+
+Para cada modelo detectado:
+- queries.get_one → HasPermission(f"{modelo}.view")
+- queries.get_many → HasPermission(f"{modelo}.view")
+- mutation.create → HasPermission(f"{modelo}.create")
+- mutation.update → HasPermission(f"{modelo}.update")
+- mutation.delete → HasPermission(f"{modelo}.delete")
+
+Esto se hace en el loop de generate_resolvers() cuando se crean los strawberry.field y strawberry.mutation
+
+SEED DATA INICIAL
+==================
+
+Al inicializar la aplicación, poblar tabla Permiso con todos los permisos del catálogo listado arriba.
+
+Crear roles básicos:
+- admin: asignar TODOS los permisos
+- editor: asignar permisos de .view, .create, .update en inmuebles, actuaciones, transmisiones
+- viewer: asignar solo permisos .view
+- configurador: asignar permisos de tipologías, geografía y figuras
+
+CONSIDERACIONES DE PERFORMANCE
+===============================
+
+La query para verificar permisos se ejecuta en CADA request GraphQL.
+
+Optimizaciones recomendadas:
+1. Caché en Redis con TTL corto (30-60 segundos)
+2. Eager loading de user.roles.permisos al cargar el usuario en get_context()
+3. Índices en tablas usuario_rol, rol_permiso
+
+FIN DEL RESUMEN

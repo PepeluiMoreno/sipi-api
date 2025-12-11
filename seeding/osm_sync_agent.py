@@ -22,7 +22,7 @@ from app.db.models import (
     InmuebleOSMExt,
     TipoInmueble,
     Provincia,
-    Localidad
+    Municipio
 )
 
 
@@ -276,7 +276,7 @@ class OSMChurchSyncAgent:
             latitud=lat,
             longitud=lon,
             provincia_id=self._resolve_provincia(lat, lon),
-            localidad_id=self._resolve_localidad(lat, lon),
+            Municipio_id=self._resolve_Municipio(lat, lon),
             tipo_inmueble_id=self._map_tipo_inmueble(tags),
             es_bic=self._is_bic(tags),
             es_ruina=self._is_ruina(tags)
@@ -541,8 +541,8 @@ class OSMChurchSyncAgent:
         """Resuelve provincia_id desde coordenadas - TODO: implementar geocoding"""
         return None
     
-    def _resolve_localidad(self, lat: float, lon: float) -> Optional[str]:
-        """Resuelve localidad_id desde coordenadas - TODO: implementar geocoding"""
+    def _resolve_Municipio(self, lat: float, lon: float) -> Optional[str]:
+        """Resuelve Municipio_id desde coordenadas - TODO: implementar geocoding"""
         return None
     
     def _build_description(self, tags: dict) -> Optional[str]:

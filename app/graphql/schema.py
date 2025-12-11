@@ -1,315 +1,232 @@
 # app/graphql/schema.py
-"""GraphQL Schema Auto-Generator"""
 from pathlib import Path
-import importlib
 from typing import List, Type, Optional, Dict
 import strawberry
 from strawberry.types import Info
-from app.graphql.types import FilterInput, SortInput, PaginationInput, PageInfo
-from app.graphql.decorators import async_safe_resolver
-
-from app.graphql.mapper.crud import CRUDResolver
-from app.core.config import GRAPHQL_MAX_DEPTH
-
 from strawberry_sqlalchemy_mapper import StrawberrySQLAlchemyMapper
 
-mapper = StrawberrySQLAlchemyMapper()
+from app.graphql.mapper import mapper
+from app.graphql.types import FilterInput, SortInput, PaginationInput, PageInfo as PageInfoBase
+from app.graphql.crud import CRUDResolver
+from app.graphql.spanish import pluralize
 
-# from app.graphql.mapper import SQLAlchemyMapper # Custom mapper removed
- 
-# Importar configuración de pluralización
-try:
-    from app.graphql.spanish import PLURALES_INVARIABLES, PLURALES_EXCEPCIONES
-    print(f"📋 Config español: {len(PLURALES_INVARIABLES)} invariables, {len(PLURALES_EXCEPCIONES)} excepciones")
-except ImportError:
-    print("⚠️  Archivo de config español no encontrado, usando valores por defecto")
-    PLURALES_INVARIABLES = {'crisis', 'tesis', 'sintesis', 'analisis', 'diocesis'}
-    PLURALES_EXCEPCIONES = {}
+import logging
+logger = logging.getLogger(__name__)
 
-# mapper = EnhancedSQLAlchemyMapper() # Custom mapper removed
-mapper = StrawberrySQLAlchemyMapper()
+PageInfo = strawberry.type(PageInfoBase)
 
-def pluralize_spanish(word: str) -> str:
-    """
-    Pluraliza palabras en español usando reglas lingüísticas.
-    Lee palabras invariables y excepciones desde config.
-    """
-    word_lower = word.lower()
-    
-    # Consultar excepciones primero
-    if word_lower in PLURALES_EXCEPCIONES:
-        return PLURALES_EXCEPCIONES[word_lower]
-    
-    # Palabras invariables (desde config)
-    if word_lower in PLURALES_INVARIABLES or any(word_lower.endswith(inv) for inv in PLURALES_INVARIABLES):
-        return word_lower
-    
-    # Regla 1: Termina en -ción → -ciones
-    if word_lower.endswith('cion'):
-        return word_lower + 'es'
-    
-    # Regla 2: Termina en -sión → -siones  
-    if word_lower.endswith('sion'):
-        return word_lower + 'es'
-    
-    # Regla 3: Termina en -z → -ces
-    if word_lower.endswith('z'):
-        return word_lower[:-1] + 'ces'
-    
-    # Regla 4: Termina en vocal átona (a, e, i, o, u) → +s
-    if len(word_lower) > 1 and word_lower[-1] in 'aeiou':
-        return word_lower + 's'
-    
-    # Regla 5: Termina en -í o -ú (vocal tónica) → +es
-    if word_lower.endswith(('í', 'ú')):
-        return word_lower + 'es'
-    
-    # Regla 6: Termina en consonante (excepto -s, -x) → +es
-    if word_lower[-1] not in 'aeiousx':
-        return word_lower + 'es'
-    
-    # Regla 7: Ya termina en -s (invariable por defecto)
-    if word_lower.endswith('s'):
-        return word_lower
-    
-    # Por defecto: +s
-    return word_lower + 's'
+_original_convert = getattr(StrawberrySQLAlchemyMapper, "_convert_column_to_strawberry_type", None)
 
-def load_models_from_folder(folder: str) -> List[Type]:
-    """Carga todos los modelos SQLAlchemy desde una carpeta"""
-    models = []
-    folder_path = Path(folder)
-    if not folder_path.exists():
-        raise FileNotFoundError(f"❌ Carpeta no encontrada: {folder}")
-    
-    for py_file in folder_path.glob("*.py"):
-        if py_file.name.startswith("__"):
-            continue
-        module_name = f"{folder.replace('/', '.')}.{py_file.stem}"
-        module = importlib.import_module(module_name)
-        
-        for attr_name in dir(module):
-            attr = getattr(module, attr_name)
-            if hasattr(attr, "__tablename__"):
-                models.append(attr)
-    
-    print(f"✅ {len(models)} modelos cargados")
-    return models
+def _safe_convert_column_to_strawberry_type(self, column):
+    try:
+        col_type = getattr(column, "type", None)
+        if col_type is not None:
+            tname = getattr(col_type.__class__, "__name__", "").lower()
+            tmod = getattr(col_type.__class__, "__module__", "").lower()
+            if any(k in tname for k in ("geometry", "geography", "wkb", "ewkb", "point")) or "geoalchemy2" in tmod:
+                return Optional[str]
+    except Exception:
+        pass
+    return _original_convert(self, column) if _original_convert else None
+
+if not getattr(StrawberrySQLAlchemyMapper, "_patched_safe_convert", False):
+    StrawberrySQLAlchemyMapper._convert_column_to_strawberry_type = _safe_convert_column_to_strawberry_type
+    StrawberrySQLAlchemyMapper._patched_safe_convert = True
+
+
+_paginated_cache: Dict[str, Type] = {}
 
 def create_paginated_type(item_type: Type, model_name: str) -> Type:
-    """Crea un tipo PaginatedResult específico para un modelo"""
+    if model_name in _paginated_cache:
+        return _paginated_cache[model_name]
     
-    @strawberry.type(name=f"{model_name}Paginated")
-    class PaginatedType:
-        items: List[item_type]
-        page_info: PageInfo
+    def __init__(self, items, page_info):
+        self.items = items
+        self.page_info = page_info
     
-    return PaginatedType
+    PaginatedClass = type(
+        f"{model_name}Paginated",
+        (),
+        {
+            '__init__': __init__,
+            '__annotations__': {
+                'items': List[item_type],
+                'page_info': PageInfo
+            }
+        }
+    )
+    
+    StrawberryPaginated = strawberry.type(PaginatedClass)
+    _paginated_cache[model_name] = StrawberryPaginated
+    return StrawberryPaginated
 
-def generate_resolvers(models: List[Type]) -> tuple:
-    """Genera resolvers GraphQL dinámicamente para todos los modelos"""
-    queries = {}
-    mutations = {}
+
+def create_schema() -> strawberry.Schema:
+    logger.info("[START]")
     
-    # Pre-registrar todos los tipos Strawberry
-    type_registry: Dict[str, Type] = {}
-    paginated_registry: Dict[str, Type] = {}
+    # Importar modelos desde __init__.py (orden correcto de dependencias)
+    from app.db.models import (
+        Adquiriente, Administracion, AdministracionTitular, AgenciaInmobiliaria,
+        ColegioProfesional, Diocesis, DiocesisTitular, Notaria,
+        Tecnico, RegistroPropiedad, RegistroPropiedadTitular, Transmitente,
+        TipoEstadoConservacion, TipoEstadoTratamiento, TipoRolTecnico,
+        TipoCertificacionPropiedad, TipoDocumento, TipoInmueble, TipoMimeDocumento,
+        TipoPersona, TipoTransmision, TipoVia, TipoLicencia, FuenteDocumental,
+        ComunidadAutonoma, Provincia, Municipio,
+        Documento, InmuebleDocumento, ActuacionDocumento, TransmisionDocumento,
+        Actuacion, ActuacionTecnico,
+        Transmision, TransmisionAnunciante,
+        Inmueble, Inmatriculacion, InmuebleDenominacion, InmuebleOSMExt, InmuebleWDExt, InmuebleCita,
+        FuenteHistoriografica,
+        FiguraProteccion,
+        ActuacionSubvencion, SubvencionAdministracion,
+        Usuario, Rol
+    )
     
-    print(f"\n{'='*70}")
-    print(f"🔍 Mapeando {len(models)} modelos a tipos Strawberry...")
-    print(f"📋 Modelos encontrados: {[m.__name__ for m in models]}")
-    print(f"{'='*70}\n")
+    models = [
+        ComunidadAutonoma, Provincia, Municipio,
+        TipoEstadoConservacion, TipoEstadoTratamiento, TipoRolTecnico,
+        TipoCertificacionPropiedad, TipoDocumento, TipoInmueble, TipoMimeDocumento,
+        TipoPersona, TipoTransmision, TipoVia, TipoLicencia, FuenteDocumental,
+        FuenteHistoriografica, FiguraProteccion,
+        Adquiriente, Administracion, AdministracionTitular, AgenciaInmobiliaria,
+        ColegioProfesional, Diocesis, DiocesisTitular, Notaria,
+        Tecnico, RegistroPropiedad, RegistroPropiedadTitular, Transmitente,
+        Documento, InmuebleDocumento, ActuacionDocumento, TransmisionDocumento,
+        Actuacion, ActuacionTecnico,
+        Transmision, TransmisionAnunciante,
+        ActuacionSubvencion, SubvencionAdministracion,
+        Usuario, Rol,
+        Inmueble, Inmatriculacion, InmuebleDenominacion, InmuebleOSMExt, InmuebleWDExt, InmuebleCita
+    ]
     
+    logger.info(f"OK {len(models)} models imported")
+    
+    # CRÍTICO: Forzar que SQLAlchemy configure TODOS los mappers antes de strawberry
+    from sqlalchemy.orm import configure_mappers
+    try:
+        configure_mappers()
+        logger.info("OK SQLAlchemy mappers configured")
+    except Exception as e:
+        logger.error(f"ERR configuring SQLAlchemy mappers: {e}")
+        raise
+    
+    # Mapear modelos
+    type_registry = {}
     for model in models:
         try:
             model_name = model.__name__
-            print(f"📝 Procesando {model_name}...")
             
-            # Crear tipo base
-            print(f"  → Creando tipo Strawberry...")
+            if hasattr(mapper, '_type_map') and model in mapper._type_map:
+                strawberry_type = mapper._type_map[model]
+                type_registry[model_name] = strawberry_type
+                logger.info(f"[CACHED] {model_name}")
+                continue
             
-            # ✅ Solución: usar mapper.type(model) como clase base para la herencia dinámica.
-            # Esto fuerza la inyección de campos (incluyendo relaciones) antes de que
-            # strawberry.type decore la clase, resolviendo el problema de las relaciones.
-            BaseType = mapper.type(model)
-            
-            @strawberry.type(name=model_name)
-            class DynamicType(BaseType):
-                pass
-            
-            strawberry_type = DynamicType
-            print(f"  → Tipo creado: {strawberry_type}")
-            
+            decorator = mapper.type(model)
+            BaseClass = type(f'Type_{id(model)}', (), {})
+            strawberry_type = decorator(BaseClass)
             type_registry[model_name] = strawberry_type
-            
-            # Crear tipo paginado
-            print(f"  → Creando tipo paginado...")
-            paginated_type = create_paginated_type(strawberry_type, model_name)
-            paginated_registry[model_name] = paginated_type
-            
-            print(f"  ✅ {model_name} mapeado correctamente\n")
-        
+            logger.info(f"[OK] {model_name}")
         except Exception as e:
-            print(f"  ❌ ERROR en {model_name}: {type(e).__name__}: {e}")
-            import traceback
-            traceback.print_exc()
-            print()
-            continue
+            logger.error(f"[ERR] {model_name}: {e}")
     
-    print(f"\n{'='*70}")
-    print(f"✅ {len(type_registry)}/{len(models)} tipos mapeados correctamente")
-    print(f"📋 Tipos exitosos: {list(type_registry.keys())}")
-    print(f"{'='*70}\n")
+    logger.info(f"OK {len(type_registry)} types")
     
     if not type_registry:
-        print("\n❌ NINGÚN MODELO SE PUDO MAPEAR")
-        print("Revisa los errores arriba para ver qué falló")
-        raise ValueError("❌ No se pudo mapear ningún modelo")
+        raise ValueError("ERROR type_registry empty")
     
-    # Generar resolvers para cada modelo
-    print(f"🔨 Generando resolvers...")
+    # Tipos paginados
+    logger.info("[PAGINATED]")
+    paginated_registry = {}
+    for model_name, strawberry_type in type_registry.items():
+        try:
+            paginated_type = create_paginated_type(strawberry_type, model_name)
+            paginated_registry[model_name] = paginated_type
+        except Exception as e:
+            logger.error(f"[ERR] {model_name}Paginated: {e}")
+    
+    logger.info(f"OK {len(paginated_registry)} paginated")
+    
+    # Resolvers
+    logger.info("[RESOLVERS]")
+    queries = {}
+    mutations = {}
     
     for model in models:
-        if model.__name__ not in type_registry:
-            print(f"  ⏭️  Saltando {model.__name__} (no se pudo mapear)")
-            continue
-            
         model_name = model.__name__
-        name_prefix = model_name.lower()
-        name_plural = pluralize_spanish(model_name)
+        if model_name not in type_registry or model_name not in paginated_registry:
+            continue
         
-        print(f"  🔧 {model_name} → {name_prefix} / {name_plural}")
+        name_single = model_name.lower()
+        name_plural = pluralize(name_single)
         
         crud = CRUDResolver(model, mapper)
-        strawberry_type = type_registry[model_name]
+        model_type = type_registry[model_name]
         paginated_type = paginated_registry[model_name]
         
-        try:
-            create_input = mapper.input_type(model, name=f"{model_name}CreateInput")
-            update_input = mapper.input_type(model, name=f"{model_name}UpdateInput", partial=True)
-        except Exception as e:
-            print(f"    ⚠️  No se pudo crear inputs para {model_name}: {e}")
-            continue
-        
-        # ==================== QUERIES ====================
-        # ✅ Crear funciones con anotaciones correctas usando setattr
-        
-        # Query: obtener uno por ID
-        def make_get_one_func(crud_inst, ret_type):
+        def make_get(c, t):
             async def resolver(info: Info, id: strawberry.ID):
-                db = info.context["db"]
-                return await crud_inst.get(db, id)
-            # ✅ Añadir anotación de retorno manualmente
-            resolver.__annotations__['return'] = Optional[ret_type]
-            return async_safe_resolver(resolver)
+                return await c.get(info.context["request"].state.db, id)
+            resolver.__annotations__['return'] = Optional[t]
+            return resolver
         
-        # Query: obtener lista paginada
-        def make_get_many_func(crud_inst, pag_type):
+        queries[name_single] = strawberry.field(make_get(crud, model_type))
+        
+        def make_list(c, pt):
             async def resolver(
                 info: Info,
                 filters: Optional[List[FilterInput]] = None,
                 sort: Optional[List[SortInput]] = None,
                 pagination: Optional[PaginationInput] = None,
             ):
-                db = info.context["db"]
-                result = await crud_inst.list(db, filters, sort, pagination)
-                return pag_type(items=result.items, page_info=result.page_info)
-            # ✅ Añadir anotación de retorno manualmente
-            resolver.__annotations__['return'] = pag_type
-            return async_safe_resolver(resolver)
+                result = await c.list(info.context["request"].state.db, filters, sort, pagination)
+                return pt(items=result.items, page_info=result.page_info)
+            resolver.__annotations__['return'] = pt
+            return resolver
         
-        queries[f"{name_prefix}"] = strawberry.field(
-            resolver=make_get_one_func(crud, strawberry_type)
-        )
-        queries[f"{name_plural}"] = strawberry.field(
-            resolver=make_get_many_func(crud, paginated_type)
-        )
+        queries[name_plural] = strawberry.field(make_list(crud, paginated_type))
         
-        # ==================== MUTATIONS ====================
-        
-        # Mutation: crear
-        def make_create_func(crud_inst, inp_type, ret_type):
-            async def resolver(info: Info, data: inp_type):
-                db = info.context["db"]
-                return await crud_inst.create(db, data.__dict__)
-            resolver.__annotations__['return'] = ret_type
-            return async_safe_resolver(resolver)
-        
-        # Mutation: actualizar
-        def make_update_func(crud_inst, inp_type, ret_type):
-            async def resolver(info: Info, id: strawberry.ID, data: inp_type):
-                db = info.context["db"]
-                return await crud_inst.update(db, id, data.__dict__)
-            resolver.__annotations__['return'] = Optional[ret_type]
-            return async_safe_resolver(resolver)
-        
-        # Mutation: eliminar
-        def make_delete_func(crud_inst):
+        def make_delete(c):
             async def resolver(info: Info, id: strawberry.ID) -> bool:
-                db = info.context["db"]
-                return await crud_inst.delete(db, id)
-            return async_safe_resolver(resolver)
+                return await c.delete(info.context["request"].state.db, id)
+            return resolver
         
-        mutations[f"create{model_name}"] = strawberry.mutation(
-            resolver=make_create_func(crud, create_input, strawberry_type)
-        )
-        mutations[f"update{model_name}"] = strawberry.mutation(
-            resolver=make_update_func(crud, update_input, strawberry_type)
-        )
-        mutations[f"delete{model_name}"] = strawberry.mutation(
-            resolver=make_delete_func(crud)
-        )
+        mutations[f"delete{model_name}"] = strawberry.mutation(make_delete(crud))
         
-        # Mutation: restore (solo si tiene soft delete)
-        if hasattr(model, "deleted_at"):
-            def make_restore_func(crud_inst, ret_type):
-                async def resolver(info: Info, id: strawberry.ID):
-                    db = info.context["db"]
-                    return await crud_inst.restore(db, id)
-                resolver.__annotations__['return'] = Optional[ret_type]
-                return async_safe_resolver(resolver)
-            
-            mutations[f"restore{model_name}"] = strawberry.mutation(
-                resolver=make_restore_func(crud, strawberry_type)
-            )
+        try:
+            create_input = mapper.input_type(model, name=f"{model_name}CreateInput")
+            def make_create(c, inp, t):
+                async def resolver(info: Info, data: inp):
+                    return await c.create(info.context["request"].state.db, data.__dict__)
+                resolver.__annotations__['return'] = t
+                return resolver
+            mutations[f"create{model_name}"] = strawberry.mutation(make_create(crud, create_input, model_type))
+        except:
+            pass
+        
+        try:
+            update_input = mapper.input_type(model, name=f"{model_name}UpdateInput", partial=True)
+            def make_update(c, inp, t):
+                async def resolver(info: Info, id: strawberry.ID, data: inp):
+                    return await c.update(info.context["request"].state.db, id, data.__dict__)
+                resolver.__annotations__['return'] = Optional[t]
+                return resolver
+            mutations[f"update{model_name}"] = strawberry.mutation(make_update(crud, update_input, model_type))
+        except:
+            pass
     
-    print(f"  ✅ Resolvers generados\n")
+    logger.info(f"OK {len(queries)} queries, {len(mutations)} mutations")
     
-    # Crear tipos Query y Mutation
-    print(f"🏗️  Creando tipos GraphQL Query y Mutation...")
+    if not queries:
+        raise ValueError("ERROR No queries")
+    
+    mapper.finalize()
+    
     Query = strawberry.type(type("Query", (), queries))
     Mutation = strawberry.type(type("Mutation", (), mutations))
-    print(f"  ✅ Tipos creados\n")
     
-    return Query, Mutation
-
-def create_schema(models_folder: str = "app/db/models") -> strawberry.Schema:
-    """Crea y retorna el schema GraphQL completo"""
-    print(f"\n{'='*70}")
-    print(f"📂 INICIANDO GENERACIÓN DE SCHEMA GRAPHQL")
-    print(f"{'='*70}\n")
+    schema = strawberry.Schema(query=Query, mutation=Mutation)
     
-    print(f"📂 Cargando modelos desde: {models_folder}")
-    models = load_models_from_folder(models_folder)
-    
-    print(f"\n🔨 Generando schema GraphQL...")
-    Query, Mutation = generate_resolvers(models)
-    
-    print(f"{'='*70}")
-    print(f"🚀 GraphQL Schema creado exitosamente")
-    print(f"   • Modelos: {len(models)}")
-    print(f"   • Tipos GraphQL generados")
-    print(f"{'='*70}\n")
-    
-    return strawberry.Schema(
-        query=Query,
-        mutation=Mutation,
-        extensions=[
-            strawberry.extensions.QueryDepthLimiter(
-                max_depth=GRAPHQL_MAX_DEPTH
-            )
-        ],
-    )
-
-# Schema global
-schema = create_schema()
+    logger.info("[DONE]")
+    return schema

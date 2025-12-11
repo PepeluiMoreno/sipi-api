@@ -5,7 +5,7 @@ from sqlalchemy import String, ForeignKey, Float
 from sqlalchemy.orm import Mapped, mapped_column, relationship, declared_attr
 
 if TYPE_CHECKING:
-    from app.db.models.geografia import Provincia, Localidad, ComunidadAutonoma
+    from app.db.models.geografia import Provincia, Municipio, ComunidadAutonoma
     from app.db.models.tipologias import TipoVia
 
 class DireccionMixin:
@@ -24,7 +24,7 @@ class DireccionMixin:
     # Referencias geográficas
     comunidad_autonoma_id: Mapped[Optional[str]] = mapped_column(String(36), ForeignKey("comunidades_autonomas.id"), index=True)
     provincia_id: Mapped[Optional[str]] = mapped_column(String(36), ForeignKey("provincias.id"), index=True)
-    localidad_id: Mapped[Optional[str]] = mapped_column(String(36), ForeignKey("localidades.id"), index=True)
+    Municipio_id: Mapped[Optional[str]] = mapped_column(String(36), ForeignKey("Municipio.id"), index=True)
     
     # Coordenadas
     latitud: Mapped[Optional[Decimal]] = mapped_column(Float(precision=10, asdecimal=True), nullable=True)
@@ -44,8 +44,8 @@ class DireccionMixin:
         return relationship("Provincia", lazy="joined")
     
     @declared_attr
-    def localidad(cls) -> Mapped[Optional["Localidad"]]:
-        return relationship("Localidad", lazy="joined")
+    def Municipio(cls) -> Mapped[Optional["Municipio"]]:
+        return relationship("Municipio", lazy="joined")
     
     @property
     def direccion_completa(self) -> str:
@@ -73,12 +73,12 @@ class DireccionMixin:
         if detalles:
             partes.append(f" ({', '.join(detalles)})")
         
-        if self.codigo_postal and self.localidad:
-            partes.append(f" - {self.codigo_postal} {self.localidad.nombre}")
+        if self.codigo_postal and self.Municipio:
+            partes.append(f" - {self.codigo_postal} {self.Municipio.nombre}")
         elif self.codigo_postal:
             partes.append(f" - {self.codigo_postal}")
-        elif self.localidad:
-            partes.append(f" - {self.localidad.nombre}")
+        elif self.Municipio:
+            partes.append(f" - {self.Municipio.nombre}")
         
         return "".join(partes).strip()
     
