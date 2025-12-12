@@ -19,7 +19,6 @@ usuario_rol = Table(
 )
 
 class Usuario(UUIDPKMixin, AuditMixin, IdentificacionMixin, ContactoMixin, Base):
-        __table_args__ = {'schema': 'sipi'}
     __tablename__ = "usuarios"
     
     nombre_usuario: Mapped[str] = mapped_column(String(100))
@@ -36,7 +35,6 @@ class Usuario(UUIDPKMixin, AuditMixin, IdentificacionMixin, ContactoMixin, Base)
     )
 
 class Rol(UUIDPKMixin, AuditMixin, Base):
-        __table_args__ = {'schema': 'sipi'}
     __tablename__ = "roles"
     
     nombre: Mapped[str] = mapped_column(String(50), unique=True, index=True)

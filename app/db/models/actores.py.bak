@@ -25,7 +25,6 @@ class PersonaMixin(IdentificacionMixin):
     tipo_persona_id: Mapped[Optional[str]] = mapped_column(String(36), ForeignKey("tipos_persona.id"), index=True)
 
 class TitularBase(UUIDPKMixin, AuditMixin, IdentificacionMixin, Base):
-        __table_args__ = {'schema': 'sipi'}
     """Base para tablas de titulares temporales (personas físicas)"""
     __abstract__ = True
     
@@ -38,7 +37,6 @@ class TitularBase(UUIDPKMixin, AuditMixin, IdentificacionMixin, Base):
 # ============================================================================
 
 class Adquiriente(UUIDPKMixin, AuditMixin, PersonaMixin, ContactoDireccionMixin, Base):
-        __table_args__ = {'schema': 'sipi'}
     """Persona que adquiere un inmueble en una transmisión"""
     __tablename__ = "adquirientes"
     
@@ -51,7 +49,6 @@ class Adquiriente(UUIDPKMixin, AuditMixin, PersonaMixin, ContactoDireccionMixin,
     transmisiones: Mapped[list["Transmision"]] = relationship("Transmision", back_populates="adquiriente")
 
 class Transmitente(UUIDPKMixin, AuditMixin, PersonaMixin, ContactoDireccionMixin, Base):
-        __table_args__ = {'schema': 'sipi'}
     """Persona que transmite un inmueble"""
     __tablename__ = "transmitentes"
     
@@ -64,7 +61,6 @@ class Transmitente(UUIDPKMixin, AuditMixin, PersonaMixin, ContactoDireccionMixin
     transmisiones: Mapped[list["Transmision"]] = relationship("Transmision", back_populates="transmitente")
 
 class Tecnico(UUIDPKMixin, AuditMixin, IdentificacionMixin, ContactoDireccionMixin, Base):
-        __table_args__ = {'schema': 'sipi'}
     """Técnico profesional (arquitecto, ingeniero, etc.)"""
     __tablename__ = "tecnicos"
     
@@ -91,7 +87,6 @@ class Tecnico(UUIDPKMixin, AuditMixin, IdentificacionMixin, ContactoDireccionMix
 # ============================================================================
 
 class Administracion(UUIDPKMixin, AuditMixin, ContactoDireccionMixin, TitularidadMixin, Base):
-        __table_args__ = {'schema': 'sipi'}
     """Administración pública (estatal, autonómica, local)"""
     __tablename__ = "administraciones"
     
@@ -120,7 +115,6 @@ class Administracion(UUIDPKMixin, AuditMixin, ContactoDireccionMixin, Titularida
     subvenciones: Mapped[list["SubvencionAdministracion"]] = relationship("SubvencionAdministracion", back_populates="administracion")
 
 class AdministracionTitular(TitularBase):
-        __table_args__ = {'schema': 'sipi'}
     """Responsable de una administración"""
     __tablename__ = "administraciones_titulares"
     
@@ -130,7 +124,6 @@ class AdministracionTitular(TitularBase):
     administracion: Mapped["Administracion"] = relationship("Administracion", back_populates="titulares")
 
 class ColegioProfesional(UUIDPKMixin, AuditMixin, ContactoDireccionMixin, Base):
-        __table_args__ = {'schema': 'sipi'}
     """Colegio profesional de arquitectos, ingenieros, etc."""
     __tablename__ = "colegios_profesionales"
     
@@ -150,7 +143,6 @@ class ColegioProfesional(UUIDPKMixin, AuditMixin, ContactoDireccionMixin, Base):
 # ============================================================================
 
 class Diocesis(UUIDPKMixin, AuditMixin, ContactoDireccionMixin, TitularidadMixin, Base):
-        __table_args__ = {'schema': 'sipi'}
     """Diócesis católica"""
     __tablename__ = "diocesis"
     
@@ -167,7 +159,6 @@ class Diocesis(UUIDPKMixin, AuditMixin, ContactoDireccionMixin, TitularidadMixin
     titulares: Mapped[list["DiocesisTitular"]] = relationship("DiocesisTitular", back_populates="diocesis", cascade="all, delete-orphan")
 
 class DiocesisTitular(TitularBase):
-        __table_args__ = {'schema': 'sipi'}
     """Obispo de una diócesis"""
     __tablename__ = "diocesis_titulares"
     
@@ -181,7 +172,6 @@ class DiocesisTitular(TitularBase):
 # ============================================================================
 
 class Notaria(UUIDPKMixin, AuditMixin, ContactoDireccionMixin, Base):
-        __table_args__ = {'schema': 'sipi'}
     """Notaría"""
     __tablename__ = "notarias"
     
@@ -196,7 +186,6 @@ class Notaria(UUIDPKMixin, AuditMixin, ContactoDireccionMixin, Base):
     transmisiones: Mapped[list["Transmision"]] = relationship("Transmision", back_populates="notaria")
 
 class RegistroPropiedad(UUIDPKMixin, AuditMixin, IdentificacionMixin, ContactoDireccionMixin, TitularidadMixin, Base):
-        __table_args__ = {'schema': 'sipi'}
     """Registro de la Propiedad"""
     __tablename__ = "registros_propiedad"
     
@@ -211,7 +200,6 @@ class RegistroPropiedad(UUIDPKMixin, AuditMixin, IdentificacionMixin, ContactoDi
     titulares: Mapped[list["RegistroPropiedadTitular"]] = relationship("RegistroPropiedadTitular", back_populates="registro_propiedad", cascade="all, delete-orphan")
 
 class RegistroPropiedadTitular(TitularBase):
-        __table_args__ = {'schema': 'sipi'}
     """Registrador de la Propiedad (persona física titular del registro)"""
     __tablename__ = "registros_propiedad_titulares"
     
@@ -225,7 +213,6 @@ class RegistroPropiedadTitular(TitularBase):
 # ============================================================================
 
 class AgenciaInmobiliaria(UUIDPKMixin, AuditMixin, ContactoDireccionMixin, Base):
-        __table_args__ = {'schema': 'sipi'}
     """Agencia inmobiliaria"""
     __tablename__ = "agencias_inmobiliarias"
     

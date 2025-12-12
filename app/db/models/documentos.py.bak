@@ -7,7 +7,6 @@ from app.db.base import Base
 from app.db.mixins import UUIDPKMixin, AuditMixin, DocumentoMixin
 
 class Documento(UUIDPKMixin, AuditMixin, DocumentoMixin, Base):
-        __table_args__ = {'schema': 'sipi'}
     __tablename__ = "documentos"
     tipo_documento_id: Mapped[str] = mapped_column(String(36), ForeignKey("tipos_documento.id", ondelete="RESTRICT"), index=True)
     tipo_licencia_id: Mapped[Optional[str]] = mapped_column(String(36), ForeignKey("tipos_licencia.id", ondelete="RESTRICT"), index=True)
@@ -20,7 +19,6 @@ class Documento(UUIDPKMixin, AuditMixin, DocumentoMixin, Base):
     fuente_documental: Mapped[Optional["FuenteDocumental"]] = relationship("FuenteDocumental", back_populates="documentos")
 
 class InmuebleDocumento(UUIDPKMixin, AuditMixin, Base):
-        __table_args__ = {'schema': 'sipi'}
     __tablename__ = "inmuebles_documentos"
     inmueble_id: Mapped[str] = mapped_column(String(36), ForeignKey("inmuebles.id", ondelete="CASCADE"), index=True)
     documento_id: Mapped[str] = mapped_column(String(36), ForeignKey("documentos.id", ondelete="CASCADE"), index=True)
@@ -29,7 +27,6 @@ class InmuebleDocumento(UUIDPKMixin, AuditMixin, Base):
     documento: Mapped["Documento"] = relationship("Documento", back_populates="inmuebles")
 
 class ActuacionDocumento(UUIDPKMixin, AuditMixin, Base):
-        __table_args__ = {'schema': 'sipi'}
     __tablename__ = "actuaciones_documentos"
     actuacion_id: Mapped[str] = mapped_column(String(36), ForeignKey("actuaciones.id", ondelete="CASCADE"), index=True)
     documento_id: Mapped[str] = mapped_column(String(36), ForeignKey("documentos.id", ondelete="CASCADE"), index=True)
@@ -38,7 +35,6 @@ class ActuacionDocumento(UUIDPKMixin, AuditMixin, Base):
     documento: Mapped["Documento"] = relationship("Documento", back_populates="actuaciones")
 
 class TransmisionDocumento(UUIDPKMixin, AuditMixin, Base):
-        __table_args__ = {'schema': 'sipi'}
     __tablename__ = "transmisiones_documentos"
     transmision_id: Mapped[str] = mapped_column(String(36), ForeignKey("transmisiones.id", ondelete="CASCADE"), index=True)
     documento_id: Mapped[str] = mapped_column(String(36), ForeignKey("documentos.id", ondelete="CASCADE"), index=True)

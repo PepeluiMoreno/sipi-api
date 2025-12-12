@@ -68,7 +68,6 @@ class Provincia(UUIDPKMixin, AuditMixin, Base):
 
 
 class Municipio(UUIDPKMixin, AuditMixin, Base):
-        __table_args__ = {'schema': 'sipi'}
     """Municipio español"""
     __tablename__ = "municipios"
     

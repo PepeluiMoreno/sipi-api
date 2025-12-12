@@ -8,65 +8,53 @@ from app.db.mixins import UUIDPKMixin, AuditMixin
 
 
 class  TipologiaBase(UUIDPKMixin, AuditMixin, Base):
-        __table_args__ = {'schema': 'sipi'}
     __abstract__ = True
     nombre: Mapped[str] = mapped_column(String(100), unique=True, index=True)
     descripcion: Mapped[str | None] = mapped_column(Text, nullable=True)
 
 class TipoEstadoConservacion( TipologiaBase):
-        __table_args__ = {'schema': 'sipi'}
     __tablename__ = "estados_conservacion"
     inmuebles: Mapped[list["Inmueble"]] = relationship("Inmueble", back_populates="estado_conservacion")
 
 class TipoEstadoTratamiento( TipologiaBase):
-        __table_args__ = {'schema': 'sipi'}
     __tablename__ = "estados_tratamiento"
     inmuebles: Mapped[list["Inmueble"]] = relationship("Inmueble", back_populates="estado_tratamiento")
 
 class TipoRolTecnico( TipologiaBase):
-        __table_args__ = {'schema': 'sipi'}
     __tablename__ = "roles_tecnico"
     tecnicos: Mapped[list["Tecnico"]] = relationship("Tecnico", back_populates="rol_tecnico")
 
 class TipoCertificacionPropiedad( TipologiaBase):
-        __table_args__ = {'schema': 'sipi'}
     __tablename__ = "tipos_certificacion_propiedad"
     transmisiones: Mapped[list["Transmision"]] = relationship("Transmision", back_populates="tipo_certificacion_propiedad")
     inmatriculaciones: Mapped[list["Inmatriculacion"]] = relationship("Inmatriculacion", back_populates="tipo_certificacion_propiedad")
 
 class TipoDocumento( TipologiaBase):
-        __table_args__ = {'schema': 'sipi'}
     __tablename__ = "tipos_documento"
     documentos: Mapped[list["Documento"]] = relationship("Documento", back_populates="tipo_documento")
 
 class TipoInmueble( TipologiaBase):
-        __table_args__ = {'schema': 'sipi'}
     __tablename__ = "tipos_inmueble"
     inmuebles: Mapped[list["Inmueble"]] = relationship("Inmueble", back_populates="tipo_inmueble")
 
 class TipoMimeDocumento(UUIDPKMixin, AuditMixin, Base):
-        __table_args__ = {'schema': 'sipi'}
     __tablename__ = "tipos_mime_documento"
     tipo_mime: Mapped[str] = mapped_column(String(100), unique=True, index=True)
     extension: Mapped[str] = mapped_column(String(10))
     descripcion: Mapped[str | None] = mapped_column(Text, nullable=True)
 
 class TipoPersona( TipologiaBase):
-        __table_args__ = {'schema': 'sipi'}
     __tablename__ = "tipos_persona"
 
 class TipoTransmision( TipologiaBase):
-        __table_args__ = {'schema': 'sipi'}
     __tablename__ = "tipos_transmision"
     transmisiones: Mapped[list["Transmision"]] = relationship("Transmision", back_populates="tipo_transmision")
 
 class TipoVia( TipologiaBase):
-        __table_args__ = {'schema': 'sipi'}
     __tablename__ = "tipos_via"
 
 
 class TipoLicencia(UUIDPKMixin, AuditMixin, Base):
-        __table_args__ = {'schema': 'sipi'}
     __tablename__ = "tipos_licencia"
     codigo: Mapped[str] = mapped_column(String(50), unique=True, index=True, nullable=False)
     nombre: Mapped[str] = mapped_column(String(200), nullable=False)
@@ -102,7 +90,6 @@ class TipoLicencia(UUIDPKMixin, AuditMixin, Base):
 
 
 class FuenteDocumental(UUIDPKMixin, AuditMixin, Base):
-        __table_args__ = {'schema': 'sipi'}
     __tablename__ = "fuentes_documentales"
     codigo: Mapped[str] = mapped_column(String(50), unique=True, index=True, nullable=False)
     nombre: Mapped[str] = mapped_column(String(200), nullable=False)

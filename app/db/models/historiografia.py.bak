@@ -7,7 +7,6 @@ from app.db.base import Base
 from app.db.mixins import UUIDPKMixin, AuditMixin
 
 class FuenteHistoriografica(UUIDPKMixin, AuditMixin, Base):
-        __table_args__ = {'schema': 'sipi'}
     __tablename__ = "fuentes_historiograficas"
 
     nombre: Mapped[str] = mapped_column(String(255), index=True)

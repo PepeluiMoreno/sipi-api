@@ -8,7 +8,6 @@ from app.db.base import Base
 from app.db.mixins import UUIDPKMixin, AuditMixin
   
 class ActuacionSubvencion(UUIDPKMixin, AuditMixin, Base):
-        __table_args__ = {'schema': 'sipi'}
     __tablename__ = "actuaciones_subvenciones"
     
     actuacion_id: Mapped[str] = mapped_column(String(36), ForeignKey("actuaciones.id"), index=True)
@@ -23,7 +22,6 @@ class ActuacionSubvencion(UUIDPKMixin, AuditMixin, Base):
     administraciones: Mapped[list["SubvencionAdministracion"]] = relationship("SubvencionAdministracion", back_populates="subvencion", cascade="all, delete-orphan")
 
 class SubvencionAdministracion(UUIDPKMixin, AuditMixin, Base):
-        __table_args__ = {'schema': 'sipi'}
     __tablename__ = "subvenciones_administraciones"
     
     subvencion_id: Mapped[str] = mapped_column(String(36), ForeignKey("actuaciones_subvenciones.id"), index=True)

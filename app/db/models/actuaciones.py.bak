@@ -9,7 +9,6 @@ from app.db.base import Base
 from app.db.mixins import UUIDPKMixin, AuditMixin
 
 class Actuacion(UUIDPKMixin, AuditMixin, Base):
-        __table_args__ = {'schema': 'sipi'}
     """Intervenciones/actuaciones realizadas sobre un inmueble"""
     __tablename__ = "actuaciones"
     
@@ -31,7 +30,6 @@ class Actuacion(UUIDPKMixin, AuditMixin, Base):
     subvenciones: Mapped[list["ActuacionSubvencion"]] = relationship("ActuacionSubvencion", back_populates="actuacion", cascade="all, delete-orphan")
 
 class ActuacionTecnico(UUIDPKMixin, AuditMixin, Base):
-        __table_args__ = {'schema': 'sipi'}
     """Técnicos asignados a una actuación con roles específicos"""
     __tablename__ = "actuaciones_tecnicos"
     
