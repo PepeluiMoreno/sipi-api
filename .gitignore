@@ -75,6 +75,7 @@ coverage.xml
 .Trashes
 ehthumbs.db
 Thumbs.db
+.zip
 
 # Proyecto específico - Excluir carpeta ETL/preparacion
 ETL/preparacion/
