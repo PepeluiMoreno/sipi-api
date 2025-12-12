@@ -13,4 +13,4 @@ metadata = MetaData(schema=DB_SCHEMA)
 Base = declarative_base(metadata=metadata)
 
 # Hacer que el schema sea accesible
-Base.schema = DB_SCHEMAmv
+Base.schema = DB_SCHEMA
