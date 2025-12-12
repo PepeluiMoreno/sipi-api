@@ -1,7 +1,7 @@
 # models/geografia.py
 
 from __future__ import annotations
-from typing import TYPE_CHECKING, Optional
+from typing import Optional
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from sqlalchemy import String, Boolean, ForeignKey, Index
 
@@ -81,16 +81,18 @@ class Municipio(UUIDPKMixin, AuditMixin, Base):
     # Relaciones
     provincia: Mapped["Provincia"] = relationship("Provincia", back_populates="municipios")
     comunidad_autonoma: Mapped["ComunidadAutonoma"] = relationship("ComunidadAutonoma", back_populates="municipios")
+    
+    # Relaciones 1:M con nombres descriptivos específicos
     inmuebles: Mapped[list["Inmueble"]] = relationship("Inmueble", back_populates="municipio")
-    administraciones: Mapped[list["Administracion"]] = relationship("Administracion", back_populates="municipio")
-    adquirientes: Mapped[list["Adquiriente"]] = relationship("Adquiriente", back_populates="municipio")
-    transmitentes: Mapped[list["Transmitente"]] = relationship("Transmitente", back_populates="municipio")
-    tecnicos: Mapped[list["Tecnico"]] = relationship("Tecnico", back_populates="municipio")
-    notarias: Mapped[list["Notaria"]] = relationship("Notaria", back_populates="municipio")
-    registros_propiedad: Mapped[list["RegistroPropiedad"]] = relationship("RegistroPropiedad", back_populates="municipio")
-    colegios_profesionales: Mapped[list["ColegioProfesional"]] = relationship("ColegioProfesional", back_populates="municipio")
-    agencias_inmobiliarias: Mapped[list["AgenciaInmobiliaria"]] = relationship("AgenciaInmobiliaria", back_populates="municipio")
-    diocesis: Mapped[list["Diocesis"]] = relationship("Diocesis", back_populates="municipio")
+    administraciones: Mapped[list["Administracion"]] = relationship("Administracion", back_populates="municipio_sede")
+    adquirientes: Mapped[list["Adquiriente"]] = relationship("Adquiriente", back_populates="municipio_residencia")
+    transmitentes: Mapped[list["Transmitente"]] = relationship("Transmitente", back_populates="municipio_residencia")
+    tecnicos: Mapped[list["Tecnico"]] = relationship("Tecnico", back_populates="municipio_trabajo")
+    notarias: Mapped[list["Notaria"]] = relationship("Notaria", back_populates="municipio_ubicacion")
+    registros_propiedad: Mapped[list["RegistroPropiedad"]] = relationship("RegistroPropiedad", back_populates="municipio_ubicacion")
+    colegios_profesionales: Mapped[list["ColegioProfesional"]] = relationship("ColegioProfesional", back_populates="municipio_sede")
+    agencias_inmobiliarias: Mapped[list["AgenciaInmobiliaria"]] = relationship("AgenciaInmobiliaria", back_populates="municipio_oficina")
+    diocesis: Mapped[list["Diocesis"]] = relationship("Diocesis", back_populates="municipio_sede")
     
     def __repr__(self) -> str:
         return f"<Municipio {self.codigo_ine} - {self.nombre}>"

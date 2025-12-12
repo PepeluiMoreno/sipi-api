@@ -5,7 +5,7 @@ import asyncio
 from logging.config import fileConfig
 
 from alembic import context
-from sqlalchemy import pool, inspect as sqla_inspect
+from sqlalchemy import pool, text
 from sqlalchemy.ext.asyncio import create_async_engine
 
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
@@ -24,7 +24,38 @@ if database_url.startswith("postgresql://"):
 
 try:
     from app.db.base import Base
+    
+    # ✅ DESCUBRIMIENTO AUTOMÁTICO DE MODELOS (igual que schema.py)
+    import importlib
+    from pathlib import Path
+    
+    MODELS_ROOT = os.getenv("MODELS_ROOT", "app/db/models")
+    models_folder = Path(MODELS_ROOT)
+    
+    print(f"🔍 Descubriendo modelos en: {MODELS_ROOT}")
+    
+    # Importar todos los módulos en MODELS_ROOT
+    models_imported = 0
+    for py_file in models_folder.glob("*.py"):
+        if py_file.name.startswith("__"):
+            continue
+        
+        module_name = f"{MODELS_ROOT.replace('/', '.')}.{py_file.stem}"
+        
+        try:
+            importlib.import_module(module_name)
+            models_imported += 1
+            print(f"  📦 {module_name}")
+        except Exception as e:
+            print(f"  ⚠️  Error importando {module_name}: {e}")
+            continue
+    
+    print(f"✅ {models_imported} módulos importados")
+    print(f"✅ {len(Base.metadata.tables)} tablas detectadas en Base.metadata")
+    print(f"   Tablas: {', '.join(list(Base.metadata.tables.keys())[:5])}...")
+    
     target_metadata = Base.metadata
+    
 except Exception as e:
     print(f"❌ ERROR importando modelos: {e}")
     import traceback
@@ -90,6 +121,9 @@ def run_migrations_offline():
 
 
 def run_migrations_online():
+    # ✅ Schema personalizable via variable de entorno
+    db_schema = os.getenv("DB_SCHEMA", "sipi")
+    
     connectable = create_async_engine(
         database_url,
         poolclass=pool.NullPool,
@@ -98,6 +132,10 @@ def run_migrations_online():
 
     async def run_async_migrations():
         async with connectable.connect() as connection:
+            # ✅ Crear schema si no existe
+            await connection.execute(text(f"CREATE SCHEMA IF NOT EXISTS {db_schema}"))
+            await connection.commit()
+            
             await connection.run_sync(do_run_migrations)
         await connectable.dispose()
 
@@ -105,11 +143,16 @@ def run_migrations_online():
         context.configure(
             connection=connection,
             target_metadata=target_metadata,
-            include_schemas=False,  # ✅ NO incluir múltiples schemas
+            version_table_schema=db_schema,  # ✅ alembic_version en schema personalizado
+            include_schemas=False,
             include_object=include_object_filter,
             compare_type=True,
-            compare_server_default=False,  # ✅ NO comparar defaults (evita cambios innecesarios)
+            compare_server_default=False,
         )
+        
+        # ✅ search_path: primero nuestro schema, luego public (para PostGIS)
+        connection.execute(text(f"SET search_path TO {db_schema}, public"))
+        
         with context.begin_transaction():
             context.run_migrations()
 

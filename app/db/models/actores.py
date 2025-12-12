@@ -1,11 +1,11 @@
 # models/actores.py
-#  Personas físicas o jurídicas intervinientes en los procesos del dominio
+# Personas físicas o jurídicas intervinientes en los procesos del dominio
 
 from __future__ import annotations
 from datetime import datetime
-from typing import TYPE_CHECKING, Optional
-from sqlalchemy.orm import Mapped, mapped_column, relationship
-from sqlalchemy import String,  ForeignKey
+from typing import Optional
+from sqlalchemy.orm import Mapped, mapped_column, relationship, foreign
+from sqlalchemy import String, ForeignKey
 
 from app.db.base import Base
 from app.db.mixins import (
@@ -33,48 +33,53 @@ class TitularBase(UUIDPKMixin, AuditMixin, IdentificacionMixin, Base):
     cargo: Mapped[Optional[str]] = mapped_column(String(100))
 
 # ============================================================================
-# actores PERSONAS
+# ACTORES PERSONAS
 # ============================================================================
 
 class Adquiriente(UUIDPKMixin, AuditMixin, PersonaMixin, ContactoDireccionMixin, Base):
     """Persona que adquiere un inmueble en una transmisión"""
     __tablename__ = "adquirientes"
     
-    # Foreign Key para municipio (requerido por ContactoDireccionMixin)
-    municipio_id: Mapped[Optional[str]] = mapped_column(String(36), ForeignKey("municipios.id"), index=True)
-    
-    # Relaciones
-    municipio: Mapped[Optional["Municipio"]] = relationship("Municipio", foreign_keys=[municipio_id])
+    # Relación con nombre descriptivo - residencia del adquiriente
+    municipio_residencia: Mapped[Optional["Municipio"]] = relationship(
+        "Municipio", 
+        primaryjoin="foreign(Adquiriente.municipio_id) == Municipio.id",
+        back_populates="adquirientes"
+    )
     transmisiones: Mapped[list["Transmision"]] = relationship("Transmision", back_populates="adquiriente")
 
 class Transmitente(UUIDPKMixin, AuditMixin, PersonaMixin, ContactoDireccionMixin, Base):
     """Persona que transmite un inmueble"""
     __tablename__ = "transmitentes"
     
-    # Foreign Key para municipio (requerido por ContactoDireccionMixin)
-    municipio_id: Mapped[Optional[str]] = mapped_column(String(36), ForeignKey("municipios.id"), index=True)
-    
-    # Relaciones
-    municipio: Mapped[Optional["Municipio"]] = relationship("Municipio", foreign_keys=[municipio_id])
+    # Relación con nombre descriptivo - residencia del transmitente
+    municipio_residencia: Mapped[Optional["Municipio"]] = relationship(
+        "Municipio", 
+        primaryjoin="foreign(Transmitente.municipio_id) == Municipio.id",
+        back_populates="transmitentes"
+    )
     transmisiones: Mapped[list["Transmision"]] = relationship("Transmision", back_populates="transmitente")
 
 class Tecnico(UUIDPKMixin, AuditMixin, IdentificacionMixin, ContactoDireccionMixin, Base):
     """Técnico profesional (arquitecto, ingeniero, etc.)"""
     __tablename__ = "tecnicos"
     
-    # Foreign Keys
+    # Foreign Keys adicionales (municipio_id viene del mixin)
     rol_tecnico_id: Mapped[Optional[str]] = mapped_column(String(36), ForeignKey("roles_tecnico.id"), index=True)
     colegio_profesional_id: Mapped[Optional[str]] = mapped_column(String(36), ForeignKey("colegios_profesionales.id"), index=True)
-    municipio_id: Mapped[Optional[str]] = mapped_column(String(36), ForeignKey("municipios.id"), index=True)
     
     # Campos adicionales
     numero_colegiado: Mapped[Optional[str]] = mapped_column(String(50), index=True)
     fecha_colegiacion: Mapped[Optional[datetime]] = mapped_column()
     
-    # Relaciones
+    # Relaciones con nombres descriptivos
     rol_tecnico: Mapped[Optional["TipoRolTecnico"]] = relationship("TipoRolTecnico", back_populates="tecnicos")
     colegio_profesional: Mapped[Optional["ColegioProfesional"]] = relationship("ColegioProfesional", back_populates="tecnicos")
-    municipio: Mapped[Optional["Municipio"]] = relationship("Municipio", foreign_keys=[municipio_id])
+    municipio_trabajo: Mapped[Optional["Municipio"]] = relationship(
+        "Municipio", 
+        primaryjoin="foreign(Tecnico.municipio_id) == Municipio.id",
+        back_populates="tecnicos"
+    )
     actuaciones: Mapped[list["ActuacionTecnico"]] = relationship("ActuacionTecnico", back_populates="tecnico")
 
 # ============================================================================
@@ -88,15 +93,24 @@ class Administracion(UUIDPKMixin, AuditMixin, ContactoDireccionMixin, Titularida
     nombre: Mapped[str] = mapped_column(String(255), unique=True, index=True)
     ambito: Mapped[Optional[str]] = mapped_column(String(100))
     
-    # Foreign Keys
-    comunidad_autonoma_id: Mapped[Optional[str]] = mapped_column(String(36), ForeignKey("comunidades_autonomas.id"), index=True)
-    provincia_id: Mapped[Optional[str]] = mapped_column(String(36), ForeignKey("provincias.id"), index=True)
-    municipio_id: Mapped[Optional[str]] = mapped_column(String(36), ForeignKey("municipios.id"), index=True)
+    # FKs geográficos vienen del DireccionMixin (comunidad_autonoma_id, provincia_id, municipio_id)
     
-    # Relaciones
-    comunidad_autonoma: Mapped[Optional["ComunidadAutonoma"]] = relationship("ComunidadAutonoma", back_populates="administraciones")
-    provincia: Mapped[Optional["Provincia"]] = relationship("Provincia", back_populates="administraciones")
-    municipio: Mapped[Optional["Municipio"]] = relationship("Municipio", back_populates="administraciones", foreign_keys=[municipio_id])
+    # Relaciones con nombres descriptivos y primaryjoin explícito
+    comunidad_autonoma: Mapped[Optional["ComunidadAutonoma"]] = relationship(
+        "ComunidadAutonoma", 
+        primaryjoin="foreign(Administracion.comunidad_autonoma_id) == ComunidadAutonoma.id",
+        back_populates="administraciones"
+    )
+    provincia: Mapped[Optional["Provincia"]] = relationship(
+        "Provincia",
+        primaryjoin="foreign(Administracion.provincia_id) == Provincia.id",
+        back_populates="administraciones"
+    )
+    municipio_sede: Mapped[Optional["Municipio"]] = relationship(
+        "Municipio", 
+        primaryjoin="foreign(Administracion.municipio_id) == Municipio.id",
+        back_populates="administraciones"
+    )
     titulares: Mapped[list["AdministracionTitular"]] = relationship("AdministracionTitular", back_populates="administracion", cascade="all, delete-orphan")
     subvenciones: Mapped[list["SubvencionAdministracion"]] = relationship("SubvencionAdministracion", back_populates="administracion")
 
@@ -116,11 +130,12 @@ class ColegioProfesional(UUIDPKMixin, AuditMixin, ContactoDireccionMixin, Base):
     nombre: Mapped[str] = mapped_column(String(255), unique=True, index=True)
     codigo: Mapped[Optional[str]] = mapped_column(String(50), unique=True, index=True)
     
-    # Foreign Key para municipio
-    municipio_id: Mapped[Optional[str]] = mapped_column(String(36), ForeignKey("municipios.id"), index=True)
-    
-    # Relaciones
-    municipio: Mapped[Optional["Municipio"]] = relationship("Municipio", foreign_keys=[municipio_id])
+    # Relaciones con nombres descriptivos
+    municipio_sede: Mapped[Optional["Municipio"]] = relationship(
+        "Municipio", 
+        primaryjoin="foreign(ColegioProfesional.municipio_id) == Municipio.id",
+        back_populates="colegios_profesionales"
+    )
     tecnicos: Mapped[list["Tecnico"]] = relationship("Tecnico", back_populates="colegio_profesional")
 
 # ============================================================================
@@ -134,11 +149,12 @@ class Diocesis(UUIDPKMixin, AuditMixin, ContactoDireccionMixin, TitularidadMixin
     nombre: Mapped[str] = mapped_column(String(100), unique=True, index=True)
     wikidata_qid: Mapped[Optional[str]] = mapped_column(String(32), unique=True, index=True)
     
-    # Foreign Key para municipio
-    municipio_id: Mapped[Optional[str]] = mapped_column(String(36), ForeignKey("municipios.id"), index=True)
-    
-    # Relaciones
-    municipio: Mapped[Optional["Municipio"]] = relationship("Municipio", foreign_keys=[municipio_id])
+    # Relaciones con nombres descriptivos - sede diocesana
+    municipio_sede: Mapped[Optional["Municipio"]] = relationship(
+        "Municipio", 
+        primaryjoin="foreign(Diocesis.municipio_id) == Municipio.id",
+        back_populates="diocesis"
+    )
     inmuebles: Mapped[list["Inmueble"]] = relationship("Inmueble", back_populates="diocesis")
     titulares: Mapped[list["DiocesisTitular"]] = relationship("DiocesisTitular", back_populates="diocesis", cascade="all, delete-orphan")
 
@@ -161,22 +177,24 @@ class Notaria(UUIDPKMixin, AuditMixin, ContactoDireccionMixin, Base):
     
     nombre: Mapped[str] = mapped_column(String(255), index=True)
     
-    # Foreign Key para municipio
-    municipio_id: Mapped[Optional[str]] = mapped_column(String(36), ForeignKey("municipios.id"), index=True)
-    
-    # Relaciones
-    municipio: Mapped[Optional["Municipio"]] = relationship("Municipio", foreign_keys=[municipio_id])
+    # Relaciones con nombres descriptivos - ubicación física de la notaría
+    municipio_ubicacion: Mapped[Optional["Municipio"]] = relationship(
+        "Municipio", 
+        primaryjoin="foreign(Notaria.municipio_id) == Municipio.id",
+        back_populates="notarias"
+    )
     transmisiones: Mapped[list["Transmision"]] = relationship("Transmision", back_populates="notaria")
 
 class RegistroPropiedad(UUIDPKMixin, AuditMixin, IdentificacionMixin, ContactoDireccionMixin, TitularidadMixin, Base):
     """Registro de la Propiedad"""
     __tablename__ = "registros_propiedad"
     
-    # Foreign Key para municipio
-    municipio_id: Mapped[Optional[str]] = mapped_column(String(36), ForeignKey("municipios.id"), index=True)
-    
-    # Relaciones
-    municipio: Mapped[Optional["Municipio"]] = relationship("Municipio", foreign_keys=[municipio_id])
+    # Relaciones con nombres descriptivos - ubicación del registro
+    municipio_ubicacion: Mapped[Optional["Municipio"]] = relationship(
+        "Municipio", 
+        primaryjoin="foreign(RegistroPropiedad.municipio_id) == Municipio.id",
+        back_populates="registros_propiedad"
+    )
     transmisiones: Mapped[list["Transmision"]] = relationship("Transmision", back_populates="registro_propiedad")
     inmatriculaciones: Mapped[list["Inmatriculacion"]] = relationship("Inmatriculacion", back_populates="registro_propiedad")
     titulares: Mapped[list["RegistroPropiedadTitular"]] = relationship("RegistroPropiedadTitular", back_populates="registro_propiedad", cascade="all, delete-orphan")
@@ -200,9 +218,10 @@ class AgenciaInmobiliaria(UUIDPKMixin, AuditMixin, ContactoDireccionMixin, Base)
     
     nombre: Mapped[str] = mapped_column(String(255), index=True)
     
-    # Foreign Key para municipio
-    municipio_id: Mapped[Optional[str]] = mapped_column(String(36), ForeignKey("municipios.id"), index=True)
-    
-    # Relaciones
-    municipio: Mapped[Optional["Municipio"]] = relationship("Municipio", foreign_keys=[municipio_id])
+    # Relaciones con nombres descriptivos - oficina de la agencia
+    municipio_oficina: Mapped[Optional["Municipio"]] = relationship(
+        "Municipio", 
+        primaryjoin="foreign(AgenciaInmobiliaria.municipio_id) == Municipio.id",
+        back_populates="agencias_inmobiliarias"
+    )
     transmisiones_anunciadas: Mapped[list["TransmisionAnunciante"]] = relationship("TransmisionAnunciante", back_populates="agencia_inmobiliaria")

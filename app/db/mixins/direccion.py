@@ -1,15 +1,35 @@
+
 # app/db/mixins/direccion.py
 from decimal import Decimal
 from typing import TYPE_CHECKING, Optional
 from sqlalchemy import String, ForeignKey, Float
-from sqlalchemy.orm import Mapped, mapped_column, relationship, declared_attr
+from sqlalchemy.orm import Mapped, mapped_column, declared_attr
 
 if TYPE_CHECKING:
     from app.db.models.geografia import Provincia, Municipio, ComunidadAutonoma
     from app.db.models.tipologias import TipoVia
 
 class DireccionMixin:
-    """Mixin para datos de dirección geográfica"""
+    """
+    Mixin para datos de dirección geográfica.
+    
+    IMPORTANTE:
+    - Este mixin define SOLO las columnas FK (tipo_via_id, comunidad_autonoma_id, provincia_id, municipio_id)
+    - NO define las relaciones (tipo_via, comunidad_autonoma, provincia, municipio)
+    - Cada clase que herede este mixin debe definir sus propias relaciones con nombres descriptivos
+    
+    EJEMPLO DE USO:
+    
+    class Tecnico(DireccionMixin, Base):
+        # ... otros campos ...
+        
+        # ✅ Definir relación con nombre descriptivo
+        municipio_trabajo: Mapped["Municipio"] = relationship(
+            "Municipio",
+            primaryjoin="foreign(Tecnico.municipio_id) == Municipio.id",
+            back_populates="tecnicos"
+        )
+    """
     
     # Componentes de dirección
     tipo_via_id: Mapped[Optional[str]] = mapped_column(String(36), ForeignKey("tipos_via.id"), index=True)
@@ -21,74 +41,40 @@ class DireccionMixin:
     puerta: Mapped[Optional[str]] = mapped_column(String(10))
     codigo_postal: Mapped[Optional[str]] = mapped_column(String(10), index=True)
     
-    # Referencias geográficas
+    # Referencias geográficas - SOLO FKs
     comunidad_autonoma_id: Mapped[Optional[str]] = mapped_column(String(36), ForeignKey("comunidades_autonomas.id"), index=True)
     provincia_id: Mapped[Optional[str]] = mapped_column(String(36), ForeignKey("provincias.id"), index=True)
-    Municipio_id: Mapped[Optional[str]] = mapped_column(String(36), ForeignKey("Municipio.id"), index=True)
+    municipio_id: Mapped[Optional[str]] = mapped_column(String(36), ForeignKey("municipios.id"), index=True)  # ✅ CORREGIDO: municipios.id (minúscula)
     
     # Coordenadas
     latitud: Mapped[Optional[Decimal]] = mapped_column(Float(precision=10, asdecimal=True), nullable=True)
     longitud: Mapped[Optional[Decimal]] = mapped_column(Float(precision=10, asdecimal=True), nullable=True)
     
-    # Relaciones (declaradas correctamente)
-    @declared_attr
-    def tipo_via(cls) -> Mapped[Optional["TipoVia"]]:
-        return relationship("TipoVia", lazy="joined")
+    # ⚠️ NO DEFINIR RELACIONES AQUÍ
+    # Las relaciones tipo_via, comunidad_autonoma, provincia y municipio
+    # deben definirse en cada clase con nombres descriptivos.
+    #
+    # ANTES (❌ causaba conflictos):
+    # @declared_attr
+    # def Municipio(cls) -> Mapped[Optional["Municipio"]]:
+    #     return relationship("Municipio", lazy="joined")
+    #
+    # AHORA (✅ cada clase define su propia relación):
+    # En Tecnico: municipio_trabajo
+    # En Adquiriente: municipio_residencia
+    # En Notaria: municipio_ubicacion
+    # etc.
     
-    @declared_attr
-    def comunidad_autonoma(cls) -> Mapped[Optional["ComunidadAutonoma"]]:
-        return relationship("ComunidadAutonoma", lazy="joined")
-    
-    @declared_attr
-    def provincia(cls) -> Mapped[Optional["Provincia"]]:
-        return relationship("Provincia", lazy="joined")
-    
-    @declared_attr
-    def Municipio(cls) -> Mapped[Optional["Municipio"]]:
-        return relationship("Municipio", lazy="joined")
-    
-    @property
-    def direccion_completa(self) -> str:
-        """Dirección completa formateada"""
-        partes = []
-        
-        if self.tipo_via and self.nombre_via:
-            partes.append(f"{self.tipo_via.nombre} {self.nombre_via}")
-        elif self.nombre_via:
-            partes.append(self.nombre_via)
-        
-        if self.numero:
-            partes.append(f", nº {self.numero}")
-        
-        detalles = []
-        for label, valor in [
-            ("Bloque", self.bloque),
-            ("Esc.", self.escalera),
-            ("Piso", self.piso),
-            ("Puerta", self.puerta)
-        ]:
-            if valor:
-                detalles.append(f"{label} {valor}")
-        
-        if detalles:
-            partes.append(f" ({', '.join(detalles)})")
-        
-        if self.codigo_postal and self.Municipio:
-            partes.append(f" - {self.codigo_postal} {self.Municipio.nombre}")
-        elif self.codigo_postal:
-            partes.append(f" - {self.codigo_postal}")
-        elif self.Municipio:
-            partes.append(f" - {self.Municipio.nombre}")
-        
-        return "".join(partes).strip()
+    # Propiedades calculadas - NOTA: Estas propiedades ya no funcionarán
+    # porque no hay relaciones. Debes acceder a través de las relaciones
+    # específicas de cada clase (ej: tecnico.municipio_trabajo.nombre)
     
     @property
     def direccion_corta(self) -> str:
         """Dirección corta: tipo vía + nombre + número"""
         partes = []
-        if self.tipo_via and self.nombre_via:
-            partes.append(f"{self.tipo_via.nombre} {self.nombre_via}")
-        elif self.nombre_via:
+        # Nota: tipo_via ya no está disponible aquí
+        if self.nombre_via:
             partes.append(self.nombre_via)
         if self.numero:
             partes.append(f", {self.numero}")
