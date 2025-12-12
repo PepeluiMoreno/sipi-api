@@ -10,7 +10,6 @@ from app.db.mixins import UUIDPKMixin, AuditMixin
 
 
 class Transmision(UUIDPKMixin, AuditMixin, Base):
-        __table_args__ = {'schema': 'sipi'}
     __tablename__ = "transmisiones"
     
     inmueble_id: Mapped[str] = mapped_column(String(36), ForeignKey("inmuebles.id"), index=True)
@@ -37,7 +36,6 @@ class Transmision(UUIDPKMixin, AuditMixin, Base):
     anunciantes: Mapped[list["TransmisionAnunciante"]] = relationship("TransmisionAnunciante", back_populates="transmision", cascade="all, delete-orphan")
 
 class TransmisionAnunciante(UUIDPKMixin, AuditMixin, Base):
-        __table_args__ = {'schema': 'sipi'}
     __tablename__ = "transmision_anunciantes"
     
     transmision_id: Mapped[str] = mapped_column(String(36), ForeignKey("transmisiones.id"), index=True)

@@ -21,7 +21,7 @@ class DireccionMixin:
     EJEMPLO DE USO:
     
     class Tecnico(DireccionMixin, Base):
-            __table_args__ = {'schema': 'sipi'}
+        __table_args__ = {'schema': 'sipi'}
         # ... otros campos ...
         
         # ✅ Definir relación con nombre descriptivo

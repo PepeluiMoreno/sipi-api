@@ -11,7 +11,7 @@ from app.db.mixins import UUIDPKMixin, AuditMixin
 class ComunidadAutonoma(UUIDPKMixin, AuditMixin, Base):
     """Comunidad Autónoma de España"""
     __tablename__ = "comunidades_autonomas"
-    __table_args__ = 
+    
     codigo: Mapped[str] = mapped_column(String(2), unique=True, index=True, nullable=False)
     codigo_ine: Mapped[str] = mapped_column(String(2), unique=True, index=True, nullable=False)
     nombre: Mapped[str] = mapped_column(String(100), index=True, nullable=False)
@@ -31,7 +31,6 @@ class ComunidadAutonoma(UUIDPKMixin, AuditMixin, Base):
         Index('ix_ccaa_codigo_ine', 'codigo_ine'),
         Index('ix_ccaa_nombre', 'nombre'),
         Index('ix_ccaa_activo', 'activo'),
-        {'schema': 'sipi'}
     )
     
     def __repr__(self) -> str:
@@ -62,7 +61,6 @@ class Provincia(UUIDPKMixin, AuditMixin, Base):
         Index('ix_provincia_nombre', 'nombre'),
         Index('ix_provincia_ccaa', 'comunidad_autonoma_id'),
         Index('ix_provincia_activo', 'activo'),
-        {'schema': 'sipi'}
     )
     
     def __repr__(self) -> str:
@@ -70,7 +68,6 @@ class Provincia(UUIDPKMixin, AuditMixin, Base):
 
 
 class Municipio(UUIDPKMixin, AuditMixin, Base):
-        __table_args__ = {'schema': 'sipi'}
     """Municipio español"""
     __tablename__ = "municipios"
     

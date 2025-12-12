@@ -11,7 +11,6 @@ from app.db.mixins import UUIDPKMixin, AuditMixin
 
 
 class Inmueble(UUIDPKMixin, AuditMixin, Base):
-        __table_args__ = {'schema': 'sipi'}
     __tablename__ = "inmuebles"
     
     nombre: Mapped[str] = mapped_column(String(255), index=True)
@@ -62,7 +61,6 @@ class Inmueble(UUIDPKMixin, AuditMixin, Base):
 
 
 class Inmatriculacion(UUIDPKMixin, AuditMixin, Base):
-        __table_args__ = {'schema': 'sipi'}
     __tablename__ = "inmatriculaciones"
     
     inmueble_id: Mapped[str] = mapped_column(String(36), ForeignKey("inmuebles.id"), index=True)
@@ -83,7 +81,6 @@ class Inmatriculacion(UUIDPKMixin, AuditMixin, Base):
 
 
 class InmuebleDenominacion(UUIDPKMixin, AuditMixin, Base):
-        __table_args__ = {'schema': 'sipi'}
     __tablename__ = "inmuebles_denominaciones"
     
     inmueble_id: Mapped[str] = mapped_column(String(36), ForeignKey("inmuebles.id"), index=True)
@@ -94,7 +91,6 @@ class InmuebleDenominacion(UUIDPKMixin, AuditMixin, Base):
 
 
 class InmuebleOSMExt(UUIDPKMixin, AuditMixin, Base):
-        __table_args__ = {'schema': 'sipi'}
     __tablename__ = "inmuebles_osm_ext"
     
     inmueble_id: Mapped[str] = mapped_column(String(36), ForeignKey("inmuebles.id"), index=True)
@@ -106,7 +102,6 @@ class InmuebleOSMExt(UUIDPKMixin, AuditMixin, Base):
 
 
 class InmuebleWDExt(UUIDPKMixin, AuditMixin, Base):
-        __table_args__ = {'schema': 'sipi'}
     __tablename__ = "inmuebles_wd_ext"
     
     inmueble_id: Mapped[str] = mapped_column(String(36), ForeignKey("inmuebles.id"), index=True)
@@ -117,7 +112,6 @@ class InmuebleWDExt(UUIDPKMixin, AuditMixin, Base):
 
 
 class InmuebleCita(UUIDPKMixin, AuditMixin, Base):
-        __table_args__ = {'schema': 'sipi'}
     """Cita bibliografica de un inmueble en una fuente"""
     __tablename__ = "citas_bibliograficas"
 

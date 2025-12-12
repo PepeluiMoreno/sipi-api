@@ -21,7 +21,6 @@ class NivelProteccion(str, enum.Enum):
 
 
 class FiguraProteccion(UUIDPKMixin, AuditMixin, Base):
-        __table_args__ = {'schema': 'sipi'}
     """
     Figura de protección patrimonial según legislación española
     
@@ -146,7 +145,7 @@ class FiguraProteccion(UUIDPKMixin, AuditMixin, Base):
     # CONSTRAINTS E ÍNDICES
     # =======================================================================
     
-    __table_args__ = (
+__table_args__ = (
         # Constraint: nivel NACIONAL => comunidad_autonoma_id DEBE ser NULL
         CheckConstraint(
             "(nivel != 'nacional') OR (comunidad_autonoma_id IS NULL)",

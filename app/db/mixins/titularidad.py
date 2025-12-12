@@ -14,12 +14,12 @@ class TitularidadMixin:
     
     USO EN MODELO PRINCIPAL:
     class Notaria(Base, TitularidadMixin):
-            __table_args__ = {'schema': 'sipi'}
+        __table_args__ = {'schema': 'sipi'}
         # ... campos ...
         
     USO EN MODELO TITULAR:
     class NotariaTitular(TitularBase):
-            __table_args__ = {'schema': 'sipi'}
+        __table_args__ = {'schema': 'sipi'}
         notaria_id: Mapped[str] = ForeignKey("notarias.id")
         notaria: Mapped["Notaria"] = relationship("Notaria", back_populates="titulares")
     

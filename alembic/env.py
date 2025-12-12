@@ -1,44 +1,44 @@
 # alembic/env.py
 from __future__ import with_statement
+import os
 from alembic import context
 from sqlalchemy import engine_from_config, pool
 from logging.config import fileConfig
 
-from app.db.models import Base
+# ✅ Importar Base desde tu estructura
+from app.db.base import Base
 
 config = context.config
-
 fileConfig(config.config_file_name)
 
-"""
-Load models metadata. We should define schema in this class firstly, 
-or set schema implicit with `__table_args__ = {'schema' : 'test'}` in model class
-"""
+# ✅ Usar el metadata de tu Base con schema dinámico
 target_metadata = Base.metadata
 
+# ✅ Leer URL desde variable de entorno
+DATABASE_URL = os.getenv("DATABASE_URL")
+if not DATABASE_URL:
+    raise RuntimeError("DATABASE_URL no está definida en las variables de entorno")
 
 def run_migrations_offline():
-    url = config.get_main_option("sqlalchemy.url")
     context.configure(
-        url=url, target_metadata=target_metadata, literal_binds=True)
+        url=DATABASE_URL,
+        target_metadata=target_metadata,
+        literal_binds=True,
+        version_table_schema=target_metadata.schema,
+        include_schemas=True
+    )
 
     with context.begin_transaction():
         context.run_migrations()
 
-
 def run_migrations_online():
     connectable = engine_from_config(
-        config.get_section(config.config_ini_section),
-        prefix='sqlalchemy.',
-        poolclass=pool.NullPool)
+        {"sqlalchemy.url": DATABASE_URL},
+        prefix="sqlalchemy.",
+        poolclass=pool.NullPool,
+    )
 
     with connectable.connect() as connection:
-        """
-        Configure migration context
-        1. Pass our models metadata
-        2. Set schema for alembic_version table
-        3. Load all available schemas
-        """
         context.configure(
             connection=connection,
             target_metadata=target_metadata,
@@ -47,13 +47,10 @@ def run_migrations_online():
         )
 
         with context.begin_transaction():
-            """
-            By default search_path is setted to "$user",public 
-            that why alembic can't create foreign keys correctly
-            """
-            context.execute('SET search_path TO public')
+            # ✅ Asegurar que el schema esté activo
+            if target_metadata.schema:
+                context.execute(f'SET search_path TO {target_metadata.schema}')
             context.run_migrations()
-
 
 if context.is_offline_mode():
     run_migrations_offline()

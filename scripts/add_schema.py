@@ -24,7 +24,7 @@ if not MODELS_ROOT.is_dir():
 CLASS_RE = re.compile(r'^\s*class\s+(\w+)\s*\(.*Base.*\):')
 
 # plantilla que insertaremos justo después de la línea de la clase
-TABLE_ARGS = f"    __table_args__ = {{'schema': '{DATABASE_SCHEMA}'}}"
+TABLE_ARGS = f" __table_args__ = {{'schema': '{DATABASE_SCHEMA}'}}"
 
 
 def process_file(path: Path, dry: bool = True) -> bool:
