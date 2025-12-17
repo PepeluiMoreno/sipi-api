@@ -87,91 +87,103 @@ def get_excluded_field_names_for_model(model):
     return excluded
 
 def create_graphql_types(models):
-    """Crea tipos GraphQL para todos los modelos sin duplicados"""
+    """Crea tipos GraphQL para todos los modelos soportando Relaciones"""
     type_registry = {}
+    raw_classes = {}
     failed_models = []
     
+    # PASO 1: Crear clases base (raw) para permitir referencias circulares
+    for model in models:
+        try:
+            model_name = model.__name__
+            # Creamos una clase vacía inicialmente
+            raw_classes[model_name] = type(model_name, (), {
+                "_model_class": model,
+                "_property_methods": {}
+            })
+        except Exception as e:
+            logger.warning(f"⚠️  Error inicializando clase para {model.__name__}: {e}")
+
+    # PASO 2: Poblar anotaciones (Campos + Relaciones)
     for model in models:
         model_name = model.__name__
-        
-        # Verificar si ya existe
-        if model_name in type_registry:
-            logger.warning(f"⚠️  Tipo {model_name} ya existe, omitiendo duplicado")
+        if model_name not in raw_classes:
             continue
+            
+        cls = raw_classes[model_name]
+        fields = {}
         
         try:
-            # Verificar estructura básica
-            if not hasattr(model, '__table__'):
-                logger.warning(f"⚠️  Modelo {model_name} no tiene tabla, omitiendo")
-                failed_models.append((model_name, "No tiene __table__"))
-                continue
+            # A. Columnas
+            if hasattr(model, '__table__'):
+                for column in model.__table__.columns:
+                    field_name = column.name
+                    graphql_type = get_graphql_type_for_column(column)
+                    fields[field_name] = graphql_type
             
-            # Campos de columnas
-            fields = {}
-            for column in model.__table__.columns:
-                field_name = column.name
-                graphql_type = get_graphql_type_for_column(column)
-                fields[field_name] = graphql_type
-            
-            # Propiedades (@property)
-            property_methods = {}
+            # B. Relaciones
+            insp = inspect(model)
+            for rel in insp.relationships:
+                target_model = rel.mapper.class_
+                target_name = target_model.__name__
+                
+                # Solo mapear si el destino también está en nuestro registro
+                if target_name in raw_classes:
+                    target_cls = raw_classes[target_name]
+                    
+                    if rel.uselist:
+                        fields[rel.key] = List[target_cls]
+                    else:
+                        fields[rel.key] = Optional[target_cls]
+                else:
+                    logger.debug(f"⚠️  Omitiendo relación {model_name}.{rel.key} (destino {target_name} desconocido)")
+
+            # C. Propiedades (@property)
             for attr_name in dir(model):
                 if attr_name.startswith('_'):
                     continue
                     
                 attr = getattr(model, attr_name)
                 if isinstance(attr, property) and attr.fget:
-                    logger.debug(f"🔍 @property encontrado: {model_name}.{attr_name}")
-                    
-                    # Determinar tipo de retorno
-                    return_type = Optional[str]
+                    # Determinar tipo de retorno (simplificado)
+                    return_type = Optional[str] # Default
                     sig = inspect.signature(attr.fget)
                     
                     if sig.return_annotation != inspect.Parameter.empty:
                         ann = sig.return_annotation
-                        if ann == int:
-                            return_type = Optional[int]
-                        elif ann == str:
-                            return_type = Optional[str]
-                        elif ann == bool:
-                            return_type = Optional[bool]
-                        elif ann == float:
-                            return_type = Optional[float]
-                        elif ann == datetime:
-                            return_type = Optional[str]
-                        elif ann == date:
-                            return_type = Optional[str]
-                        elif ann == Decimal:
-                            return_type = Optional[float]
-                        elif hasattr(ann, '__origin__') and ann.__origin__ == list:
-                            return_type = List[str]
+                        # Mapeo básico de tipos
+                        if ann in (int, str, bool, float, datetime, date, Decimal):
+                             # Ajustar a tipos GQL (opcionales por defecto para properties safe)
+                             if ann == int: return_type = Optional[int]
+                             elif ann == bool: return_type = Optional[bool]
+                             elif ann == float: return_type = Optional[float]
+                             elif ann == Decimal: return_type = Optional[float]
+                             else: return_type = Optional[str]
                     
                     fields[attr_name] = return_type
-                    property_methods[attr_name] = attr.fget
+                    cls._property_methods[attr_name] = attr.fget
             
-            # Crear tipo GraphQL
-            type_class = strawberry.type(
-                type(model_name, (), {
-                    "__annotations__": fields,
-                    "_property_methods": property_methods,
-                    "_model_class": model,
-                })
-            )
-            
-            type_registry[model_name] = type_class
-            logger.info(f"✅ Tipo {model_name} creado con {len(fields)} campos")
+            # Asignar anotaciones
+            cls.__annotations__ = fields
             
         except Exception as e:
-            logger.error(f"❌ Error creando tipo para {model_name}: {e}")
+            logger.error(f"❌ Error procesando campos para {model_name}: {e}")
             failed_models.append((model_name, str(e)))
-            continue
-    
-    # Reporte
-    logger.info(f"📊 Resumen: {len(type_registry)}/{len(models)} tipos creados")
-    if failed_models:
-        logger.warning(f"⚠️  {len(failed_models)} modelos fallaron:")
-        for model_name, reason in failed_models:
-            logger.warning(f"   • {model_name}: {reason}")
+
+    # PASO 3: Convertir a Tipos Strawberry
+    for model_name, cls in raw_classes.items():
+        try:
+            # Verificamos si falló en paso 2
+            if not hasattr(cls, '__annotations__'):
+                continue
+                
+            strawberry_type = strawberry.type(cls)
+            type_registry[model_name] = strawberry_type
+            logger.info(f"✅ Tipo {model_name} registrado (con relaciones)")
+            
+        except Exception as e:
+            logger.error(f"❌ Error finalizando tipo {model_name}: {e}")
+            failed_models.append((model_name, str(e)))
     
     return type_registry
 
@@ -265,6 +277,12 @@ def convert_model_to_graphql(instance, strawberry_type):
 from app.graphql.strawchemy import create_filter_input_type, apply_strawchemy_filters
 from app.graphql.spanish import pluralize
 
+def lower_first(s: str) -> str:
+    """Baja la primera letra de un string"""
+    if not s:
+        return s
+    return s[0].lower() + s[1:]
+
 def create_queries(models, type_registry):
     """Crea queries automáticas con soporte Strawchemy"""
     queries = {}
@@ -327,10 +345,13 @@ def create_queries(models, type_registry):
         # 1. Singular standard
         queries[f"get{model_name}"] = strawberry.field(get_one_resolver)
         
-        # 2. Plural corto (convención frontend: 'tecnicos', 'notarias')
-        queries[plural_name.lower()] = strawberry.field(list_resolver)
+        # 2. Plural corto (convención frontend: 'tecnicos', 'agenciasInmobiliarias')
+        queries[lower_first(plural_name)] = strawberry.field(list_resolver)
         
-        # 3. Alias list{Name}s por compatibilidad
+        # 3. Alias list{Name}s por compatibilidad (listAgenciaInmobiliarias)
+        queries[f"list{plural_name}"] = strawberry.field(list_resolver)  # Usar plural_name aquí también es mejor práctica
+        # Mantenemos list{Model}s para absoluta backward compatibility si fuera necesario, 
+        # pero list{Plural} es más limpio. Frontend usa plural corto ahora.
         queries[f"list{model_name}s"] = strawberry.field(list_resolver)
 
     logger.info(f"✅ {len(queries)} queries creadas")

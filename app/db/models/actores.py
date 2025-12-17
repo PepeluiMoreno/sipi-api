@@ -184,6 +184,16 @@ class Notaria(UUIDPKMixin, AuditMixin, ContactoDireccionMixin, Base):
         back_populates="notarias"
     )
     transmisiones: Mapped[list["Transmision"]] = relationship("Transmision", back_populates="notaria")
+    titulares: Mapped[list["NotariaTitular"]] = relationship("NotariaTitular", back_populates="notaria", cascade="all, delete-orphan")
+
+class NotariaTitular(TitularBase):
+    """Notario titular"""
+    __tablename__ = "notarias_titulares"
+    
+    notaria_id: Mapped[str] = mapped_column(String(36), ForeignKey("notarias.id"), index=True)
+    
+    # Relaciones
+    notaria: Mapped["Notaria"] = relationship("Notaria", back_populates="titulares")
 
 class RegistroPropiedad(UUIDPKMixin, AuditMixin, IdentificacionMixin, ContactoDireccionMixin, TitularidadMixin, Base):
     """Registro de la Propiedad"""
