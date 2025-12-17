@@ -262,14 +262,19 @@ def convert_model_to_graphql(instance, strawberry_type):
     
     return strawberry_type(**kwargs)
 
+from app.graphql.strawchemy import create_filter_input_type, apply_strawchemy_filters
+
 def create_queries(models, type_registry):
-    """Crea queries automáticas"""
+    """Crea queries automáticas con soporte Strawchemy"""
     queries = {}
     
     for model_name, strawberry_type in type_registry.items():
         model = getattr(strawberry_type, '_model_class', None)
         if not model:
             continue
+            
+        # Generar Input Type para Filtros
+        FilterInput = create_filter_input_type(model)
         
         # Query singular (get by id)
         async def get_one_resolver(
@@ -286,13 +291,24 @@ def create_queries(models, type_registry):
                 logger.error(f"Error en get{model_name}: {e}")
                 return None
         
-        # Query plural (list all)
-        async def get_all_resolver(
-            info: strawberry.Info
+        # Query plural con Filtros Strawchemy (list all)
+        # Reemplaza a la antigua list y search
+        async def list_resolver(
+            info: strawberry.Info,
+            filter: Optional[FilterInput] = None,
+            limit: int = 50,
+            offset: int = 0
         ) -> List[strawberry_type]:
             try:
                 db = info.context["request"].state.db
-                stmt = select(model).limit(50)
+                stmt = select(model)
+                
+                # Aplicar filtros Strawchemy
+                if filter:
+                    stmt = apply_strawchemy_filters(stmt, filter, model)
+                
+                stmt = stmt.offset(offset).limit(limit)
+                
                 result = await db.execute(stmt)
                 instances = result.scalars().all()
                 return [convert_model_to_graphql(inst, strawberry_type) for inst in instances]
@@ -300,42 +316,16 @@ def create_queries(models, type_registry):
                 logger.error(f"Error en list{model_name}s: {e}")
                 return []
         
-        # Search query
-        async def search_resolver(
-            info: strawberry.Info,
-            search: Optional[str] = None,
-            limit: int = 50
-        ) -> List[strawberry_type]:
-            try:
-                db = info.context["request"].state.db
-                stmt = select(model)
-                
-                if search and hasattr(model, '__table__'):
-                    search_filters = []
-                    for column in model.__table__.columns:
-                        if isinstance(column.type, String):
-                            search_filters.append(column.ilike(f"%{search}%"))
-                    
-                    if search_filters:
-                        stmt = stmt.where(or_(*search_filters))
-                
-                stmt = stmt.limit(limit)
-                result = await db.execute(stmt)
-                instances = result.scalars().all()
-                return [convert_model_to_graphql(inst, strawberry_type) for inst in instances]
-            except Exception as e:
-                logger.error(f"Error en search{model_name}s: {e}")
-                return []
-        
         # Añadir anotaciones de retorno
         get_one_resolver.__annotations__['return'] = Optional[strawberry_type]
-        get_all_resolver.__annotations__['return'] = List[strawberry_type]
-        search_resolver.__annotations__['return'] = List[strawberry_type]
+        list_resolver.__annotations__['return'] = List[strawberry_type]
         
         # Registrar queries
         queries[f"get{model_name}"] = strawberry.field(get_one_resolver)
-        queries[f"list{model_name}s"] = strawberry.field(get_all_resolver)
-        queries[f"search{model_name}s"] = strawberry.field(search_resolver)
+        queries[f"list{model_name}s"] = strawberry.field(list_resolver)
+        
+        # Mantenemos search por compatibilidad hacia atrás si se desea, 
+        # pero list con filter cubre todo. Lo quitamos según plan.
     
     logger.info(f"✅ {len(queries)} queries creadas")
     return queries
