@@ -263,6 +263,7 @@ def convert_model_to_graphql(instance, strawberry_type):
     return strawberry_type(**kwargs)
 
 from app.graphql.strawchemy import create_filter_input_type, apply_strawchemy_filters
+from app.graphql.spanish import pluralize
 
 def create_queries(models, type_registry):
     """Crea queries automáticas con soporte Strawchemy"""
@@ -292,7 +293,6 @@ def create_queries(models, type_registry):
                 return None
         
         # Query plural con Filtros Strawchemy (list all)
-        # Reemplaza a la antigua list y search
         async def list_resolver(
             info: strawberry.Info,
             filter: Optional[FilterInput] = None,
@@ -320,13 +320,19 @@ def create_queries(models, type_registry):
         get_one_resolver.__annotations__['return'] = Optional[strawberry_type]
         list_resolver.__annotations__['return'] = List[strawberry_type]
         
-        # Registrar queries
-        queries[f"get{model_name}"] = strawberry.field(get_one_resolver)
-        queries[f"list{model_name}s"] = strawberry.field(list_resolver)
+        # Nombres de queries
+        plural_name = pluralize(model_name)
         
-        # Mantenemos search por compatibilidad hacia atrás si se desea, 
-        # pero list con filter cubre todo. Lo quitamos según plan.
-    
+        # Registrar queries
+        # 1. Singular standard
+        queries[f"get{model_name}"] = strawberry.field(get_one_resolver)
+        
+        # 2. Plural corto (convención frontend: 'tecnicos', 'notarias')
+        queries[plural_name.lower()] = strawberry.field(list_resolver)
+        
+        # 3. Alias list{Name}s por compatibilidad
+        queries[f"list{model_name}s"] = strawberry.field(list_resolver)
+
     logger.info(f"✅ {len(queries)} queries creadas")
     return queries
 
@@ -338,6 +344,9 @@ def create_mutations(models, type_registry, input_registry):
         model = getattr(strawberry_type, '_model_class', None)
         if not model:
             continue
+            
+        FilterInput = create_filter_input_type(model)
+        plural_name = pluralize(model_name)
         
         # CREATE mutation
         if f"{model_name}CreateInput" in input_registry:
@@ -374,8 +383,10 @@ def create_mutations(models, type_registry, input_registry):
             
             create_resolver.__annotations__['return'] = Optional[strawberry_type]
             mutations[f"create{model_name}"] = strawberry.mutation(create_resolver)
+            
+            # Alias frontend update convention? Frontend uses create{Model} usually.
         
-        # DELETE mutation
+        # DELETE mutation (Singular standard)
         async def delete_resolver(
             info: strawberry.Info,
             id: strawberry.ID
@@ -400,6 +411,35 @@ def create_mutations(models, type_registry, input_registry):
         
         delete_resolver.__annotations__['return'] = bool
         mutations[f"delete{model_name}"] = strawberry.mutation(delete_resolver)
+        
+        # DELETE MANY mutation (Frontend convention: deleteTecnicos(filter: ...))
+        async def delete_many_resolver(
+            info: strawberry.Info,
+            filter: FilterInput
+        ) -> List[strawberry_type]:
+            try:
+                db = info.context["request"].state.db
+                stmt = select(model)
+                stmt = apply_strawchemy_filters(stmt, filter, model)
+                
+                result = await db.execute(stmt)
+                instances = result.scalars().all()
+                
+                deleted_items = []
+                for instance in instances:
+                    item_data = convert_model_to_graphql(instance, strawberry_type)
+                    deleted_items.append(item_data)
+                    await db.delete(instance)
+                
+                await db.commit()
+                return deleted_items
+            except Exception as e:
+                logger.error(f"Error en delete{plural_name}: {e}")
+                await db.rollback()
+                return []
+
+        delete_many_resolver.__annotations__['return'] = List[strawberry_type]
+        mutations[f"delete{plural_name}"] = strawberry.mutation(delete_many_resolver)
     
     logger.info(f"✅ {len(mutations)} mutations creadas")
     return mutations
