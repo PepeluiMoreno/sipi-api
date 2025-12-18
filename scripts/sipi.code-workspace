@@ -1,0 +1,14 @@
+{
+	"folders": [
+		{
+			"path": "../../sipi-frontend"
+		},
+		{
+			"path": ".."
+		},
+		{
+			"path": "../../sipi-etl"
+		}
+	],
+	"settings": {}
+}
