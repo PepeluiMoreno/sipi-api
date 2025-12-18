@@ -1,8 +1,8 @@
 from typing import List, Tuple
 from sqlalchemy import select, func, and_, or_, cast, Float
 from sqlalchemy.ext.asyncio import AsyncSession
-from app.db.models.inmuebles import Inmueble
-from app.db.models.discovery import InmuebleRaw
+from sipi.db.models.inmuebles import Inmueble
+from sipi.db.models.discovery import InmuebleRaw
 
 async def sugerir_candidatos_censo(
     db: AsyncSession, 

@@ -4,14 +4,18 @@ import sys
 import os
 
 async def test_aiven_connection():
-    # URL de Aiven proporcionada por el usuario
-    url = "postgres://avnadmin:AVNS_wFKVpyYaBMZRRMDiFjz@pepelu-postgresql-joseluis-moreno.h.aivencloud.com:17113/defaultdb?sslmode=require"
-    
+    # URL de Aiven proporcionada por entorno
+    url = os.getenv("DATABASE_URL")
+    if not url:
+        print("ERROR: DATABASE_URL not set")
+        return
+
     # asyncpg requiere postgresql://
     if url.startswith("postgres://"):
         url = "postgresql://" + url[11:]
 
-    print(f"Connecting to: {url.split('@')[1]}") # Print host only for security
+    host = url.split('@')[1] if '@' in url else 'unknown'
+    print(f"Connecting to: {host}") # Print host only for security
     try:
         conn = await asyncio.wait_for(
             asyncpg.connect(url), 

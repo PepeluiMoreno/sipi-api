@@ -23,7 +23,7 @@ if database_url.startswith("postgresql://"):
     database_url = database_url.replace("postgresql://", "postgresql+asyncpg://", 1)
 
 try:
-    from app.db.base import Base
+    from sipi.db.base import Base
     
     # ✅ DESCUBRIMIENTO AUTOMÁTICO DE MODELOS (igual que schema.py)
     import importlib

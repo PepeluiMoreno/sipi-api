@@ -8,7 +8,7 @@ from starlette.responses import PlainTextResponse, JSONResponse, HTMLResponse, R
 from starlette.routing import Route, Mount
 from starlette.requests import Request
 
-from app.db.sessions.async_session import async_session_maker
+from sipi.db.sessions.async_session import async_session_maker
 
 # Variables globales para la app GraphQL (creación lazy)
 _schema = None

@@ -1,5 +1,5 @@
 from sqlalchemy import select
-from app.db.models.geografia import ComunidadAutonoma, Provincia, Municipio, RegistroPropiedad
+from sipi.db.models.geografia import ComunidadAutonoma, Provincia, Municipio, RegistroPropiedad
 
 def generate_code(name, length=2):
     """Genera código dummy basado en hash del nombre"""

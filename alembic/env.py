@@ -6,7 +6,7 @@ from sqlalchemy import engine_from_config, pool
 from logging.config import fileConfig
 
 # ✅ Importar Base desde tu estructura
-from app.db.base import Base
+from sipi.db.base import Base
 
 config = context.config
 fileConfig(config.config_file_name)

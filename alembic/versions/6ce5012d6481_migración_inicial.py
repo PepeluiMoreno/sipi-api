@@ -11,8 +11,8 @@ from sqlalchemy import text
 from geoalchemy2 import Geometry, Geography
 
 # Importar todos los modelos para que estén en Base.metadata
-from app.db.models import *
-from app.db.base import Base
+from sipi.db.models import *
+from sipi.db.base import Base
 
 # revision identifiers, used by Alembic.
 revision = '6ce5012d6481'

@@ -502,7 +502,7 @@ def create_mutations(models, type_registry, input_registry):
     ) -> bool:
         try:
             db = info.context["request"].state.db
-            from app.db.models.discovery import DeteccionAnuncio, InmuebleRaw
+            from sipi.db.models.discovery import DeteccionAnuncio, InmuebleRaw
             
             # 1. Verificar existencia
             res_ad = await db.execute(select(InmuebleRaw).where(InmuebleRaw.id == ad_id))
@@ -528,7 +528,7 @@ def create_mutations(models, type_registry, input_registry):
                 det.confirmed_at = datetime.utcnow()
             
             # 3. Marcar el inmueble del censo como 'en_venta'
-            from app.db.models.inmuebles import Inmueble
+            from sipi.db.models.inmuebles import Inmueble
             res_census = await db.execute(select(Inmueble).where(Inmueble.id == census_id))
             census_item = res_census.scalar_one_or_none()
             if census_item:
