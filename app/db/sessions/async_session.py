@@ -1,32 +1,35 @@
-"""SQLAlchemy Async Session Factory"""
-from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine, async_sessionmaker
-from sqlalchemy.pool import AsyncAdaptedQueuePool
+"""
+SQLAlchemy Async Session Wrapper using SIPI-CORE Manager
+Adapts the core manager to the API specific configuration (settings).
+"""
+from typing import AsyncGenerator
+from sqlalchemy.ext.asyncio import AsyncSession
 from app.core.config import settings
 
-engine = create_async_engine(
-    settings.DATABASE_URL,
-    poolclass=AsyncAdaptedQueuePool,
+# Importar el manager del core
+# Asumimos que sipi-core está instalado como package 'sipi'
+from sipi.db.sessions.manager import AsyncDatabaseManager
+
+# Instancia global del manager configurada con settings de la API
+db_manager = AsyncDatabaseManager(
+    database_url=settings.DATABASE_URL,
     pool_size=settings.POOL_SIZE,
     max_overflow=settings.POOL_MAX_OVERFLOW,
     pool_timeout=settings.POOL_TIMEOUT,
-    pool_pre_ping=True,
     pool_recycle=settings.POOL_RECYCLE,
     echo=settings.SQLALCHEMY_ECHO,
 )
 
-# NOMBRE CORRECTO que app.py espera
-async_session_maker = async_sessionmaker(
-    engine,
-    class_=AsyncSession,
-    expire_on_commit=False,
-)
+# Mantener compatibilidad con imports existentes en app.py
+# app.py espera: async_session_maker (o similar) y get_async_db
 
-AsyncSessionLocal = async_session_maker  # Alias opcional
+async_session_maker = db_manager.session_maker
 
-async def get_async_db():
-    async with async_session_maker() as session:
-        try:
-            yield session
-        finally:
-            await session.rollback()
-            await session.close()
+async def get_async_db() -> AsyncGenerator[AsyncSession, None]:
+    """Dependency injection wrapper"""
+    async with db_manager.get_session() as session:
+        yield session
+
+# Función para cerrar conexión al apagar app
+async def close_db_connection():
+    await db_manager.close()
