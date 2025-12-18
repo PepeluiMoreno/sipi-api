@@ -37,6 +37,7 @@ class Inmueble(UUIDPKMixin, AuditMixin, Base):
     valor_catastral: Mapped[Optional[Decimal]] = mapped_column(Numeric(15, 2))
     valor_mercado: Mapped[Optional[Decimal]] = mapped_column(Numeric(15, 2))
     
+    en_venta: Mapped[bool] = mapped_column(Boolean, default=False, index=True)
     activo: Mapped[bool] = mapped_column(Boolean, default=True, index=True)
     
     # Relaciones

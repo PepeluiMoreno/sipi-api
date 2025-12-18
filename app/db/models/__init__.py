@@ -46,6 +46,9 @@ from .subvenciones import ActuacionSubvencion, SubvencionAdministracion
 # Usuarios
 from .users import Usuario, Rol
 
+# Discovery (Anuncios)
+from .discovery import InmuebleRaw, DeteccionAnuncio
+
 __all__ = [
     'Base', 'UUIDPKMixin', 'AuditMixin',
     # Actores
@@ -74,5 +77,7 @@ __all__ = [
     # Subvenciones
     'ActuacionSubvencion', 'SubvencionAdministracion',
     # Usuarios
-    'Usuario', 'Rol'
+    'Usuario', 'Rol',
+    # Discovery
+    'InmuebleRaw', 'DeteccionAnuncio'
 ]

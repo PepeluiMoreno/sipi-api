@@ -12,6 +12,9 @@ from sqlalchemy.orm import RelationshipProperty
 
 logger = logging.getLogger(__name__)
 
+from app.graphql.types_custom import MatchSuggestion
+from app.core.matching import sugerir_candidatos_censo
+
 def get_graphql_type_for_column(column):
     """Determina el tipo GraphQL para una columna SQLAlchemy"""
     field_name = column.name
@@ -355,6 +358,33 @@ def create_queries(models, type_registry):
         queries[f"list{model_name}s"] = strawberry.field(list_resolver)
 
     logger.info(f"✅ {len(queries)} queries creadas")
+    
+    # 🕵️ Queries Especiales (Discovery / Matching)
+    async def sugerir_pareos_resolver(
+        info: strawberry.Info,
+        ad_id: int,
+        limit: int = 5
+    ) -> List[MatchSuggestion]:
+        try:
+            db = info.context["request"].state.db
+            candidatos = await sugerir_candidatos_censo(db, ad_id, limit=limit)
+            
+            suggestions = []
+            for inst, score in candidatos:
+                suggestions.append(MatchSuggestion(
+                    inmueble_id=inst.id,
+                    nombre=inst.nombre,
+                    municipio_nombre=inst.municipio.nombre if inst.municipio else None,
+                    provincia_nombre=inst.provincia.nombre if inst.provincia else None,
+                    match_score=float(score)
+                ))
+            return suggestions
+        except Exception as e:
+            logger.error(f"Error en sugerirPareos: {e}")
+            return []
+
+    queries["sugerirPareos"] = strawberry.field(sugerir_pareos_resolver)
+    
     return queries
 
 def create_mutations(models, type_registry, input_registry):
@@ -463,6 +493,56 @@ def create_mutations(models, type_registry, input_registry):
         mutations[f"delete{plural_name}"] = strawberry.mutation(delete_many_resolver)
     
     logger.info(f"✅ {len(mutations)} mutations creadas")
+    
+    # 🕵️ Mutation Especial (Discovery / Matching)
+    async def vincular_anuncio_resolver(
+        info: strawberry.Info,
+        ad_id: int,
+        census_id: str
+    ) -> bool:
+        try:
+            db = info.context["request"].state.db
+            from app.db.models.discovery import DeteccionAnuncio, InmuebleRaw
+            
+            # 1. Verificar existencia
+            res_ad = await db.execute(select(InmuebleRaw).where(InmuebleRaw.id == ad_id))
+            if not res_ad.scalar_one_or_none():
+                return False
+                
+            # 2. Buscar si ya hay una detección o crear una nueva
+            res_det = await db.execute(select(DeteccionAnuncio).where(DeteccionAnuncio.inmueble_id == ad_id))
+            det = res_det.scalar_one_or_none()
+            
+            if not det:
+                det = DeteccionAnuncio(
+                    inmueble_id=ad_id,
+                    score=1.0, 
+                    status="en_venta", # El anuncio confirma que el inmueble del censo está puesto a la venta
+                    inmueble_core_id=census_id,
+                    confirmed_at=datetime.utcnow()
+                )
+                db.add(det)
+            else:
+                det.status = "en_venta"
+                det.inmueble_core_id = census_id
+                det.confirmed_at = datetime.utcnow()
+            
+            # 3. Marcar el inmueble del censo como 'en_venta'
+            from app.db.models.inmuebles import Inmueble
+            res_census = await db.execute(select(Inmueble).where(Inmueble.id == census_id))
+            census_item = res_census.scalar_one_or_none()
+            if census_item:
+                census_item.en_venta = True
+            
+            await db.commit()
+            return True
+        except Exception as e:
+            logger.error(f"Error en vincularAnuncio: {e}")
+            await db.rollback()
+            return False
+
+    mutations["vincularAnuncio"] = strawberry.mutation(vincular_anuncio_resolver)
+    
     return mutations
 
 def create_schema(models_folder: str = "app/db/models") -> strawberry.Schema:
