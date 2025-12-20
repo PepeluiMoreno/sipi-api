@@ -6,6 +6,7 @@ def get_env(key: str, default: str = "") -> str:
 
 # Database
 DATABASE_URL = get_env("DATABASE_URL", "postgresql+asyncpg://sipi:sipi@db:5432/sipi")
+LEGACY_DATABASE_URL = get_env("LEGACY_DATABASE_URL", "")
 
 # SQLAlchemy (aplica a sync y async)
 SQLALCHEMY_ECHO = get_env("SQLALCHEMY_ECHO", "false").lower() == "true"
@@ -25,6 +26,8 @@ ENVIRONMENT = get_env("ENVIRONMENT", "development")
 class SimpleSettings:
     def __init__(self):
         self.DATABASE_URL = DATABASE_URL
+        self.LEGACY_DATABASE_URL = LEGACY_DATABASE_URL
+        self.SQLALCHEMY_ECHO = SQLALCHEMY_ECHO
         self.SQLALCHEMY_ECHO = SQLALCHEMY_ECHO
         self.POOL_SIZE = POOL_SIZE
         self.POOL_MAX_OVERFLOW = POOL_MAX_OVERFLOW
