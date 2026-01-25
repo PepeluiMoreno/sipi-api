@@ -1,0 +1,20 @@
+codigo_ine,nombre,nombre_oficial,activo
+01,Andalucía,Andalucía,True
+02,Aragón,Aragón,True
+03,"Asturias, Principado de","Asturias, Principado de",True
+04,"Balears, Illes","Balears, Illes",True
+05,Canarias,Canarias,True
+06,Cantabria,Cantabria,True
+07,Castilla y León,Castilla y León,True
+08,Castilla-La Mancha,Castilla-La Mancha,True
+09,Cataluña,Cataluña,True
+10,Comunitat Valenciana,Comunitat Valenciana,True
+11,Extremadura,Extremadura,True
+12,Galicia,Galicia,True
+13,"Madrid, Comunidad de","Madrid, Comunidad de",True
+14,"Murcia, Región de","Murcia, Región de",True
+15,"Navarra, Comunidad Foral de","Navarra, Comunidad Foral de",True
+16,País Vasco,País Vasco,True
+17,"Rioja, La","Rioja, La",True
+18,Ceuta,Ceuta,True
+19,Melilla,Melilla,True

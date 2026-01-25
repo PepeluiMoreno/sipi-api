@@ -19,13 +19,19 @@ PLURALES_EXCEPCIONES = {
     'el': 'los',
     'la': 'las',
     'un': 'unos',
-    
+
     # Modelos Compuestos (CamelCase preservation)
     'agenciainmobiliaria': 'AgenciasInmobiliarias',
     'colegioprofesional': 'ColegiosProfesionales',
     'registropropiedad': 'RegistrosPropiedad',
     'comunidadautonoma': 'ComunidadesAutonomas',
-    
+
+    # Versiones lowercase para queries
+    'ComunidadAutonoma': 'ComunidadesAutonomas',
+    'AgenciaInmobiliaria': 'AgenciasInmobiliarias',
+    'ColegioProfesional': 'ColegiosProfesionales',
+    'RegistroPropiedad': 'RegistrosPropiedad',
+
     # Titulares (sufijo simple es correcto habitualmente, pero por si acaso)
     'administraciontitular': 'AdministracionTitulares',
     'diocesistitular': 'DiocesisTitulares',
@@ -40,16 +46,14 @@ def pluralize(word: str) -> str:
     """
     if not word:
         return word
-        
+
+    # 1. Excepciones específicas - buscar primero con casing original
+    if word in PLURALES_EXCEPCIONES:
+        return PLURALES_EXCEPCIONES[word]
+
+    # Luego buscar con lowercase
     word_lower = word.lower()
-    
-    # 1. Excepciones específicas
     if word_lower in PLURALES_EXCEPCIONES:
-        # Recuperar casing original si es posible (simple append)
-        # Si la excepción cambia la raíz, es difícil, pero asumimos append o cambio simple.
-        # Por simplicidad, si está en excepciones, devolvemos la excepción (generalmente lowercase en el dict).
-        # Si necesitamos soporte camelCase en excepciones, el dict debería tener keys lower y values con casing correcto?
-        # Asumimos que las excepciones definen la palabra completa.
         return PLURALES_EXCEPCIONES[word_lower]
     
     # 2. Invariables

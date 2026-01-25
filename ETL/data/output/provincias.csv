@@ -1,0 +1,53 @@
+codigo_ine,nombre,nombre_oficial,comunidad_autonoma_codigo,activo
+01,Araba/Álava,Araba/Álava,16,True
+02,Albacete,Albacete,08,True
+03,Alicante/Alacant,Alicante/Alacant,10,True
+04,Almería,Almería,01,True
+05,Ávila,Ávila,07,True
+06,Badajoz,Badajoz,11,True
+07,"Balears, Illes","Balears, Illes",04,True
+08,Barcelona,Barcelona,09,True
+09,Burgos,Burgos,07,True
+10,Cáceres,Cáceres,11,True
+11,Cádiz,Cádiz,01,True
+12,Castellón/Castelló,Castellón/Castelló,10,True
+13,Ciudad Real,Ciudad Real,08,True
+14,Córdoba,Córdoba,01,True
+15,"Coruña, A","Coruña, A",12,True
+16,Cuenca,Cuenca,08,True
+17,Girona,Girona,09,True
+18,Granada,Granada,01,True
+19,Guadalajara,Guadalajara,08,True
+20,Gipuzkoa,Gipuzkoa,16,True
+21,Huelva,Huelva,01,True
+22,Huesca,Huesca,02,True
+23,Jaén,Jaén,01,True
+24,León,León,07,True
+25,Lleida,Lleida,09,True
+26,"Rioja, La","Rioja, La",17,True
+27,Lugo,Lugo,12,True
+28,Madrid,Madrid,13,True
+29,Málaga,Málaga,01,True
+30,Murcia,Murcia,14,True
+31,Navarra,Navarra,15,True
+32,Ourense,Ourense,12,True
+33,Asturias,Asturias,03,True
+34,Palencia,Palencia,07,True
+35,"Palmas, Las","Palmas, Las",05,True
+36,Pontevedra,Pontevedra,12,True
+37,Salamanca,Salamanca,07,True
+38,Santa Cruz de Tenerife,Santa Cruz de Tenerife,05,True
+39,Cantabria,Cantabria,06,True
+40,Segovia,Segovia,07,True
+41,Sevilla,Sevilla,01,True
+42,Soria,Soria,07,True
+43,Tarragona,Tarragona,09,True
+44,Teruel,Teruel,02,True
+45,Toledo,Toledo,08,True
+46,Valencia/València,Valencia/València,10,True
+47,Valladolid,Valladolid,07,True
+48,Bizkaia,Bizkaia,16,True
+49,Zamora,Zamora,07,True
+50,Zaragoza,Zaragoza,02,True
+51,Ceuta,Ceuta,18,True
+52,Melilla,Melilla,19,True

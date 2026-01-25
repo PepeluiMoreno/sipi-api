@@ -52,7 +52,7 @@ class IDFilter(FilterOperations[strawberry.ID]):
     pass
 
 @strawberry.input
-class DateFilter(FilterOperations[str]): 
+class DateFilter(FilterOperations[str]):
     # Usamos string para fechas en input GraphQL por simplicidad
     pass
 
@@ -79,7 +79,7 @@ def get_filter_type_for_python_type(py_type: Type) -> Type:
 
 def create_filter_input_type(model: Type, type_name_prefix: str = "") -> Type:
     """
-    Crea dinámicamente un Input Type de Strawberry con campos de filtro 
+    Crea dinámicamente un Input Type de Strawberry con campos de filtro
     para cada columna del modelo SQLAlchemy.
     """
     model_name = model.__name__
@@ -90,7 +90,7 @@ def create_filter_input_type(model: Type, type_name_prefix: str = "") -> Type:
 
     # Campos base
     annotations: Dict[str, Any] = {}
-    
+
     # 1. Campos de columnas
     if hasattr(model, '__table__'):
         for column in model.__table__.columns:
@@ -107,33 +107,26 @@ def create_filter_input_type(model: Type, type_name_prefix: str = "") -> Type:
 
     # 2. Construir la clase
     # Necesitamos definir la clase primero para poder referenciarla en _and / _or (Self reference)
-    
-    # Usamos un hack para tipos recursivos en runtime construct: 
+
+    # Usamos un hack para tipos recursivos en runtime construct:
     # Strawberry no soporta fácil tipos recursivos autogenerados sin definir la clase explicitamente.
     # Pero podemos usar Lazy Types o simplemente definir _and/_or como List['InputName'] si fuera static.
     # Para dynamic, lo haremos en dos pasos.
 
-    # Paso A: Crear la clase sin _and/_or
-    cls = type(input_name, (), {"__annotations__": annotations})
-    
-    # Paso B: Decorar con strawberry.input
-    input_type = strawberry.input(cls)
-    
-    # Paso C: Añadir _and y _or dinámicamente? 
-    # Strawberry valida las anotaciones al decorar. 
-    # Una opción robusta es permitir _and / _or como JSON genérico o simplificar 
-    # y no soportar anidamiento infinito recursivo en la definición del tipo, 
-    # sino solo 1 nivel si fuera necesario, pero Strawchemy frontend pide recursivo.
-    
-    # Solución: Usar List[Any] para _and/_or temporalmente o definir fields opcionales manualmente
-    # Nota: Strawberry permite `List["TypeName"]` lazy.
-    
-    # Re-intentamos definiendo la clase de forma completa con anotaciones lazy
-    annotations["_and"] = Optional[List[input_type]]
-    annotations["_or"] = Optional[List[input_type]]
-    
-    # Recargamos la clase con las nuevas anotaciones
-    cls = type(input_name, (), {"__annotations__": annotations})
+    # Crear la clase con las anotaciones y valores por defecto
+    # Nota: _and y _or se omiten por ahora para evitar recursión compleja
+    # El frontend puede hacer múltiples queries separadas si necesita lógica compleja
+
+    # IMPORTANTE: Agregar valores por defecto strawberry.UNSET a todos los campos
+    # para que Strawberry los trate como opcionales (None no funciona aquí)
+    defaults = {field_name: strawberry.UNSET for field_name in annotations.keys()}
+
+    cls = type(input_name, (), {
+        "__annotations__": annotations,
+        **defaults  # Agregar todos los campos con valor por defecto UNSET
+    })
+
+    # Decorar con strawberry.input una sola vez
     input_type = strawberry.input(cls)
 
     _filter_input_cache[input_name] = input_type
@@ -152,24 +145,34 @@ def apply_strawchemy_filters(query, filter_input: Any, model: Type):
         return query
 
     conditions = _build_conditions(filter_input, model)
+
     if conditions:
         query = query.where(and_(*conditions))
-    
+
     return query
+
+def _camel_to_snake(name: str) -> str:
+    """Convierte camelCase a snake_case"""
+    import re
+    name = re.sub('(.)([A-Z][a-z]+)', r'\1_\2', name)
+    return re.sub('([a-z0-9])([A-Z])', r'\1_\2', name).lower()
 
 def _build_conditions(filter_input: Any, model: Type) -> List[Any]:
     conditions = []
-    
+
     # Iterar sobre los campos del input
     # filter_input es una instancia de la clase generada por strawberry
-    
+
     # Convertir a dict para iterar fácil, saltando nulos
     data = vars(filter_input) if hasattr(filter_input, "__dict__") else {}
-    
+
     for field, value in data.items():
         if value is None:
             continue
-            
+        # Skip UNSET values
+        if hasattr(value, '__class__') and value.__class__.__name__ == 'UNSETType':
+            continue
+
         if field == "_and":
             # value es List[FilterInput]
             and_conditions = []
@@ -179,7 +182,7 @@ def _build_conditions(filter_input: Any, model: Type) -> List[Any]:
                     and_conditions.append(and_(*subs))
             if and_conditions:
                 conditions.append(and_(*and_conditions))
-                
+
         elif field == "_or":
             # value es List[FilterInput]
             or_conditions = []
@@ -191,27 +194,32 @@ def _build_conditions(filter_input: Any, model: Type) -> List[Any]:
                     or_conditions.append(and_(*subs))
             if or_conditions:
                 conditions.append(or_(*or_conditions))
-                
+
         else:
             # Es un campo del modelo (ej: 'nombre', 'edad')
-            if hasattr(model, field):
-                column = getattr(model, field)
+            # Convertir de camelCase (GraphQL) a snake_case (SQLAlchemy)
+            snake_field = _camel_to_snake(field)
+
+            if hasattr(model, snake_field):
+                column = getattr(model, snake_field)
                 field_conditions = _build_field_conditions(column, value)
-                if field_conditions:
+                # IMPORTANTE: No usar `if field_conditions:` porque SQLAlchemy BinaryExpression
+                # evalúa a False en boolean context. Usar `is not None` en su lugar.
+                if field_conditions is not None:
                     conditions.append(field_conditions)
-    
+
     return conditions
 
 def _build_field_conditions(column: InstrumentedAttribute, operation_input: Any):
     # operation_input es ej: StringFilterOperations(ilike="%abc%", eq=None)
     ops = vars(operation_input) if hasattr(operation_input, "__dict__") else {}
-    
+
     res_conditions = []
-    
+
     for op, val in ops.items():
         if val is None:
             continue
-            
+
         if op == "eq":
             res_conditions.append(column == val)
         elif op == "ne":
@@ -243,10 +251,10 @@ def _build_field_conditions(column: InstrumentedAttribute, operation_input: Any)
             res_conditions.append(column.startswith(val))
         elif op == "endswith":
             res_conditions.append(column.endswith(val))
-            
+
     if len(res_conditions) == 1:
         return res_conditions[0]
     elif len(res_conditions) > 1:
         return and_(*res_conditions)
-    
+
     return None

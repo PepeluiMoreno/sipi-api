@@ -1,13 +1,14 @@
 # app/graphql/schema.py - VERSIÓN COMPLETA CORREGIDA
 import strawberry
+from strawberry.scalars import JSON
 import logging
-from typing import List, Optional, Dict, Any, Type
+from typing import List, Optional, Dict, Any, Type, get_origin, get_args, get_type_hints
 from pathlib import Path
 import importlib
 import inspect
 from datetime import datetime, date
 from decimal import Decimal
-from sqlalchemy import String, select, or_
+from sqlalchemy import String, select, or_, inspect as sqlalchemy_inspect
 from sqlalchemy.orm import RelationshipProperty
 
 logger = logging.getLogger(__name__)
@@ -46,9 +47,30 @@ def get_graphql_type_for_column(column):
         # Manejar tipos especiales (geometry, json, etc.)
         return Optional[str] if column.nullable else str
 
-def load_all_models(folder: str = "app/db/models"):
+def load_all_models(folder: str = "sipi.db.models"):
     """Carga todos los modelos SQLAlchemy sin duplicados"""
     models_dict = {}  # Usar dict para deduplicar por nombre
+
+    # Si es un paquete Python (formato: sipi.db.models), importar directamente
+    if "." in folder:
+        try:
+            import sipi.db.models as models_module
+            for attr_name in dir(models_module):
+                if attr_name.startswith("_"):
+                    continue
+                attr = getattr(models_module, attr_name)
+                if hasattr(attr, "__tablename__") and not attr_name.startswith('_'):
+                    if attr_name not in models_dict:
+                        logger.debug(f"📦 Modelo encontrado: {attr_name} (tabla: {attr.__tablename__})")
+                        models_dict[attr_name] = attr
+            models = list(models_dict.values())
+            logger.info(f"✅ {len(models)} modelos únicos cargados desde {folder}")
+            return models
+        except Exception as e:
+            logger.error(f"❌ Error cargando modelos desde paquete {folder}: {e}")
+            return []
+
+    # Si es una ruta de archivo (fallback para compatibilidad)
     folder_path = Path(folder)
     
     for py_file in folder_path.glob("*.py"):
@@ -125,7 +147,7 @@ def create_graphql_types(models):
                     fields[field_name] = graphql_type
             
             # B. Relaciones
-            insp = inspect(model)
+            insp = sqlalchemy_inspect(model)
             for rel in insp.relationships:
                 target_model = rel.mapper.class_
                 target_name = target_model.__name__
@@ -145,24 +167,54 @@ def create_graphql_types(models):
             for attr_name in dir(model):
                 if attr_name.startswith('_'):
                     continue
-                    
+
                 attr = getattr(model, attr_name)
                 if isinstance(attr, property) and attr.fget:
-                    # Determinar tipo de retorno (simplificado)
+                    # Determinar tipo de retorno
                     return_type = Optional[str] # Default
-                    sig = inspect.signature(attr.fget)
-                    
-                    if sig.return_annotation != inspect.Parameter.empty:
-                        ann = sig.return_annotation
-                        # Mapeo básico de tipos
-                        if ann in (int, str, bool, float, datetime, date, Decimal):
-                             # Ajustar a tipos GQL (opcionales por defecto para properties safe)
-                             if ann == int: return_type = Optional[int]
-                             elif ann == bool: return_type = Optional[bool]
-                             elif ann == float: return_type = Optional[float]
-                             elif ann == Decimal: return_type = Optional[float]
-                             else: return_type = Optional[str]
-                    
+
+                    try:
+                        # Usar get_type_hints() para resolver forward references como 'List[dict]'
+                        type_hints = get_type_hints(attr.fget)
+                        ann = type_hints.get('return')
+
+                        if ann is not None:
+                            # Obtener el origin type (e.g., List, Optional) y args (e.g., [dict])
+                            origin = get_origin(ann)
+                            args = get_args(ann)
+
+                            # Manejo de List[X]
+                            if origin is list:
+                                if args and args[0] == dict:
+                                    # List[dict] → List[JSON]
+                                    return_type = List[JSON]
+                                elif args:
+                                    # List[otro_tipo] - intentar mapear el tipo interno
+                                    inner_type = args[0]
+                                    if inner_type == int:
+                                        return_type = List[int]
+                                    elif inner_type == str:
+                                        return_type = List[str]
+                                    elif inner_type == bool:
+                                        return_type = List[bool]
+                                    elif inner_type == float:
+                                        return_type = List[float]
+                                    else:
+                                        return_type = List[JSON]
+                            # Manejo de dict
+                            elif ann == dict or origin is dict:
+                                return_type = JSON
+                            # Manejo de tipos simples
+                            elif ann in (int, str, bool, float, datetime, date, Decimal):
+                                 # Ajustar a tipos GQL (opcionales por defecto para properties safe)
+                                 if ann == int: return_type = Optional[int]
+                                 elif ann == bool: return_type = Optional[bool]
+                                 elif ann == float: return_type = Optional[float]
+                                 elif ann == Decimal: return_type = Optional[float]
+                                 else: return_type = Optional[str]
+                    except Exception as e:
+                        logger.debug(f"⚠️  Error obteniendo type hints para {model_name}.{attr_name}: {e}")
+
                     fields[attr_name] = return_type
                     cls._property_methods[attr_name] = attr.fget
             
@@ -244,21 +296,39 @@ def convert_model_to_graphql(instance, strawberry_type):
     """Convierte instancia SQLAlchemy a instancia GraphQL"""
     if not instance:
         return None
-    
+
+    from sqlalchemy import inspect as sa_inspect
+
     kwargs = {}
-    
-    # Campos de columna
-    for field_name in strawberry_type.__annotations__.keys():
-        if hasattr(instance, field_name):
-            value = getattr(instance, field_name)
-            
+
+    # Usar inspect de la CLASE para obtener metadatos sin trigger lazy loads
+    mapper = sa_inspect(instance.__class__)
+    column_keys = set(mapper.column_attrs.keys())
+
+    # Acceder directamente a __dict__ para evitar descriptors de SQLAlchemy
+    instance_dict = {k: v for k, v in instance.__dict__.items() if not k.startswith('_')}
+
+    # Campos de columna y relaciones
+    for field_name, field_type in strawberry_type.__annotations__.items():
+        # Si es columna Y está cargado
+        if field_name in column_keys and field_name in instance_dict:
+            value = instance_dict[field_name]
+
             # Convertir tipos especiales
             if isinstance(value, (datetime, date)):
                 value = value.isoformat()
             elif isinstance(value, Decimal):
                 value = float(value)
-            
+
             kwargs[field_name] = value
+        # Si es una relación o campo faltante, poner valor por defecto
+        else:
+            # Para List types, usar lista vacía
+            if hasattr(field_type, '__origin__') and field_type.__origin__ is list:
+                kwargs[field_name] = []
+            # Para Optional types o cualquier otro, usar None
+            else:
+                kwargs[field_name] = None
     
     # Campos @property
     property_methods = getattr(strawberry_type, '_property_methods', {})
@@ -266,10 +336,12 @@ def convert_model_to_graphql(instance, strawberry_type):
         if prop_name in strawberry_type.__annotations__:
             try:
                 value = fget(instance)
+                # Convertir tipos especiales (pero NO dict/list, que se pasan directamente como JSON)
                 if isinstance(value, (datetime, date)):
                     value = value.isoformat()
                 elif isinstance(value, Decimal):
                     value = float(value)
+                # dict y list se dejan tal cual para el JSON scalar
                 kwargs[prop_name] = value
             except Exception as e:
                 logger.debug(f"⚠️  Error en propiedad {prop_name}: {e}")
@@ -294,52 +366,82 @@ def create_queries(models, type_registry):
         model = getattr(strawberry_type, '_model_class', None)
         if not model:
             continue
-            
+
         # Generar Input Type para Filtros
         FilterInput = create_filter_input_type(model)
-        
-        # Query singular (get by id)
-        async def get_one_resolver(
-            info: strawberry.Info, 
-            id: strawberry.ID
-        ) -> Optional[strawberry_type]:
-            try:
-                db = info.context["request"].state.db
-                stmt = select(model).where(model.id == id)
-                result = await db.execute(stmt)
-                instance = result.scalar_one_or_none()
-                return convert_model_to_graphql(instance, strawberry_type)
-            except Exception as e:
-                logger.error(f"Error en get{model_name}: {e}")
-                return None
-        
-        # Query plural con Filtros Strawchemy (list all)
-        async def list_resolver(
-            info: strawberry.Info,
-            filter: Optional[FilterInput] = None,
-            limit: int = 50,
-            offset: int = 0
-        ) -> List[strawberry_type]:
-            try:
-                db = info.context["request"].state.db
-                stmt = select(model)
-                
-                # Aplicar filtros Strawchemy
-                if filter:
-                    stmt = apply_strawchemy_filters(stmt, filter, model)
-                
-                stmt = stmt.offset(offset).limit(limit)
-                
-                result = await db.execute(stmt)
-                instances = result.scalars().all()
-                return [convert_model_to_graphql(inst, strawberry_type) for inst in instances]
-            except Exception as e:
-                logger.error(f"Error en list{model_name}s: {e}")
-                return []
-        
-        # Añadir anotaciones de retorno
-        get_one_resolver.__annotations__['return'] = Optional[strawberry_type]
-        list_resolver.__annotations__['return'] = List[strawberry_type]
+
+        # Factory function to create resolvers with proper closures
+        def make_get_one_resolver(model, strawberry_type, model_name):
+            async def get_one_resolver(
+                info: strawberry.Info,
+                id: strawberry.ID
+            ) -> Optional[strawberry_type]:
+                try:
+                    # Acceder a sesión desde contexto (patrón oficial ASGI)
+                    db = info.context["db"]
+                    stmt = select(model).where(model.id == id)
+                    result = await db.execute(stmt)
+                    instance = result.scalar_one_or_none()
+                    return convert_model_to_graphql(instance, strawberry_type)
+                except Exception as e:
+                    logger.error(f"Error en get{model_name}: {e}")
+                    return None
+            get_one_resolver.__annotations__['return'] = Optional[strawberry_type]
+            return get_one_resolver
+
+        def make_list_resolver(model, strawberry_type, model_name, FilterInput):
+            async def list_resolver(
+                info: strawberry.Info,
+                filter: Optional[FilterInput] = None,
+                limit: int = 50,
+                offset: int = 0
+            ) -> List[strawberry_type]:
+                try:
+                    logger.info(f"list{model_name}s resolver called")
+
+                    # Acceder a sesión desde contexto (patrón oficial ASGI)
+                    db = info.context["db"]
+                    stmt = select(model)
+
+                    # Aplicar filtros Strawchemy
+                    if filter:
+                        stmt = apply_strawchemy_filters(stmt, filter, model)
+
+                    stmt = stmt.offset(offset).limit(limit)
+                    logger.info(f"Executing query for {model_name}")
+
+                    result = await db.execute(stmt)
+                    instances = result.scalars().all()
+                    logger.info(f"Query returned {len(instances)} instances")
+
+                    # Expunge instances from session to avoid lazy loading issues
+                    for inst in instances:
+                        db.expunge(inst)
+
+                    logger.info(f"Starting conversion of {len(instances)} instances")
+                    converted = []
+                    for idx, inst in enumerate(instances):
+                        try:
+                            logger.info(f"Converting instance {idx+1}/{len(instances)}")
+                            item = convert_model_to_graphql(inst, strawberry_type)
+                            converted.append(item)
+                            logger.info(f"Instance {idx+1} converted successfully")
+                        except Exception as e:
+                            logger.error(f"Error converting instance {idx+1}: {e}", exc_info=True)
+                            raise
+                    logger.info(f"Converted to GraphQL types: {len(converted)} items")
+                    return converted
+                except Exception as e:
+                    logger.error(f"Error en list{model_name}s: {e}", exc_info=True)
+                    import traceback
+                    traceback.print_exc()
+                    return []
+            list_resolver.__annotations__['return'] = List[strawberry_type]
+            return list_resolver
+
+        # Create resolvers using factory functions
+        get_one_resolver = make_get_one_resolver(model, strawberry_type, model_name)
+        list_resolver = make_list_resolver(model, strawberry_type, model_name, FilterInput)
         
         # Nombres de queries
         plural_name = pluralize(model_name)
@@ -366,7 +468,7 @@ def create_queries(models, type_registry):
         limit: int = 5
     ) -> List[MatchSuggestion]:
         try:
-            db = info.context["request"].state.db
+            db = info.context["request"].scope["db_session"]
             candidatos = await sugerir_candidatos_censo(db, ad_id, limit=limit)
             
             suggestions = []
@@ -408,7 +510,7 @@ def create_mutations(models, type_registry, input_registry):
                 data: CreateInput
             ) -> Optional[strawberry_type]:
                 try:
-                    db = info.context["request"].state.db
+                    db = info.context["request"].scope["db_session"]
                     
                     # Extraer datos (solo columnas)
                     data_dict = {}
@@ -443,7 +545,7 @@ def create_mutations(models, type_registry, input_registry):
             id: strawberry.ID
         ) -> bool:
             try:
-                db = info.context["request"].state.db
+                db = info.context["request"].scope["db_session"]
                 
                 stmt = select(model).where(model.id == id)
                 result = await db.execute(stmt)
@@ -469,7 +571,7 @@ def create_mutations(models, type_registry, input_registry):
             filter: FilterInput
         ) -> List[strawberry_type]:
             try:
-                db = info.context["request"].state.db
+                db = info.context["request"].scope["db_session"]
                 stmt = select(model)
                 stmt = apply_strawchemy_filters(stmt, filter, model)
                 
@@ -501,7 +603,7 @@ def create_mutations(models, type_registry, input_registry):
         census_id: str
     ) -> bool:
         try:
-            db = info.context["request"].state.db
+            db = info.context["request"].scope["db_session"]
             from sipi.db.models.discovery import DeteccionAnuncio, InmuebleRaw
             
             # 1. Verificar existencia
@@ -545,7 +647,7 @@ def create_mutations(models, type_registry, input_registry):
     
     return mutations
 
-def create_schema(models_folder: str = "app/db/models") -> strawberry.Schema:
+def create_schema(models_folder: str = "sipi.db.models") -> strawberry.Schema:
     """Función principal que crea el schema GraphQL completo"""
     logger.info("🚀 Iniciando creación de schema GraphQL")
     

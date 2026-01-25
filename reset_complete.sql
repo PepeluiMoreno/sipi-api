@@ -1,0 +1,9 @@
+-- Limpiar base de datos completamente
+DROP SCHEMA IF EXISTS sipi CASCADE;
+DROP SCHEMA IF EXISTS portals CASCADE;
+DROP EXTENSION IF EXISTS postgis CASCADE;
+
+-- Recrear
+CREATE EXTENSION IF NOT EXISTS postgis;
+CREATE SCHEMA sipi;
+CREATE SCHEMA portals;

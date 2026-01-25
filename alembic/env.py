@@ -1,55 +1,74 @@
-# alembic/env.py
-from __future__ import with_statement
-import os
-from alembic import context
-from sqlalchemy import engine_from_config, pool
+"""Alembic environment configuration for SIPI API"""
 from logging.config import fileConfig
+from sqlalchemy import engine_from_config, pool, text as sa_text
+from alembic import context
+import os
+from dotenv import load_dotenv
+from geoalchemy2 import alembic_helpers
 
-# ✅ Importar Base desde tu estructura
+# Cargar variables de entorno
+load_dotenv()
+
+# Importar Base desde sipi-core
 from sipi.db.base import Base
+ 
+# Importar solo modelos del schema sipi (excluir portals)
+try: 
+    from sipi.db.models import (
+        users, inmuebles, geografia, 
+        actores, documentos, figuras_proteccion, 
+        historiografia, intervenciones, osm,
+        subvenciones, tipologias, transmisiones
+    )
+except ImportError:
+    # Si no se pueden importar los modelos, usamos solo Base
+    pass
 
-config = context.config
-fileConfig(config.config_file_name)
+def get_config():
+    """Get alembic configuration"""
+    config = context.config
+    if config.config_file_name is not None:
+        fileConfig(config.config_file_name)
+    return config
 
-# ✅ Usar el metadata de tu Base con schema dinámico
-target_metadata = Base.metadata
-
-# ✅ Leer URL desde variable de entorno
-DATABASE_URL = os.getenv("DATABASE_URL")
-if not DATABASE_URL:
-    raise RuntimeError("DATABASE_URL no está definida en las variables de entorno")
-
-def run_migrations_offline():
+def run_migrations_offline() -> None:
+    config = get_config()
+    url = config.get_main_option("sqlalchemy.url")
     context.configure(
-        url=DATABASE_URL,
-        target_metadata=target_metadata,
+        url=url,
+        target_metadata=Base.metadata,
         literal_binds=True,
-        version_table_schema=target_metadata.schema,
-        include_schemas=True
+        dialect_opts={"paramstyle": "named"},
+        include_object=alembic_helpers.include_object,  # ← Ignora tablas internas de PostGIS
+        process_revision_directives=alembic_helpers.writer,  # ← Maneja operaciones espaciales
+        render_item=alembic_helpers.render_item,  # ← Añade imports de geoalchemy2 en migraciones
     )
 
     with context.begin_transaction():
         context.run_migrations()
 
-def run_migrations_online():
+def run_migrations_online() -> None:
+    config = get_config()
     connectable = engine_from_config(
-        {"sqlalchemy.url": DATABASE_URL},
+        config.get_section(config.config_ini_section, {}),
         prefix="sqlalchemy.",
         poolclass=pool.NullPool,
     )
 
     with connectable.connect() as connection:
+        # Create schemas if they don't exist
+        connection.execute(sa_text("CREATE EXTENSION IF NOT EXISTS postgis;"))
+        connection.execute(sa_text("CREATE SCHEMA IF NOT EXISTS sipi;"))
+        connection.commit()
+        
         context.configure(
-            connection=connection,
-            target_metadata=target_metadata,
-            version_table_schema=target_metadata.schema,
-            include_schemas=True
+            connection=connection, target_metadata=Base.metadata,
+            include_object=alembic_helpers.include_object,  # ← Ignora tablas internas de PostGIS
+            process_revision_directives=alembic_helpers.writer,  # ← Maneja operaciones espaciales
+            render_item=alembic_helpers.render_item,  # ← Añade imports de geoalchemy2 en migraciones
         )
 
         with context.begin_transaction():
-            # ✅ Asegurar que el schema esté activo
-            if target_metadata.schema:
-                context.execute(f'SET search_path TO {target_metadata.schema}')
             context.run_migrations()
 
 if context.is_offline_mode():
