@@ -1,23 +1,26 @@
 #!/usr/bin/env python3
 """
 Script de inicialización de la Base de Datos para ETL.
-Carga los esquemas SQL definidos en el proyecto 'sipi-etl' en la base de datos de 'sipi-api'.
+Carga los esquemas SQL definidos en el proyecto 'sipi-etl' en la base de datos.
+
+Usa la configuración de base de datos de sipi-core.
 """
 
 import sys
-import os
 import asyncio
 from pathlib import Path
-from sqlalchemy.ext.asyncio import create_async_engine
 from sqlalchemy import text
 
-# Configurar Paths
-script_dir = Path(__file__).parent # ETL/loaders
-project_root = script_dir.parents[1] # sipi-api
-etl_project_root = project_root.parent / 'sipi-etl' # sipi-etl hermano
+# Agregar sipi-core al path
+script_dir = Path(__file__).parent
+SIPI_CORE_PATH = script_dir.parent.parent.parent / "sipi-core"
+sys.path.insert(0, str(SIPI_CORE_PATH / "src"))
 
-sys.path.append(str(project_root))
-from app.core.config import settings
+# Importar db_manager ya configurado
+from sipi.db.sessions.async_session import db_manager
+
+# Proyecto sipi-etl hermano
+etl_project_root = script_dir.parent.parent.parent / 'sipi-etl'
 
 async def run_sql_file(conn, file_path):
     print(f"📄 Ejecutando: {file_path.name}")
@@ -41,11 +44,10 @@ async def main():
         print(f"❌ No se encuentra el directorio SQL en: {sql_dir}")
         return
 
-    # Ajustar conexión local
-    DB_URL = settings.DATABASE_URL.replace("db", "localhost") if "db" in settings.DATABASE_URL else settings.DATABASE_URL
-    engine = create_async_engine(DB_URL, echo=True)
+    # Usar engine ya configurado de sipi-core
+    engine = db_manager.engine
 
-    print(f"🔌 Conectando a BD: {DB_URL.split('@')[-1]}") # Ocultar credenciales
+    print(f"🔌 Conectando a BD usando sipi-core...")
     
     # Orden de ejecución importante
     files_to_run = [
@@ -65,7 +67,13 @@ async def main():
 
     print("\n🏁 Inicialización de esquemas ETL completada.")
 
+async def run():
+    try:
+        await main()
+    finally:
+        await db_manager.close()
+
 if __name__ == '__main__':
     if sys.platform == 'win32':
         asyncio.set_event_loop_policy(asyncio.WindowsSelectorEventLoopPolicy())
-    asyncio.run(main())
+    asyncio.run(run())

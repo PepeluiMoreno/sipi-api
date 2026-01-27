@@ -1,5 +1,13 @@
+import sys
+from pathlib import Path
+
+# Agregar sipi-core al path para importar sus módulos
+SIPI_CORE_PATH = Path(__file__).parent.parent.parent.parent / "sipi-core"
+sys.path.insert(0, str(SIPI_CORE_PATH / "src"))
+
 from sqlalchemy import select
-from sipi.db.models.geografia import ComunidadAutonoma, Provincia, Municipio, RegistroPropiedad
+from sipi.db.models.geografia import ComunidadAutonoma, Provincia, Municipio
+from sipi.db.models.actores import RegistroPropiedad
 
 def generate_code(name, length=2):
     """Genera código dummy basado en hash del nombre"""
@@ -13,13 +21,12 @@ async def get_or_create_ca(session, nombre):
     stmt = select(ComunidadAutonoma).where(ComunidadAutonoma.nombre == nombre)
     result = await session.execute(stmt)
     obj = result.scalar_one_or_none()
-    
+
     if not obj:
         code = generate_code(nombre, 2)
         obj = ComunidadAutonoma(
             nombre=nombre,
             nombre_oficial=nombre,
-            codigo=code,
             codigo_ine=code,
             activo=True
         )
@@ -30,7 +37,6 @@ async def get_or_create_ca(session, nombre):
             await session.rollback()
             import uuid
             code = str(uuid.uuid4())[:2].upper()
-            obj.codigo = code
             obj.codigo_ine = code
             session.add(obj)
             await session.flush()
@@ -41,16 +47,14 @@ async def get_or_create_provincia(session, nombre, ca_id):
     stmt = select(Provincia).where(Provincia.nombre == nombre)
     result = await session.execute(stmt)
     obj = result.scalar_one_or_none()
-    
+
     if not obj:
         code = generate_code(nombre, 2)
-        iso = generate_code(nombre, 3)
         obj = Provincia(
             nombre=nombre,
             nombre_oficial=nombre,
             comunidad_autonoma_id=ca_id,
-            codigo=code,
-            codigo_iso=iso,
+            codigo_ine=code,
             activo=True
         )
         session.add(obj)

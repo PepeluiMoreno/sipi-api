@@ -397,8 +397,6 @@ def create_queries(models, type_registry):
                 offset: int = 0
             ) -> List[strawberry_type]:
                 try:
-                    logger.info(f"list{model_name}s resolver called")
-
                     # Acceder a sesión desde contexto (patrón oficial ASGI)
                     db = info.context["db"]
                     stmt = select(model)
@@ -408,28 +406,24 @@ def create_queries(models, type_registry):
                         stmt = apply_strawchemy_filters(stmt, filter, model)
 
                     stmt = stmt.offset(offset).limit(limit)
-                    logger.info(f"Executing query for {model_name}")
 
                     result = await db.execute(stmt)
                     instances = result.scalars().all()
-                    logger.info(f"Query returned {len(instances)} instances")
+                    logger.debug(f"{model_name}: query returned {len(instances)} instances")
 
                     # Expunge instances from session to avoid lazy loading issues
                     for inst in instances:
                         db.expunge(inst)
 
-                    logger.info(f"Starting conversion of {len(instances)} instances")
                     converted = []
                     for idx, inst in enumerate(instances):
                         try:
-                            logger.info(f"Converting instance {idx+1}/{len(instances)}")
                             item = convert_model_to_graphql(inst, strawberry_type)
                             converted.append(item)
-                            logger.info(f"Instance {idx+1} converted successfully")
                         except Exception as e:
-                            logger.error(f"Error converting instance {idx+1}: {e}", exc_info=True)
+                            logger.error(f"Error converting instance {idx+1}/{len(instances)}: {e}", exc_info=True)
                             raise
-                    logger.info(f"Converted to GraphQL types: {len(converted)} items")
+                    logger.debug(f"Converted {len(converted)} instances to GraphQL types")
                     return converted
                 except Exception as e:
                     logger.error(f"Error en list{model_name}s: {e}", exc_info=True)
@@ -468,9 +462,9 @@ def create_queries(models, type_registry):
         limit: int = 5
     ) -> List[MatchSuggestion]:
         try:
-            db = info.context["request"].scope["db_session"]
+            db = info.context["db"]
             candidatos = await sugerir_candidatos_censo(db, ad_id, limit=limit)
-            
+
             suggestions = []
             for inst, score in candidatos:
                 suggestions.append(MatchSuggestion(
@@ -504,94 +498,153 @@ def create_mutations(models, type_registry, input_registry):
         # CREATE mutation
         if f"{model_name}CreateInput" in input_registry:
             CreateInput = input_registry[f"{model_name}CreateInput"]
-            
-            async def create_resolver(
-                info: strawberry.Info,
-                data: CreateInput
-            ) -> Optional[strawberry_type]:
-                try:
-                    db = info.context["request"].scope["db_session"]
-                    
-                    # Extraer datos (solo columnas)
-                    data_dict = {}
-                    if hasattr(model, '__table__'):
-                        for column in model.__table__.columns:
-                            col_name = column.name
-                            if col_name != 'id' and hasattr(data, col_name):
-                                value = getattr(data, col_name)
-                                if value is not None:
-                                    data_dict[col_name] = value
-                    
-                    # Crear instancia
-                    instance = model(**data_dict)
-                    db.add(instance)
-                    await db.commit()
-                    await db.refresh(instance)
-                    
-                    return convert_model_to_graphql(instance, strawberry_type)
-                except Exception as e:
-                    logger.error(f"Error en create{model_name}: {e}")
-                    await db.rollback()
-                    return None
-            
-            create_resolver.__annotations__['return'] = Optional[strawberry_type]
-            mutations[f"create{model_name}"] = strawberry.mutation(create_resolver)
-            
-            # Alias frontend update convention? Frontend uses create{Model} usually.
-        
-        # DELETE mutation (Singular standard)
-        async def delete_resolver(
-            info: strawberry.Info,
-            id: strawberry.ID
-        ) -> bool:
-            try:
-                db = info.context["request"].scope["db_session"]
-                
-                stmt = select(model).where(model.id == id)
-                result = await db.execute(stmt)
-                instance = result.scalar_one_or_none()
-                
-                if not instance:
-                    return False
-                
-                await db.delete(instance)
-                await db.commit()
-                return True
-            except Exception as e:
-                logger.error(f"Error en delete{model_name}: {e}")
-                await db.rollback()
-                return False
-        
-        delete_resolver.__annotations__['return'] = bool
-        mutations[f"delete{model_name}"] = strawberry.mutation(delete_resolver)
-        
-        # DELETE MANY mutation (Frontend convention: deleteTecnicos(filter: ...))
-        async def delete_many_resolver(
-            info: strawberry.Info,
-            filter: FilterInput
-        ) -> List[strawberry_type]:
-            try:
-                db = info.context["request"].scope["db_session"]
-                stmt = select(model)
-                stmt = apply_strawchemy_filters(stmt, filter, model)
-                
-                result = await db.execute(stmt)
-                instances = result.scalars().all()
-                
-                deleted_items = []
-                for instance in instances:
-                    item_data = convert_model_to_graphql(instance, strawberry_type)
-                    deleted_items.append(item_data)
-                    await db.delete(instance)
-                
-                await db.commit()
-                return deleted_items
-            except Exception as e:
-                logger.error(f"Error en delete{plural_name}: {e}")
-                await db.rollback()
-                return []
 
-        delete_many_resolver.__annotations__['return'] = List[strawberry_type]
+            # Factory function para evitar problemas de closure
+            def make_create_resolver(model, strawberry_type, model_name, CreateInput):
+                async def create_resolver(
+                    info: strawberry.Info,
+                    data: CreateInput
+                ) -> Optional[strawberry_type]:
+                    try:
+                        db = info.context["db"]
+
+                        # Extraer datos (solo columnas)
+                        data_dict = {}
+                        if hasattr(model, '__table__'):
+                            for column in model.__table__.columns:
+                                col_name = column.name
+                                if col_name != 'id' and hasattr(data, col_name):
+                                    value = getattr(data, col_name)
+                                    if value is not None:
+                                        data_dict[col_name] = value
+
+                        # Crear instancia
+                        instance = model(**data_dict)
+                        db.add(instance)
+                        await db.commit()
+                        await db.refresh(instance)
+
+                        return convert_model_to_graphql(instance, strawberry_type)
+                    except Exception as e:
+                        logger.error(f"Error en create{model_name}: {e}")
+                        await db.rollback()
+                        return None
+                create_resolver.__annotations__['return'] = Optional[strawberry_type]
+                return create_resolver
+
+            create_resolver = make_create_resolver(model, strawberry_type, model_name, CreateInput)
+            mutations[f"create{model_name}"] = strawberry.mutation(create_resolver)
+
+        # UPDATE mutation
+        if f"{model_name}UpdateInput" in input_registry:
+            UpdateInput = input_registry[f"{model_name}UpdateInput"]
+
+            # Factory function para evitar problemas de closure
+            def make_update_resolver(model, strawberry_type, model_name, UpdateInput):
+                async def update_resolver(
+                    info: strawberry.Info,
+                    data: UpdateInput
+                ) -> Optional[strawberry_type]:
+                    try:
+                        db = info.context["db"]
+
+                        # Obtener ID del input
+                        item_id = getattr(data, 'id', None)
+                        if not item_id:
+                            logger.error(f"update{model_name}: ID requerido")
+                            return None
+
+                        # Buscar instancia existente
+                        stmt = select(model).where(model.id == item_id)
+                        result = await db.execute(stmt)
+                        instance = result.scalar_one_or_none()
+
+                        if not instance:
+                            logger.error(f"update{model_name}: No encontrado id={item_id}")
+                            return None
+
+                        # Actualizar campos (solo columnas, excluyendo id)
+                        if hasattr(model, '__table__'):
+                            for column in model.__table__.columns:
+                                col_name = column.name
+                                if col_name != 'id' and hasattr(data, col_name):
+                                    value = getattr(data, col_name)
+                                    if value is not None:
+                                        setattr(instance, col_name, value)
+
+                        await db.commit()
+                        await db.refresh(instance)
+
+                        return convert_model_to_graphql(instance, strawberry_type)
+                    except Exception as e:
+                        logger.error(f"Error en update{model_name}: {e}")
+                        await db.rollback()
+                        return None
+                update_resolver.__annotations__['return'] = Optional[strawberry_type]
+                return update_resolver
+
+            update_resolver = make_update_resolver(model, strawberry_type, model_name, UpdateInput)
+            mutations[f"update{model_name}"] = strawberry.mutation(update_resolver)
+
+        # DELETE mutation (Singular standard)
+        def make_delete_resolver(model, model_name):
+            async def delete_resolver(
+                info: strawberry.Info,
+                id: strawberry.ID
+            ) -> bool:
+                try:
+                    db = info.context["db"]
+
+                    stmt = select(model).where(model.id == id)
+                    result = await db.execute(stmt)
+                    instance = result.scalar_one_or_none()
+
+                    if not instance:
+                        return False
+
+                    await db.delete(instance)
+                    await db.commit()
+                    return True
+                except Exception as e:
+                    logger.error(f"Error en delete{model_name}: {e}")
+                    await db.rollback()
+                    return False
+            delete_resolver.__annotations__['return'] = bool
+            return delete_resolver
+
+        delete_resolver = make_delete_resolver(model, model_name)
+        mutations[f"delete{model_name}"] = strawberry.mutation(delete_resolver)
+
+        # DELETE MANY mutation (Frontend convention: deleteTecnicos(filter: ...))
+        def make_delete_many_resolver(model, strawberry_type, plural_name, FilterInput):
+            async def delete_many_resolver(
+                info: strawberry.Info,
+                filter: FilterInput
+            ) -> List[strawberry_type]:
+                try:
+                    db = info.context["db"]
+                    stmt = select(model)
+                    stmt = apply_strawchemy_filters(stmt, filter, model)
+
+                    result = await db.execute(stmt)
+                    instances = result.scalars().all()
+
+                    deleted_items = []
+                    for instance in instances:
+                        item_data = convert_model_to_graphql(instance, strawberry_type)
+                        deleted_items.append(item_data)
+                        await db.delete(instance)
+
+                    await db.commit()
+                    return deleted_items
+                except Exception as e:
+                    logger.error(f"Error en delete{plural_name}: {e}")
+                    await db.rollback()
+                    return []
+            delete_many_resolver.__annotations__['return'] = List[strawberry_type]
+            return delete_many_resolver
+
+        delete_many_resolver = make_delete_many_resolver(model, strawberry_type, plural_name, FilterInput)
         mutations[f"delete{plural_name}"] = strawberry.mutation(delete_many_resolver)
     
     logger.info(f"✅ {len(mutations)} mutations creadas")
@@ -600,42 +653,42 @@ def create_mutations(models, type_registry, input_registry):
     async def vincular_anuncio_resolver(
         info: strawberry.Info,
         ad_id: int,
-        census_id: str
+        listado_cee_id: str
     ) -> bool:
         try:
-            db = info.context["request"].scope["db_session"]
+            db = info.context["db"]
             from sipi.db.models.discovery import DeteccionAnuncio, InmuebleRaw
-            
+
             # 1. Verificar existencia
             res_ad = await db.execute(select(InmuebleRaw).where(InmuebleRaw.id == ad_id))
             if not res_ad.scalar_one_or_none():
                 return False
-                
+
             # 2. Buscar si ya hay una detección o crear una nueva
             res_det = await db.execute(select(DeteccionAnuncio).where(DeteccionAnuncio.inmueble_id == ad_id))
             det = res_det.scalar_one_or_none()
-            
+
             if not det:
                 det = DeteccionAnuncio(
                     inmueble_id=ad_id,
-                    score=1.0, 
-                    status="en_venta", # El anuncio confirma que el inmueble del censo está puesto a la venta
-                    inmueble_core_id=census_id,
+                    score=1.0,
+                    status="en_venta",
+                    inmueble_core_id=listado_cee_id,
                     confirmed_at=datetime.utcnow()
                 )
                 db.add(det)
             else:
                 det.status = "en_venta"
-                det.inmueble_core_id = census_id
+                det.inmueble_core_id = listado_cee_id
                 det.confirmed_at = datetime.utcnow()
-            
+
             # 3. Marcar el inmueble del censo como 'en_venta'
             from sipi.db.models.inmuebles import Inmueble
-            res_census = await db.execute(select(Inmueble).where(Inmueble.id == census_id))
-            census_item = res_census.scalar_one_or_none()
-            if census_item:
-                census_item.en_venta = True
-            
+            res_census = await db.execute(select(Inmueble).where(Inmueble.id == listado_cee_id))
+            listado_cee_item = res_census.scalar_one_or_none()
+            if listado_cee_item:
+                listado_cee_item.en_venta = True
+
             await db.commit()
             return True
         except Exception as e:

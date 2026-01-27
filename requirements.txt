@@ -1,4 +1,5 @@
-# Base de datos y ORM
+
+ # Base de datos y ORM
 # sipi-core>=0.1.0
 sqlalchemy[asyncio]~=2.0.36
 alembic~=1.14.0
@@ -34,12 +35,50 @@ pydantic~=2.9.2
 pydantic-core~=2.23.2
 httpx[http2]~=0.24.1
 
-#   FastAPI
+# FastAPI
 fastapi~=0.128.0
-
-# requests library
-requests~=2.32.0
 
 # Environment variable management
 python-dotenv~=1.0.1
- 
+
+# ===========================================
+# DEPENDENCIAS ESPECÍFICAS PARA ETL/SCRAPING
+# ===========================================
+
+# Para extract_registradores.py (extracción web)
+aiohttp~=3.10.0
+beautifulsoup4~=4.12.0
+
+# Para transformación de datos
+openpyxl~=3.1.2  # Para leer Excel si es necesario
+xlrd~=2.0.1      # Soporte para .xls
+
+# Para carga masiva
+psutil~=5.9.0    # Monitoreo de recursos
+
+# Utilidades adicionales para ETL
+tqdm~=4.66.0     # Barras de progreso
+chardet~=5.2.0   # Detección de codificación
+
+# Testing para scripts ETL
+pytest~=8.3.2
+pytest-asyncio~=0.24.0
+
+# Logging mejorado
+structlog~=24.3.0
+
+# Manipulación de fechas
+python-dateutil~=2.9.0
+
+# ===========================================
+# GRUPOS DE DEPENDENCIAS (para instalación selectiva)
+# ===========================================
+# Instalar todo: pip install -r requirements.txt
+# 
+# Solo base: pip install sqlalchemy[asyncio] alembic asyncpg psycopg[binary] GeoAlchemy2
+# 
+# Solo scraping: pip install aiohttp beautifulsoup4 pandas requests
+# 
+# Solo ETL: pip install pandas openpyxl xlrd tqdm chardet python-dateutil
+# 
+# Solo utilidades: pip install python-dotenv unidecode psutil

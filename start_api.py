@@ -1,37 +1,29 @@
 #!/usr/bin/env python
-"""
-Script de inicio para el servidor API GraphQL de SIPI
-Lee configuración desde sipi-core/.env
-"""
-import os
+"""Inicio del servidor API GraphQL de SIPI"""
 import sys
 from pathlib import Path
 
-# Cargar variables de entorno desde sipi-core/.env
-env_file = Path(__file__).parent.parent / 'sipi-core' / '.env'
+# Agregar directorios al path
+root_dir = Path(__file__).parent
+sipi_core = root_dir.parent / "sipi-core"
+sys.path.insert(0, str(root_dir))
+sys.path.insert(0, str(sipi_core))
 
-if env_file.exists():
-    with open(env_file) as f:
-        for line in f:
-            line = line.strip()
-            if line and not line.startswith('#') and '=' in line:
-                key, value = line.split('=', 1)
-                os.environ.setdefault(key, value)
+# Cargar configuracion desde sipi-core
+from config import CONFIG
 
-if __name__ == '__main__':
-    # Obtener configuración
-    host = os.getenv('API_HOST', 'localhost')
-    port = int(os.getenv('API_PORT', '8040'))
-
-    print(f"Iniciando servidor API en {host}:{port}")
-    print(f"GraphQL endpoint: http://{host}:{port}/graphql")
-
-    # Importar y ejecutar uvicorn
+if __name__ == "__main__":
     import uvicorn
 
+    host = CONFIG.API_HOST
+    port = CONFIG.API_PORT
+
+    print(f"API: http://{host}:{port}/graphql")
+
     uvicorn.run(
-        "app.graphql.app:application",
+        "app.main:app",
         host=host,
         port=port,
-        reload=True
+        reload=CONFIG.DEBUG,
+        log_level="info"
     )
