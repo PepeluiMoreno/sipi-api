@@ -25,5 +25,6 @@ if __name__ == "__main__":
         host=host,
         port=port,
         reload=CONFIG.DEBUG,
+        reload_excludes=[".venv/*", "ETL/*"],   
         log_level="info"
     )

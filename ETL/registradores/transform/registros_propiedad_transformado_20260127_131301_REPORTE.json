@@ -1,0 +1,52 @@
+{
+  "fecha": "2026-01-27T13:13:01.720719",
+  "archivo_origen": "c:\\Users\\Jose\\dev\\sipi-api\\ETL\\registradores\\transform\\../extract\\registros_propiedad_20260125_235220.csv",
+  "archivo_destino": "c:\\Users\\Jose\\dev\\sipi-api\\ETL\\registradores\\transform\\../transform\\registros_propiedad_transformado_20260127_131301.csv",
+  "estadisticas": {
+    "total": 1059,
+    "ok": 1018,
+    "error": 41,
+    "provincias_no_encontradas": [],
+    "municipios_no_encontrados": [
+      "SEU DURGELL LA (LLEIDA)",
+      "CASTELLON DE LA PLANACASTELLO DE LA PLA (CASTELLÓN)",
+      "OROPESA DEL MARORPESA (CASTELLÓN)",
+      "ALICANTEALACANT (ALICANTE)",
+      "ALCOYALCOI (ALICANTE)",
+      "CALLOSA DEN SARRIA (ALICANTE)",
+      "ELCHEELX (ALICANTE)",
+      "JAVEAXABIA (ALICANTE)",
+      "JIJONAXIXONA (ALICANTE)",
+      "MONOVARMONOVER (ALICANTE)",
+      "VILLAJOYOSAVILA JOIOSA LA (ALICANTE)",
+      "MAHON (ILLES BALEARS)",
+      "BISBAL DEMPORDA LA (GIRONA)",
+      "ESTELLALIZARRA (NAVARRA)",
+      "PAMPLONAIRUNA (NAVARRA)",
+      "SAN AGUSTIN DE GUADALIX (MADRID)",
+      "SAGUNTOSAGUNT (VALENCIA)"
+    ],
+    "resoluciones_por_ine": 0,
+    "resoluciones_por_nombre": 1018
+  },
+  "provincias_no_encontradas": [],
+  "municipios_no_encontrados": [
+    "SEU DURGELL LA (LLEIDA)",
+    "CASTELLON DE LA PLANACASTELLO DE LA PLA (CASTELLÓN)",
+    "OROPESA DEL MARORPESA (CASTELLÓN)",
+    "ALICANTEALACANT (ALICANTE)",
+    "ALCOYALCOI (ALICANTE)",
+    "CALLOSA DEN SARRIA (ALICANTE)",
+    "ELCHEELX (ALICANTE)",
+    "JAVEAXABIA (ALICANTE)",
+    "JIJONAXIXONA (ALICANTE)",
+    "MONOVARMONOVER (ALICANTE)",
+    "VILLAJOYOSAVILA JOIOSA LA (ALICANTE)",
+    "MAHON (ILLES BALEARS)",
+    "BISBAL DEMPORDA LA (GIRONA)",
+    "ESTELLALIZARRA (NAVARRA)",
+    "PAMPLONAIRUNA (NAVARRA)",
+    "SAN AGUSTIN DE GUADALIX (MADRID)",
+    "SAGUNTOSAGUNT (VALENCIA)"
+  ]
+}

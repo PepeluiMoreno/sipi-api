@@ -1,0 +1,2582 @@
+{
+  "estructuras_sintacticas": {
+    "TIPO CONECTOR CONECTOR TIPO": 548,
+    "TIPO CONECTOR TITULO PROPIO": 409,
+    "TIPO CONECTOR PROPIO": 294,
+    "TIPO CONECTOR RELIG_GENERICO PROPIO CONECTOR CONECTOR PROPIO": 266,
+    "TIPO PROPIO": 260,
+    "TIPO CONECTOR RELIG_GENERICO PROPIO CONECTOR PROPIO": 256,
+    "TIPO PROPIO PROPIO": 201,
+    "TIPO CONECTOR TITULO PROPIO CONECTOR PROPIO": 154,
+    "TIPO TITULO PROPIO": 134,
+    "TIPO CONECTOR PROPIO PROPIO": 128,
+    "PROPIO PROPIO": 122,
+    "TIPO CONECTOR TITULO PROPIO PROPIO": 110,
+    "TIPO CONECTOR CONECTOR PROPIO": 107,
+    "TIPO CONECTOR TITULO RELIG_GENERICO CONECTOR CONECTOR PROPIO": 103,
+    "TIPO TIPO": 97,
+    "TIPO PROPIO PROPIO PROPIO": 95,
+    "TIPO CONECTOR CONECTOR PROPIO PROPIO": 95,
+    "PROPIO CONECTOR CONECTOR PROPIO PROPIO PROPIO": 91,
+    "TIPO RELIG_GENERICO PROPIO CONECTOR PROPIO": 87,
+    "TIPO CONECTOR RELIG_GENERICO PROPIO CONECTOR CONECTOR PROPIO CONECTOR PROPIO": 78,
+    "TIPO RELIG_GENERICO PROPIO": 77,
+    "TIPO PROPIO CONECTOR PROPIO": 70,
+    "PROPIO PROPIO PROPIO": 70,
+    "PROPIO PROPIO CONECTOR PROPIO": 70,
+    "TIPO CONECTOR RELIG_GENERICO PROPIO CONECTOR PROPIO CONECTOR PROPIO": 69,
+    "PROPIO CONECTOR PROPIO TIPO PROPIO PROPIO": 67,
+    "TIPO CONECTOR PROPIO RELIG_GENERICO RELIG_GENERICO PROPIO": 66,
+    "TIPO CONECTOR TITULO RELIG_GENERICO CONECTOR PROPIO": 65,
+    "TIPO CONECTOR PROPIO PROPIO PROPIO": 61,
+    "PROPIO CONECTOR PROPIO": 61,
+    "TIPO RELIG_GENERICO PROPIO CONECTOR CONECTOR PROPIO": 59,
+    "TIPO PROPIO CONECTOR CONECTOR PROPIO": 58,
+    "TIPO CONECTOR PROPIO CONECTOR PROPIO": 57,
+    "PROPIO TITULO CONECTOR PROPIO": 55,
+    "TIPO CONECTOR TIPO": 53,
+    "TIPO CONECTOR TITULO PROPIO PROPIO CONECTOR PROPIO": 52,
+    "TIPO TITULO PROPIO CONECTOR PROPIO": 52,
+    "PROPIO PROPIO PROPIO PROPIO": 51,
+    "TIPO CONECTOR TITULO RELIG_GENERICO CONECTOR CONECTOR PROPIO CONECTOR PROPIO": 48,
+    "TIPO CONECTOR RELIG_GENERICO PROPIO": 46,
+    "TIPO RELIG_GENERICO CONECTOR PROPIO": 45,
+    "TIPO PROPIO CONECTOR PROPIO PROPIO": 42,
+    "TIPO TITULO PROPIO PROPIO": 42,
+    "TIPO CONECTOR TITULO PROPIO CONECTOR PROPIO CONECTOR PROPIO": 42,
+    "TIPO PROPIO PROPIO CONECTOR PROPIO": 41,
+    "TIPO PROPIO CONECTOR RELIG_GENERICO PROPIO": 40,
+    "TIPO CONECTOR TIPO CONECTOR PROPIO": 38,
+    "TIPO CONECTOR PROPIO PROPIO CONECTOR PROPIO": 37,
+    "TIPO PROPIO TITULO PROPIO": 37,
+    "TIPO CONECTOR RELIG_GENERICO PROPIO CONECTOR PROPIO PROPIO": 36,
+    "TIPO CONECTOR CONECTOR PROPIO RELIG_GENERICO": 36,
+    "TIPO PROPIO CONECTOR PROPIO CONECTOR PROPIO": 35,
+    "PROPIO PROPIO PROPIO PROPIO PROPIO": 35,
+    "TIPO PROPIO PROPIO PROPIO PROPIO": 34,
+    "TIPO CONECTOR PROPIO CONECTOR CONECTOR PROPIO PROPIO": 34,
+    "TIPO CONECTOR TIPO TITULO PROPIO": 33,
+    "TIPO CONECTOR TIPO PROPIO PROPIO": 32,
+    "TIPO CONECTOR TITULO PROPIO CONECTOR CONECTOR PROPIO": 32,
+    "TIPO TIPO PROPIO PROPIO": 32,
+    "TIPO RELIG_GENERICO CONECTOR CONECTOR PROPIO": 31,
+    "TIPO CONECTOR CONECTOR RELIG_GENERICO CONECTOR CONECTOR PROPIO": 30,
+    "TIPO CONECTOR CONECTOR TITULO PROPIO": 30,
+    "TIPO PROPIO CONECTOR TITULO PROPIO": 29,
+    "PROPIO CONECTOR RELIG_GENERICO PROPIO PROPIO CONECTOR PROPIO": 29,
+    "TIPO TIPO TITULO PROPIO": 29,
+    "TIPO TIPO CONECTOR PROPIO": 28,
+    "TIPO CONECTOR TITULO RELIG_GENERICO PROPIO": 27,
+    "TIPO CONECTOR TIPO CONECTOR TITULO PROPIO": 27,
+    "PROPIO PROPIO PROPIO PROPIO TITULO CONECTOR PROPIO": 25,
+    "TIPO CONECTOR CONECTOR PROPIO PROPIO CONECTOR PROPIO": 25,
+    "RELIG_GENERICO CONECTOR RELIG_GENERICO PROPIO CONECTOR CONECTOR PROPIO PROPIO": 24,
+    "PROPIO CONECTOR PROPIO PROPIO": 24,
+    "TIPO CONECTOR CONECTOR RELIG_GENERICO CONECTOR PROPIO": 24,
+    "TIPO PROPIO CONECTOR RELIG_GENERICO": 24,
+    "TIPO CONECTOR TITULO PROPIO CONECTOR PROPIO PROPIO": 23,
+    "TIPO CONECTOR PROPIO RELIG_GENERICO RELIG_GENERICO PROPIO CONECTOR PROPIO": 23,
+    "TIPO CONECTOR TITULO PROPIO CONECTOR TITULO PROPIO": 23,
+    "TIPO CONECTOR RELIG_GENERICO RELIG_GENERICO": 22,
+    "TIPO RELIG_GENERICO PROPIO CONECTOR CONECTOR PROPIO CONECTOR PROPIO": 22,
+    "TIPO RELIG_GENERICO CONECTOR CONECTOR PROPIO CONECTOR PROPIO": 22,
+    "TIPO TITULO RELIG_GENERICO CONECTOR PROPIO": 22,
+    "TIPO CONECTOR PROPIO RELIG_GENERICO RELIG_GENERICO PROPIO CONECTOR RELIG_GENERICO PROPIO CONECTOR CONECTOR PROPIO": 22,
+    "TIPO CONECTOR PROPIO PROPIO PROPIO PROPIO": 22,
+    "TIPO PROPIO CONECTOR CONECTOR PROPIO PROPIO": 22,
+    "TIPO CONECTOR CONECTOR PROPIO CONECTOR PROPIO": 21,
+    "TIPO RELIG_GENERICO PROPIO CONECTOR PROPIO CONECTOR PROPIO": 21,
+    "PROPIO CONECTOR PROPIO CONECTOR PROPIO": 21,
+    "PROPIO CONECTOR PROPIO PROPIO CONECTOR PROPIO": 21,
+    "TIPO CONECTOR CONECTOR PROPIO RELIG_GENERICO CONECTOR CONECTOR PROPIO": 20,
+    "TIPO CONECTOR TITULO PROPIO PROPIO CONECTOR PROPIO CONECTOR PROPIO": 20,
+    "PROPIO PROPIO PROPIO CONECTOR PROPIO CONECTOR PROPIO": 20,
+    "PROPIO CONECTOR RELIG_GENERICO PROPIO PROPIO PROPIO": 20,
+    "PROPIO PROPIO PROPIO PROPIO CONECTOR PROPIO": 20,
+    "TIPO PROPIO PROPIO CONECTOR RELIG_GENERICO PROPIO": 20,
+    "TIPO CONECTOR RELIG_GENERICO PROPIO CONECTOR CONECTOR PROPIO CONECTOR PROPIO PROPIO": 19,
+    "TIPO CONECTOR PROPIO TITULO PROPIO": 19,
+    "TIPO CONECTOR TIPO PROPIO": 19,
+    "TIPO TIPO PROPIO CONECTOR PROPIO": 19,
+    "PROPIO PROPIO PROPIO CONECTOR PROPIO TIPO CONECTOR PROPIO": 19,
+    "TIPO RELIG_GENERICO RELIG_GENERICO CONECTOR RELIG_GENERICO": 19
+  },
+  "nombres_propios_comunes": {
+    "senora": 2733,
+    "santisima": 1209,
+    "nuestro": 1144,
+    "juan": 519,
+    "nazarenos": 512,
+    "dolores": 478,
+    "centro": 443,
+    "nazareno": 422,
+    "cruz": 400,
+    "jose": 360,
+    "soledad": 331,
+    "senor": 319,
+    "inmaculada": 299,
+    "espana": 270,
+    "marianas": 269,
+    "juventudes": 267,
+    "vicencianas": 266,
+    "concepcion": 260,
+    "sacramental": 238,
+    "rosario": 234,
+    "carmen": 228,
+    "esperanza": 227,
+    "evangelista": 222,
+    "fervorosa": 220,
+    "franciscana": 213,
+    "fraternidad": 204,
+    "misioneras": 187,
+    "ancianos": 184,
+    "vera": 175,
+    "caridad": 167,
+    "mayor": 167,
+    "desamparados": 167,
+    "penitencia": 163,
+    "sepulcro": 162,
+    "amor": 161,
+    "paz": 159,
+    "rocio": 159,
+    "sacramento": 159,
+    "hijas": 155,
+    "jesucristo": 145,
+    "entierro": 143,
+    "madrid": 142,
+    "religiosas": 141,
+    "cofradias": 140,
+    "entrada": 139,
+    "purisima": 137,
+    "hermanitas": 137,
+    "francisco": 135,
+    "misericordia": 135,
+    "jerusalen": 129,
+    "antonio": 127,
+    "hermandades": 125,
+    "seglar.": 121,
+    "dios": 120,
+    "familia": 114,
+    "salud": 110,
+    "real,": 108,
+    "pedro": 106,
+    "milagrosa": 104,
+    "caritas": 103,
+    "oracion": 103,
+    "angustias": 102,
+    "piedad": 102,
+    "ana": 101,
+    "auxiliadora": 99,
+    "penitencial": 98,
+    "apostol": 97,
+    "santiago": 96,
+    "consejo": 95,
+    "huerto": 91,
+    "consolacion": 91,
+    "semana": 90,
+    "teresa": 89,
+    "general": 88,
+    "sangre": 87,
+    "catolica": 86,
+    "columna": 86,
+    "valencia": 86,
+    "amargura": 85,
+    "vicente": 84,
+    "isidro": 84,
+    "sant": 84,
+    "asuncion": 84,
+    "hogar": 84,
+    "triunfal": 83,
+    "nazareno,": 82,
+    "dolor": 82,
+    "sevilla": 82,
+    "espanola": 81,
+    "resucitado": 81,
+    "buena": 81,
+    "gracia": 80,
+    "salle": 79,
+    "vedruna": 77,
+    "federacion": 77,
+    "cabeza": 77,
+    "movimiento": 76,
+    "pilar": 76,
+    "ciudad": 76,
+    "dominicas": 75
+  },
+  "elementos_por_posicion": {
+    "inicio": {
+      "hermandad": 2433,
+      "cofradia": 1978,
+      "comunidad": 1926,
+      "casa": 1854,
+      "monasterio": 683,
+      "asociacion": 600,
+      "convento": 397,
+      "congregacion": 349,
+      "real": 343,
+      "juventudes": 267,
+      "fraternidad": 186,
+      "venerable": 164,
+      "colegio": 155,
+      "muy": 133,
+      "instituto": 122,
+      "hermanitas": 121,
+      "caritas": 102,
+      "provincia": 95,
+      "ilustre": 84,
+      "residencia": 80,
+      "centro": 79,
+      "antigua": 77,
+      "real,": 76,
+      "federacion": 75,
+      "junta": 68,
+      "movimiento": 61,
+      "salesianos": 59,
+      "fervorosa": 58,
+      "comunitat": 56,
+      "religiosas": 54,
+      "hermanas": 52,
+      "archicofradia": 51,
+      "adoracion": 48,
+      "confraria": 46,
+      "pontificia": 44,
+      "orden": 43,
+      "casa-comunidad": 40,
+      "seminario": 40,
+      "obra": 38,
+      "consejo": 38,
+      "hermanos": 38,
+      "pontificia,": 37,
+      "cabildo": 34,
+      "agrupacion": 33,
+      "hospitalidad": 31,
+      "misioneras": 30,
+      "asilo": 26,
+      "antigua,": 25,
+      "escola": 24,
+      "escuelas": 22
+    },
+    "medio": {
+      "de": 21402,
+      "la": 6410,
+      "del": 4709,
+      "y": 4493,
+      "nuestra": 2713,
+      "senora": 2709,
+      "san": 2220,
+      "maria": 1664,
+      "jesus": 1515,
+      "cristo": 1398,
+      "santa": 1353,
+      "en": 1352,
+      "los": 1253,
+      "santisimo": 1214,
+      "santisima": 1204,
+      "nuestro": 1140,
+      "padre": 965,
+      "cofradia": 920,
+      "hermandad": 852,
+      "virgen": 772,
+      "santo": 606,
+      "colegio": 593,
+      "las": 524,
+      "nazarenos": 512,
+      "juan": 493,
+      "centro": 362,
+      "el": 343,
+      "ilustre": 339,
+      "nazareno": 306,
+      "senor": 303,
+      "sagrado": 279,
+      "cruz": 278,
+      "su": 271,
+      "marianas": 269,
+      "vicencianas": 265,
+      "dolores": 260,
+      "corazon": 251,
+      "madre": 239,
+      "sacramental": 228,
+      "inmaculada": 217,
+      "orden": 204,
+      "venerable": 200,
+      "residencia": 197,
+      "franciscana": 197,
+      "e": 191,
+      "hermanas": 189,
+      "real": 188,
+      "soledad": 185,
+      "vera": 172,
+      "sagrada": 172
+    },
+    "final": {
+      "congregacion": 521,
+      "espana": 238,
+      "jose": 218,
+      "dolores": 218,
+      "jesus": 177,
+      "maria": 158,
+      "concepcion": 157,
+      "soledad": 146,
+      "carmen": 135,
+      "cruz": 122,
+      "seglar.": 120,
+      "nazareno": 116,
+      "madrid": 115,
+      "esperanza": 113,
+      "evangelista": 98,
+      "rosario": 95,
+      "milagrosa": 89,
+      "dios": 79,
+      "valencia": 78,
+      "corazon": 76,
+      "inmaculada": 73,
+      "ana": 73,
+      "vedruna": 72,
+      "sevilla": 72,
+      "rocio": 70,
+      "familia": 68,
+      "frontera": 67,
+      "trinidad": 66,
+      "paz": 65,
+      "comunidad": 63,
+      "clara": 61,
+      "sepulcro": 60,
+      "pilar": 56,
+      "orden": 54,
+      "granada": 52,
+      "real": 51,
+      "cabeza": 49,
+      "angustias": 49,
+      "encarnacion": 48,
+      "cordoba": 48,
+      "piedad": 47,
+      "generalicia": 47,
+      "misericordia": 45,
+      "angeles": 44,
+      "auxiliadora": 43,
+      "anunciata": 43,
+      "instituto": 42,
+      "caridad": 42,
+      "apostol": 42,
+      "teresa": 41
+    },
+    "conector": {}
+  },
+  "plantillas_busqueda": [
+    {
+      "plantilla": "[TIPO_ENTIDAD] [CONECTOR] [CONECTOR] [TIPO_ENTIDAD]",
+      "estructura_original": "TIPO CONECTOR CONECTOR TIPO",
+      "frecuencia": 548,
+      "ejemplos": [
+        "CASA DE LA CONGREGACION",
+        "CASA DE LA CONGREGACION",
+        "CASA DE LA CONGREGACION"
+      ]
+    },
+    {
+      "plantilla": "[TIPO_ENTIDAD] [CONECTOR] [TITULO] [NOMBRE_PROPIO]",
+      "estructura_original": "TIPO CONECTOR TITULO PROPIO",
+      "frecuencia": 409,
+      "ejemplos": [
+        "COMUNIDAD DE SAN MARTIN",
+        "COMUNIDAD DE SAN MARTIN",
+        "MONASTERIO DE SAN JOSE"
+      ]
+    },
+    {
+      "plantilla": "[TIPO_ENTIDAD] [CONECTOR] [NOMBRE_PROPIO]",
+      "estructura_original": "TIPO CONECTOR PROPIO",
+      "frecuencia": 294,
+      "ejemplos": [
+        "ASILO DE ANCIANOS",
+        "COMUNIDAD DE LAKUA",
+        "CASA DE ALBACETE"
+      ]
+    },
+    {
+      "plantilla": "[TIPO_ENTIDAD] [CONECTOR] [TERMINO_RELIGIOSO] [NOMBRE_PROPIO] [CONECTOR] [CONECTOR] [NOMBRE_PROPIO]",
+      "estructura_original": "TIPO CONECTOR RELIG_GENERICO PROPIO CONECTOR CONECTOR PROPIO",
+      "frecuencia": 266,
+      "ejemplos": [
+        "CASA DE NUESTRA SEÑORA DE LOS ANGELES",
+        "MONASTERIO DE NUESTRA SEÑORA DE LOS REMEDIOS",
+        "CONVENTO DE NUESTRA SEÑORA DE LOS ANGELES"
+      ]
+    },
+    {
+      "plantilla": "[TIPO_ENTIDAD] [NOMBRE_PROPIO]",
+      "estructura_original": "TIPO PROPIO",
+      "frecuencia": 260,
+      "ejemplos": [
+        "COMUNIDAD MARIANISTA",
+        "COMUNIDAD SANSOMENDI",
+        "COMUNIDAD AGURAIN-SALVATIERRA"
+      ]
+    },
+    {
+      "plantilla": "[TIPO_ENTIDAD] [CONECTOR] [TERMINO_RELIGIOSO] [NOMBRE_PROPIO] [CONECTOR] [NOMBRE_PROPIO]",
+      "estructura_original": "TIPO CONECTOR RELIG_GENERICO PROPIO CONECTOR PROPIO",
+      "frecuencia": 256,
+      "ejemplos": [
+        "CONVENTO DE NUESTRA SEÑORA DEL CARMEN",
+        "COFRADIA DE NUESTRA SEÑORA DE IBERNALO",
+        "COFRADIA DE NUESTRA SEÑORA DE JUGATXI"
+      ]
+    },
+    {
+      "plantilla": "[TIPO_ENTIDAD] [NOMBRE_PROPIO] [NOMBRE_PROPIO]",
+      "estructura_original": "TIPO PROPIO PROPIO",
+      "frecuencia": 201,
+      "ejemplos": [
+        "COMUNIDAD MATER CARMELI",
+        "COFRADIA ECCE HOMO",
+        "COFRADIA REGINA MARTYRUM"
+      ]
+    },
+    {
+      "plantilla": "[TIPO_ENTIDAD] [CONECTOR] [TITULO] [NOMBRE_PROPIO] [CONECTOR] [NOMBRE_PROPIO]",
+      "estructura_original": "TIPO CONECTOR TITULO PROPIO CONECTOR PROPIO",
+      "frecuencia": 154,
+      "ejemplos": [
+        "MONASTERIO DE SAN JUAN DE ACRE",
+        "PROVINCIA DE SAN JOAQUIN DE NAVARRA",
+        "CASA DE SANTA JOAQUINA DE VEDRUNA"
+      ]
+    },
+    {
+      "plantilla": "[TIPO_ENTIDAD] [TITULO] [NOMBRE_PROPIO]",
+      "estructura_original": "TIPO TITULO PROPIO",
+      "frecuencia": 134,
+      "ejemplos": [
+        "COMUNIDAD SANTA JOAQUINA",
+        "COMUNIDAD SANTA LUCIA",
+        "CASA SAN ELIAS"
+      ]
+    },
+    {
+      "plantilla": "[TIPO_ENTIDAD] [CONECTOR] [NOMBRE_PROPIO] [NOMBRE_PROPIO]",
+      "estructura_original": "TIPO CONECTOR PROPIO PROPIO",
+      "frecuencia": 128,
+      "ejemplos": [
+        "CONVENTO DE PADRES CARMELITAS",
+        "CONVENTO DE SANTIAGO APOSTOL",
+        "CONVENTO DEL CORPUS CHRISTI"
+      ]
+    },
+    {
+      "plantilla": "[NOMBRE_PROPIO] [NOMBRE_PROPIO]",
+      "estructura_original": "PROPIO PROPIO",
+      "frecuencia": 122,
+      "ejemplos": [
+        "FRANCISCANAS CLARISAS",
+        "ENCUENTRO MATRIMONIAL",
+        "CENTURIA ROMANA"
+      ]
+    },
+    {
+      "plantilla": "[TIPO_ENTIDAD] [CONECTOR] [TITULO] [NOMBRE_PROPIO] [NOMBRE_PROPIO]",
+      "estructura_original": "TIPO CONECTOR TITULO PROPIO PROPIO",
+      "frecuencia": 110,
+      "ejemplos": [
+        "CASA DE SAN SIMON STOCK",
+        "ASOCIACION DE SAN MAURO MARTIR",
+        "COFRADIA DE SAN ISIDRO LABRADOR"
+      ]
+    },
+    {
+      "plantilla": "[TIPO_ENTIDAD] [CONECTOR] [CONECTOR] [NOMBRE_PROPIO]",
+      "estructura_original": "TIPO CONECTOR CONECTOR PROPIO",
+      "frecuencia": 107,
+      "ejemplos": [
+        "MONASTERIO DE LA INMACULADA",
+        "COMUNIDAD DE LOS PALMERALES",
+        "MONASTERIO DE LA INMACULADA"
+      ]
+    },
+    {
+      "plantilla": "[TIPO_ENTIDAD] [CONECTOR] [TITULO] [TERMINO_RELIGIOSO] [CONECTOR] [CONECTOR] [NOMBRE_PROPIO]",
+      "estructura_original": "TIPO CONECTOR TITULO RELIG_GENERICO CONECTOR CONECTOR PROPIO",
+      "frecuencia": 103,
+      "ejemplos": [
+        "COFRADIA DEL SANTISIMO CRISTO DE LOS MILAGROS",
+        "COFRADIA DEL SANTISIMO CRISTO DE LA AGONIA",
+        "COFRADIA DEL SANTISIMO CRISTO DE LA PAZ"
+      ]
+    },
+    {
+      "plantilla": "[TIPO_ENTIDAD] [TIPO_ENTIDAD]",
+      "estructura_original": "TIPO TIPO",
+      "frecuencia": 97,
+      "ejemplos": [
+        "COMUNIDAD COLEGIO",
+        "CASA COMUNIDAD",
+        "CASA COMUNIDAD"
+      ]
+    }
+  ],
+  "patrones_especificos": [
+    {
+      "estructura": "TIPO CONECTOR PROPIO",
+      "ejemplo": "ASILO DE ANCIANOS",
+      "tokens_reales": [
+        "asilo",
+        "de",
+        "ancianos"
+      ],
+      "categorias": [
+        "TIPO",
+        "CONECTOR",
+        "PROPIO"
+      ]
+    },
+    {
+      "estructura": "TIPO PROPIO PROPIO PROPIO",
+      "ejemplo": "CASA C. INMACULADA CONCEPCION",
+      "tokens_reales": [
+        "casa",
+        "c.",
+        "inmaculada",
+        "concepcion"
+      ],
+      "categorias": [
+        "TIPO",
+        "PROPIO",
+        "PROPIO",
+        "PROPIO"
+      ]
+    },
+    {
+      "estructura": "TIPO TIPO CONECTOR CONECTOR PROPIO PROPIO",
+      "ejemplo": "CASA COLEGIO DE LA VERA CRUZ",
+      "tokens_reales": [
+        "casa",
+        "colegio",
+        "de",
+        "la",
+        "vera",
+        "cruz"
+      ],
+      "categorias": [
+        "TIPO",
+        "TIPO",
+        "CONECTOR",
+        "CONECTOR",
+        "PROPIO",
+        "PROPIO"
+      ]
+    },
+    {
+      "estructura": "TIPO CONECTOR CONECTOR TIPO",
+      "ejemplo": "CASA DE LA CONGREGACION",
+      "tokens_reales": [
+        "casa",
+        "de",
+        "la",
+        "congregacion"
+      ],
+      "categorias": [
+        "TIPO",
+        "CONECTOR",
+        "CONECTOR",
+        "TIPO"
+      ]
+    },
+    {
+      "estructura": "TIPO CONECTOR CONECTOR TIPO",
+      "ejemplo": "CASA DE LA CONGREGACION",
+      "tokens_reales": [
+        "casa",
+        "de",
+        "la",
+        "congregacion"
+      ],
+      "categorias": [
+        "TIPO",
+        "CONECTOR",
+        "CONECTOR",
+        "TIPO"
+      ]
+    },
+    {
+      "estructura": "TIPO CONECTOR CONECTOR TIPO",
+      "ejemplo": "CASA DE LA CONGREGACION",
+      "tokens_reales": [
+        "casa",
+        "de",
+        "la",
+        "congregacion"
+      ],
+      "categorias": [
+        "TIPO",
+        "CONECTOR",
+        "CONECTOR",
+        "TIPO"
+      ]
+    },
+    {
+      "estructura": "TIPO CONECTOR CONECTOR TIPO",
+      "ejemplo": "CASA DE LA CONGREGACION",
+      "tokens_reales": [
+        "casa",
+        "de",
+        "la",
+        "congregacion"
+      ],
+      "categorias": [
+        "TIPO",
+        "CONECTOR",
+        "CONECTOR",
+        "TIPO"
+      ]
+    },
+    {
+      "estructura": "TIPO CONECTOR CONECTOR TIPO",
+      "ejemplo": "CASA DE LA CONGREGACION",
+      "tokens_reales": [
+        "casa",
+        "de",
+        "la",
+        "congregacion"
+      ],
+      "categorias": [
+        "TIPO",
+        "CONECTOR",
+        "CONECTOR",
+        "TIPO"
+      ]
+    },
+    {
+      "estructura": "TIPO CONECTOR RELIG_GENERICO PROPIO CONECTOR CONECTOR PROPIO",
+      "ejemplo": "CASA DE NUESTRA SEÑORA DE LOS ANGELES",
+      "tokens_reales": [
+        "casa",
+        "de",
+        "nuestra",
+        "senora",
+        "de",
+        "los",
+        "angeles"
+      ],
+      "categorias": [
+        "TIPO",
+        "CONECTOR",
+        "RELIG_GENERICO",
+        "PROPIO",
+        "CONECTOR",
+        "CONECTOR",
+        "PROPIO"
+      ]
+    },
+    {
+      "estructura": "TIPO CONECTOR TIPO",
+      "ejemplo": "CASA DEL INSTITUTO",
+      "tokens_reales": [
+        "casa",
+        "del",
+        "instituto"
+      ],
+      "categorias": [
+        "TIPO",
+        "CONECTOR",
+        "TIPO"
+      ]
+    },
+    {
+      "estructura": "TIPO RELIG_GENERICO PROPIO",
+      "ejemplo": "CASA SAGRADA FAMILIA",
+      "tokens_reales": [
+        "casa",
+        "sagrada",
+        "familia"
+      ],
+      "categorias": [
+        "TIPO",
+        "RELIG_GENERICO",
+        "PROPIO"
+      ]
+    },
+    {
+      "estructura": "TIPO RELIG_GENERICO CONECTOR PROPIO",
+      "ejemplo": "CASA VIRGEN DE ESTIBALIZ",
+      "tokens_reales": [
+        "casa",
+        "virgen",
+        "de",
+        "estibaliz"
+      ],
+      "categorias": [
+        "TIPO",
+        "RELIG_GENERICO",
+        "CONECTOR",
+        "PROPIO"
+      ]
+    },
+    {
+      "estructura": "PROPIO TIPO TITULO PROPIO",
+      "ejemplo": "CASA-COMUNIDAD COLEGIO SAN VIATOR",
+      "tokens_reales": [
+        "casa-comunidad",
+        "colegio",
+        "san",
+        "viator"
+      ],
+      "categorias": [
+        "PROPIO",
+        "TIPO",
+        "TITULO",
+        "PROPIO"
+      ]
+    },
+    {
+      "estructura": "PROPIO RELIG_GENERICO PROPIO",
+      "ejemplo": "CASA-COMUNIDAD PADRE QUERBES",
+      "tokens_reales": [
+        "casa-comunidad",
+        "padre",
+        "querbes"
+      ],
+      "categorias": [
+        "PROPIO",
+        "RELIG_GENERICO",
+        "PROPIO"
+      ]
+    },
+    {
+      "estructura": "TIPO PROPIO RELIG_GENERICO PROPIO",
+      "ejemplo": "COLEGIO MISIONAL SAGRADA FAMILIA",
+      "tokens_reales": [
+        "colegio",
+        "misional",
+        "sagrada",
+        "familia"
+      ],
+      "categorias": [
+        "TIPO",
+        "PROPIO",
+        "RELIG_GENERICO",
+        "PROPIO"
+      ]
+    },
+    {
+      "estructura": "TIPO TIPO",
+      "ejemplo": "COMUNIDAD COLEGIO",
+      "tokens_reales": [
+        "comunidad",
+        "colegio"
+      ],
+      "categorias": [
+        "TIPO",
+        "TIPO"
+      ]
+    },
+    {
+      "estructura": "TIPO CONECTOR CONECTOR TIPO",
+      "ejemplo": "COMUNIDAD DE LA CONGREGACION",
+      "tokens_reales": [
+        "comunidad",
+        "de",
+        "la",
+        "congregacion"
+      ],
+      "categorias": [
+        "TIPO",
+        "CONECTOR",
+        "CONECTOR",
+        "TIPO"
+      ]
+    },
+    {
+      "estructura": "TIPO CONECTOR CONECTOR TIPO",
+      "ejemplo": "COMUNIDAD DE LA CONGREGACION",
+      "tokens_reales": [
+        "comunidad",
+        "de",
+        "la",
+        "congregacion"
+      ],
+      "categorias": [
+        "TIPO",
+        "CONECTOR",
+        "CONECTOR",
+        "TIPO"
+      ]
+    },
+    {
+      "estructura": "TIPO CONECTOR CONECTOR TIPO CONECTOR TIPO RELIG_GENERICO PROPIO",
+      "ejemplo": "COMUNIDAD DE LA CONGREGACION EN COLEGIO VIRGEN NIÑA",
+      "tokens_reales": [
+        "comunidad",
+        "de",
+        "la",
+        "congregacion",
+        "en",
+        "colegio",
+        "virgen",
+        "nina"
+      ],
+      "categorias": [
+        "TIPO",
+        "CONECTOR",
+        "CONECTOR",
+        "TIPO",
+        "CONECTOR",
+        "TIPO",
+        "RELIG_GENERICO",
+        "PROPIO"
+      ]
+    },
+    {
+      "estructura": "TIPO CONECTOR CONECTOR TIPO PROPIO PROPIO PROPIO",
+      "ejemplo": "COMUNIDAD DE LA RESIDENCIA SACERDOTAL \"JOAQUIN GOICOECHEAUNDIA\"",
+      "tokens_reales": [
+        "comunidad",
+        "de",
+        "la",
+        "residencia",
+        "sacerdotal",
+        "\"joaquin",
+        "goicoecheaundia\""
+      ],
+      "categorias": [
+        "TIPO",
+        "CONECTOR",
+        "CONECTOR",
+        "TIPO",
+        "PROPIO",
+        "PROPIO",
+        "PROPIO"
+      ]
+    },
+    {
+      "estructura": "TIPO CONECTOR PROPIO",
+      "ejemplo": "COMUNIDAD DE LAKUA",
+      "tokens_reales": [
+        "comunidad",
+        "de",
+        "lakua"
+      ],
+      "categorias": [
+        "TIPO",
+        "CONECTOR",
+        "PROPIO"
+      ]
+    },
+    {
+      "estructura": "TIPO CONECTOR PROPIO PROPIO CONECTOR PROPIO",
+      "ejemplo": "COMUNIDAD DE PP. PAULES DE MURGUIA",
+      "tokens_reales": [
+        "comunidad",
+        "de",
+        "pp.",
+        "paules",
+        "de",
+        "murguia"
+      ],
+      "categorias": [
+        "TIPO",
+        "CONECTOR",
+        "PROPIO",
+        "PROPIO",
+        "CONECTOR",
+        "PROPIO"
+      ]
+    },
+    {
+      "estructura": "TIPO CONECTOR TITULO PROPIO",
+      "ejemplo": "COMUNIDAD DE SAN MARTIN",
+      "tokens_reales": [
+        "comunidad",
+        "de",
+        "san",
+        "martin"
+      ],
+      "categorias": [
+        "TIPO",
+        "CONECTOR",
+        "TITULO",
+        "PROPIO"
+      ]
+    },
+    {
+      "estructura": "TIPO CONECTOR TITULO PROPIO",
+      "ejemplo": "COMUNIDAD DE SAN MARTIN",
+      "tokens_reales": [
+        "comunidad",
+        "de",
+        "san",
+        "martin"
+      ],
+      "categorias": [
+        "TIPO",
+        "CONECTOR",
+        "TITULO",
+        "PROPIO"
+      ]
+    },
+    {
+      "estructura": "TIPO CONECTOR TIPO TITULO RELIG_GENERICO",
+      "ejemplo": "COMUNIDAD EN COLEGIO SANTA MARIA",
+      "tokens_reales": [
+        "comunidad",
+        "en",
+        "colegio",
+        "santa",
+        "maria"
+      ],
+      "categorias": [
+        "TIPO",
+        "CONECTOR",
+        "TIPO",
+        "TITULO",
+        "RELIG_GENERICO"
+      ]
+    },
+    {
+      "estructura": "TIPO CONECTOR TIPO CONECTOR PROPIO",
+      "ejemplo": "COMUNIDAD EN RESIDENCIA DE ANCIANOS",
+      "tokens_reales": [
+        "comunidad",
+        "en",
+        "residencia",
+        "de",
+        "ancianos"
+      ],
+      "categorias": [
+        "TIPO",
+        "CONECTOR",
+        "TIPO",
+        "CONECTOR",
+        "PROPIO"
+      ]
+    },
+    {
+      "estructura": "TIPO PROPIO CONECTOR PROPIO PROPIO",
+      "ejemplo": "COMUNIDAD ESCLAVAS DEL AMOR MISERICORDIOSO",
+      "tokens_reales": [
+        "comunidad",
+        "esclavas",
+        "del",
+        "amor",
+        "misericordioso"
+      ],
+      "categorias": [
+        "TIPO",
+        "PROPIO",
+        "CONECTOR",
+        "PROPIO",
+        "PROPIO"
+      ]
+    },
+    {
+      "estructura": "TIPO PROPIO CONECTOR CONECTOR PROPIO",
+      "ejemplo": "COMUNIDAD HEGALPE-HERMANAS DE LA PROVIDENCIA",
+      "tokens_reales": [
+        "comunidad",
+        "hegalpe-hermanas",
+        "de",
+        "la",
+        "providencia"
+      ],
+      "categorias": [
+        "TIPO",
+        "PROPIO",
+        "CONECTOR",
+        "CONECTOR",
+        "PROPIO"
+      ]
+    },
+    {
+      "estructura": "TIPO RELIG_GENERICO CONECTOR CONECTOR PROPIO CONECTOR CONECTOR CONECTOR PROPIO PROPIO CONECTOR PROPIO",
+      "ejemplo": "COMUNIDAD HERMANAS DE LA CARIDAD Y DE LA INSTRUCCION CRISTIANA DE NEVERS",
+      "tokens_reales": [
+        "comunidad",
+        "hermanas",
+        "de",
+        "la",
+        "caridad",
+        "y",
+        "de",
+        "la",
+        "instruccion",
+        "cristiana",
+        "de",
+        "nevers"
+      ],
+      "categorias": [
+        "TIPO",
+        "RELIG_GENERICO",
+        "CONECTOR",
+        "CONECTOR",
+        "PROPIO",
+        "CONECTOR",
+        "CONECTOR",
+        "CONECTOR",
+        "PROPIO",
+        "PROPIO",
+        "CONECTOR",
+        "PROPIO"
+      ]
+    },
+    {
+      "estructura": "TIPO PROPIO",
+      "ejemplo": "COMUNIDAD MARIANISTA",
+      "tokens_reales": [
+        "comunidad",
+        "marianista"
+      ],
+      "categorias": [
+        "TIPO",
+        "PROPIO"
+      ]
+    },
+    {
+      "estructura": "TIPO PROPIO PROPIO",
+      "ejemplo": "COMUNIDAD MATER CARMELI",
+      "tokens_reales": [
+        "comunidad",
+        "mater",
+        "carmeli"
+      ],
+      "categorias": [
+        "TIPO",
+        "PROPIO",
+        "PROPIO"
+      ]
+    },
+    {
+      "estructura": "TIPO RELIG_GENERICO PROPIO CONECTOR PROPIO",
+      "ejemplo": "COMUNIDAD NUESTRA SEÑORA DE NAZARETH",
+      "tokens_reales": [
+        "comunidad",
+        "nuestra",
+        "senora",
+        "de",
+        "nazareth"
+      ],
+      "categorias": [
+        "TIPO",
+        "RELIG_GENERICO",
+        "PROPIO",
+        "CONECTOR",
+        "PROPIO"
+      ]
+    },
+    {
+      "estructura": "TIPO PROPIO",
+      "ejemplo": "COMUNIDAD SANSOMENDI",
+      "tokens_reales": [
+        "comunidad",
+        "sansomendi"
+      ],
+      "categorias": [
+        "TIPO",
+        "PROPIO"
+      ]
+    },
+    {
+      "estructura": "TIPO TITULO PROPIO",
+      "ejemplo": "COMUNIDAD SANTA JOAQUINA",
+      "tokens_reales": [
+        "comunidad",
+        "santa",
+        "joaquina"
+      ],
+      "categorias": [
+        "TIPO",
+        "TITULO",
+        "PROPIO"
+      ]
+    },
+    {
+      "estructura": "TIPO PROPIO CONECTOR PROPIO CONECTOR PROPIO",
+      "ejemplo": "CONGREGACION \"PRESENTACION DE MARIA\"-PROVINCIA DE ESPAÑA",
+      "tokens_reales": [
+        "congregacion",
+        "\"presentacion",
+        "de",
+        "maria\"-provincia",
+        "de",
+        "espana"
+      ],
+      "categorias": [
+        "TIPO",
+        "PROPIO",
+        "CONECTOR",
+        "PROPIO",
+        "CONECTOR",
+        "PROPIO"
+      ]
+    },
+    {
+      "estructura": "TIPO PROPIO CONECTOR CONECTOR PROPIO PROPIO CONECTOR PROPIO PROPIO",
+      "ejemplo": "CONGREGACION HIJAS DE LA INMACULADA CONCEPCION DE BUENOS AIRES",
+      "tokens_reales": [
+        "congregacion",
+        "hijas",
+        "de",
+        "la",
+        "inmaculada",
+        "concepcion",
+        "de",
+        "buenos",
+        "aires"
+      ],
+      "categorias": [
+        "TIPO",
+        "PROPIO",
+        "CONECTOR",
+        "CONECTOR",
+        "PROPIO",
+        "PROPIO",
+        "CONECTOR",
+        "PROPIO",
+        "PROPIO"
+      ]
+    },
+    {
+      "estructura": "TIPO CONECTOR RELIG_GENERICO PROPIO CONECTOR PROPIO",
+      "ejemplo": "CONVENTO DE NUESTRA SEÑORA DEL CARMEN",
+      "tokens_reales": [
+        "convento",
+        "de",
+        "nuestra",
+        "senora",
+        "del",
+        "carmen"
+      ],
+      "categorias": [
+        "TIPO",
+        "CONECTOR",
+        "RELIG_GENERICO",
+        "PROPIO",
+        "CONECTOR",
+        "PROPIO"
+      ]
+    },
+    {
+      "estructura": "PROPIO PROPIO",
+      "ejemplo": "FRANCISCANAS CLARISAS",
+      "tokens_reales": [
+        "franciscanas",
+        "clarisas"
+      ],
+      "categorias": [
+        "PROPIO",
+        "PROPIO"
+      ]
+    },
+    {
+      "estructura": "RELIG_GENERICO CONECTOR CONECTOR PROPIO CONECTOR CONECTOR PROPIO PROPIO PROPIO CONECTOR PROPIO PROPIO PROPIO CONECTOR CONECTOR RELIG_GENERICO PROPIO",
+      "ejemplo": "HERMANAS DE LA CARIDAD DE LAS SANTAS BARTOLOMEA CAPITANIO Y VICENTA GEROSA (HERMANAS DE LA VIRGEN NIÑA)",
+      "tokens_reales": [
+        "hermanas",
+        "de",
+        "la",
+        "caridad",
+        "de",
+        "las",
+        "santas",
+        "bartolomea",
+        "capitanio",
+        "y",
+        "vicenta",
+        "gerosa",
+        "(hermanas",
+        "de",
+        "la",
+        "virgen",
+        "nina)"
+      ],
+      "categorias": [
+        "RELIG_GENERICO",
+        "CONECTOR",
+        "CONECTOR",
+        "PROPIO",
+        "CONECTOR",
+        "CONECTOR",
+        "PROPIO",
+        "PROPIO",
+        "PROPIO",
+        "CONECTOR",
+        "PROPIO",
+        "PROPIO",
+        "PROPIO",
+        "CONECTOR",
+        "CONECTOR",
+        "RELIG_GENERICO",
+        "PROPIO"
+      ]
+    },
+    {
+      "estructura": "TIPO CONECTOR CONECTOR PROPIO",
+      "ejemplo": "MONASTERIO DE LA INMACULADA",
+      "tokens_reales": [
+        "monasterio",
+        "de",
+        "la",
+        "inmaculada"
+      ],
+      "categorias": [
+        "TIPO",
+        "CONECTOR",
+        "CONECTOR",
+        "PROPIO"
+      ]
+    },
+    {
+      "estructura": "TIPO CONECTOR CONECTOR PROPIO CONECTOR TITULO RELIG_GENERICO",
+      "ejemplo": "MONASTERIO DE LA VISITACION DE SANTA MARIA",
+      "tokens_reales": [
+        "monasterio",
+        "de",
+        "la",
+        "visitacion",
+        "de",
+        "santa",
+        "maria"
+      ],
+      "categorias": [
+        "TIPO",
+        "CONECTOR",
+        "CONECTOR",
+        "PROPIO",
+        "CONECTOR",
+        "TITULO",
+        "RELIG_GENERICO"
+      ]
+    },
+    {
+      "estructura": "TIPO CONECTOR RELIG_GENERICO PROPIO CONECTOR CONECTOR PROPIO",
+      "ejemplo": "MONASTERIO DE NUESTRA SEÑORA DE LOS REMEDIOS",
+      "tokens_reales": [
+        "monasterio",
+        "de",
+        "nuestra",
+        "senora",
+        "de",
+        "los",
+        "remedios"
+      ],
+      "categorias": [
+        "TIPO",
+        "CONECTOR",
+        "RELIG_GENERICO",
+        "PROPIO",
+        "CONECTOR",
+        "CONECTOR",
+        "PROPIO"
+      ]
+    },
+    {
+      "estructura": "TIPO CONECTOR TITULO PROPIO",
+      "ejemplo": "MONASTERIO DE SAN JOSE",
+      "tokens_reales": [
+        "monasterio",
+        "de",
+        "san",
+        "jose"
+      ],
+      "categorias": [
+        "TIPO",
+        "CONECTOR",
+        "TITULO",
+        "PROPIO"
+      ]
+    },
+    {
+      "estructura": "TIPO CONECTOR TITULO PROPIO CONECTOR PROPIO",
+      "ejemplo": "MONASTERIO DE SAN JUAN DE ACRE",
+      "tokens_reales": [
+        "monasterio",
+        "de",
+        "san",
+        "juan",
+        "de",
+        "acre"
+      ],
+      "categorias": [
+        "TIPO",
+        "CONECTOR",
+        "TITULO",
+        "PROPIO",
+        "CONECTOR",
+        "PROPIO"
+      ]
+    },
+    {
+      "estructura": "TIPO CONECTOR TITULO PROPIO",
+      "ejemplo": "MONASTERIO DE SAN PEDRO",
+      "tokens_reales": [
+        "monasterio",
+        "de",
+        "san",
+        "pedro"
+      ],
+      "categorias": [
+        "TIPO",
+        "CONECTOR",
+        "TITULO",
+        "PROPIO"
+      ]
+    },
+    {
+      "estructura": "TIPO CONECTOR TITULO PROPIO",
+      "ejemplo": "MONASTERIO DE SANTA CRUZ",
+      "tokens_reales": [
+        "monasterio",
+        "de",
+        "santa",
+        "cruz"
+      ],
+      "categorias": [
+        "TIPO",
+        "CONECTOR",
+        "TITULO",
+        "PROPIO"
+      ]
+    },
+    {
+      "estructura": "TIPO CONECTOR TITULO RELIG_GENERICO CONECTOR PROPIO",
+      "ejemplo": "MONASTERIO DE SANTA MARIA DE BARRIA",
+      "tokens_reales": [
+        "monasterio",
+        "de",
+        "santa",
+        "maria",
+        "de",
+        "barria"
+      ],
+      "categorias": [
+        "TIPO",
+        "CONECTOR",
+        "TITULO",
+        "RELIG_GENERICO",
+        "CONECTOR",
+        "PROPIO"
+      ]
+    },
+    {
+      "estructura": "TIPO PROPIO RELIG_GENERICO PROPIO CONECTOR CONECTOR PROPIO",
+      "ejemplo": "OBRA SOCIAL NUESTRA SEÑORA DE LOS DESEMPARADOS",
+      "tokens_reales": [
+        "obra",
+        "social",
+        "nuestra",
+        "senora",
+        "de",
+        "los",
+        "desemparados"
+      ],
+      "categorias": [
+        "TIPO",
+        "PROPIO",
+        "RELIG_GENERICO",
+        "PROPIO",
+        "CONECTOR",
+        "CONECTOR",
+        "PROPIO"
+      ]
+    },
+    {
+      "estructura": "TIPO CONECTOR TITULO PROPIO CONECTOR PROPIO",
+      "ejemplo": "PROVINCIA DE SAN JOAQUIN DE NAVARRA",
+      "tokens_reales": [
+        "provincia",
+        "de",
+        "san",
+        "joaquin",
+        "de",
+        "navarra"
+      ],
+      "categorias": [
+        "TIPO",
+        "CONECTOR",
+        "TITULO",
+        "PROPIO",
+        "CONECTOR",
+        "PROPIO"
+      ]
+    },
+    {
+      "estructura": "PROPIO PROPIO PROPIO PROPIO TITULO CONECTOR PROPIO",
+      "ejemplo": "ADORACION NOCTURNA ESPAÑOLA CONSEJO DIOCESANO DE VITORIA",
+      "tokens_reales": [
+        "adoracion",
+        "nocturna",
+        "espanola",
+        "consejo",
+        "diocesano",
+        "de",
+        "vitoria"
+      ],
+      "categorias": [
+        "PROPIO",
+        "PROPIO",
+        "PROPIO",
+        "PROPIO",
+        "TITULO",
+        "CONECTOR",
+        "PROPIO"
+      ]
+    },
+    {
+      "estructura": "TIPO PROPIO CONECTOR RELIG_GENERICO PROPIO CONECTOR CONECTOR PROPIO",
+      "ejemplo": "ASOCIACION AMIGOS DE NUESTRA SEÑORA DE LA ENCINA",
+      "tokens_reales": [
+        "asociacion",
+        "amigos",
+        "de",
+        "nuestra",
+        "senora",
+        "de",
+        "la",
+        "encina"
+      ],
+      "categorias": [
+        "TIPO",
+        "PROPIO",
+        "CONECTOR",
+        "RELIG_GENERICO",
+        "PROPIO",
+        "CONECTOR",
+        "CONECTOR",
+        "PROPIO"
+      ]
+    },
+    {
+      "estructura": "TIPO RELIG_GENERICO CONECTOR PROPIO",
+      "ejemplo": "ASOCIACION CRISTO EL SEÑOR",
+      "tokens_reales": [
+        "asociacion",
+        "cristo",
+        "el",
+        "senor"
+      ],
+      "categorias": [
+        "TIPO",
+        "RELIG_GENERICO",
+        "CONECTOR",
+        "PROPIO"
+      ]
+    },
+    {
+      "estructura": "TIPO CONECTOR PROPIO CONECTOR PROPIO PROPIO CONECTOR CONECTOR PROPIO CONECTOR PROPIO PROPIO PROPIO",
+      "ejemplo": "ASOCIACION DE GRUPOS DE TIEMPO LIBRE DE LA DIOCESIS DE VITORIA ATSEDEN TALDEAK",
+      "tokens_reales": [
+        "asociacion",
+        "de",
+        "grupos",
+        "de",
+        "tiempo",
+        "libre",
+        "de",
+        "la",
+        "diocesis",
+        "de",
+        "vitoria",
+        "atseden",
+        "taldeak"
+      ],
+      "categorias": [
+        "TIPO",
+        "CONECTOR",
+        "PROPIO",
+        "CONECTOR",
+        "PROPIO",
+        "PROPIO",
+        "CONECTOR",
+        "CONECTOR",
+        "PROPIO",
+        "CONECTOR",
+        "PROPIO",
+        "PROPIO",
+        "PROPIO"
+      ]
+    },
+    {
+      "estructura": "TIPO CONECTOR RELIG_GENERICO PROPIO CONECTOR PROPIO PROPIO",
+      "ejemplo": "ASOCIACION DE MARIA AUXILIADORA DE VITORIA-RESIDENCIA SAL.",
+      "tokens_reales": [
+        "asociacion",
+        "de",
+        "maria",
+        "auxiliadora",
+        "de",
+        "vitoria-residencia",
+        "sal."
+      ],
+      "categorias": [
+        "TIPO",
+        "CONECTOR",
+        "RELIG_GENERICO",
+        "PROPIO",
+        "CONECTOR",
+        "PROPIO",
+        "PROPIO"
+      ]
+    },
+    {
+      "estructura": "TIPO PROPIO CONECTOR PROPIO PROPIO",
+      "ejemplo": "ASOCIACION PUBLICA DE FIELES \"BERAKAH\"",
+      "tokens_reales": [
+        "asociacion",
+        "publica",
+        "de",
+        "fieles",
+        "\"berakah\""
+      ],
+      "categorias": [
+        "TIPO",
+        "PROPIO",
+        "CONECTOR",
+        "PROPIO",
+        "PROPIO"
+      ]
+    },
+    {
+      "estructura": "PROPIO CONECTOR CONECTOR PROPIO TITULO RELIG_GENERICO CONECTOR CONECTOR CONECTOR PROPIO RELIG_GENERICO PROPIO RELIG_GENERICO CONECTOR CONECTOR PROPIO CONECTOR PROPIO",
+      "ejemplo": "CABILDO DE LA CATEDRAL SANTA MARIA Y DE LA CONCATEDRAL MARIA INMACULADA, MADRE DE LA IGLESIA, DE VITORIA",
+      "tokens_reales": [
+        "cabildo",
+        "de",
+        "la",
+        "catedral",
+        "santa",
+        "maria",
+        "y",
+        "de",
+        "la",
+        "concatedral",
+        "maria",
+        "inmaculada,",
+        "madre",
+        "de",
+        "la",
+        "iglesia,",
+        "de",
+        "vitoria"
+      ],
+      "categorias": [
+        "PROPIO",
+        "CONECTOR",
+        "CONECTOR",
+        "PROPIO",
+        "TITULO",
+        "RELIG_GENERICO",
+        "CONECTOR",
+        "CONECTOR",
+        "CONECTOR",
+        "PROPIO",
+        "RELIG_GENERICO",
+        "PROPIO",
+        "RELIG_GENERICO",
+        "CONECTOR",
+        "CONECTOR",
+        "PROPIO",
+        "CONECTOR",
+        "PROPIO"
+      ]
+    },
+    {
+      "estructura": "PROPIO CONECTOR CONECTOR TIPO PROPIO CONECTOR PROPIO PROPIO",
+      "ejemplo": "CARITAS DE LA COMUNIDAD AUTONOMA DEL PAIS VASCO",
+      "tokens_reales": [
+        "caritas",
+        "de",
+        "la",
+        "comunidad",
+        "autonoma",
+        "del",
+        "pais",
+        "vasco"
+      ],
+      "categorias": [
+        "PROPIO",
+        "CONECTOR",
+        "CONECTOR",
+        "TIPO",
+        "PROPIO",
+        "CONECTOR",
+        "PROPIO",
+        "PROPIO"
+      ]
+    },
+    {
+      "estructura": "PROPIO TITULO CONECTOR PROPIO",
+      "ejemplo": "CARITAS DIOCESANA DE VITORIA",
+      "tokens_reales": [
+        "caritas",
+        "diocesana",
+        "de",
+        "vitoria"
+      ],
+      "categorias": [
+        "PROPIO",
+        "TITULO",
+        "CONECTOR",
+        "PROPIO"
+      ]
+    },
+    {
+      "estructura": "TIPO CONECTOR PROPIO PROPIO TIPO PROPIO PROPIO CONECTOR PROPIO PROPIO PROPIO",
+      "ejemplo": "CASA DE ESCUELAS PÍAS COMUNIDAD `SAN JOSE DE CALASANZ` (PP ESCOLAPIOS)",
+      "tokens_reales": [
+        "casa",
+        "de",
+        "escuelas",
+        "pias",
+        "comunidad",
+        "`san",
+        "jose",
+        "de",
+        "calasanz`",
+        "(pp",
+        "escolapios)"
+      ],
+      "categorias": [
+        "TIPO",
+        "CONECTOR",
+        "PROPIO",
+        "PROPIO",
+        "TIPO",
+        "PROPIO",
+        "PROPIO",
+        "CONECTOR",
+        "PROPIO",
+        "PROPIO",
+        "PROPIO"
+      ]
+    },
+    {
+      "estructura": "TIPO CONECTOR TITULO PROPIO CONECTOR PROPIO",
+      "ejemplo": "CASA DE SANTA JOAQUINA DE VEDRUNA",
+      "tokens_reales": [
+        "casa",
+        "de",
+        "santa",
+        "joaquina",
+        "de",
+        "vedruna"
+      ],
+      "categorias": [
+        "TIPO",
+        "CONECTOR",
+        "TITULO",
+        "PROPIO",
+        "CONECTOR",
+        "PROPIO"
+      ]
+    },
+    {
+      "estructura": "TIPO PROPIO PROPIO PROPIO",
+      "ejemplo": "CASA SACERDOTAL JOAQUIN GOIKOETXEAUNDIA",
+      "tokens_reales": [
+        "casa",
+        "sacerdotal",
+        "joaquin",
+        "goikoetxeaundia"
+      ],
+      "categorias": [
+        "TIPO",
+        "PROPIO",
+        "PROPIO",
+        "PROPIO"
+      ]
+    },
+    {
+      "estructura": "TIPO CONECTOR TIPO PROPIO TITULO PROPIO",
+      "ejemplo": "CASA Y COLEGIO MENESIANO SAN JOSÉ",
+      "tokens_reales": [
+        "casa",
+        "y",
+        "colegio",
+        "menesiano",
+        "san",
+        "jose"
+      ],
+      "categorias": [
+        "TIPO",
+        "CONECTOR",
+        "TIPO",
+        "PROPIO",
+        "TITULO",
+        "PROPIO"
+      ]
+    },
+    {
+      "estructura": "TIPO PROPIO CONECTOR TITULO PROPIO",
+      "ejemplo": "COFRADIA AMIGOS DE SAN PRUDENCIO",
+      "tokens_reales": [
+        "cofradia",
+        "amigos",
+        "de",
+        "san",
+        "prudencio"
+      ],
+      "categorias": [
+        "TIPO",
+        "PROPIO",
+        "CONECTOR",
+        "TITULO",
+        "PROPIO"
+      ]
+    },
+    {
+      "estructura": "TIPO CONECTOR PROPIO PROPIO CONECTOR PROPIO CONECTOR PROPIO",
+      "ejemplo": "COFRADIA DE ANDRA MARI DE IBABE DE ARAMAIO",
+      "tokens_reales": [
+        "cofradia",
+        "de",
+        "andra",
+        "mari",
+        "de",
+        "ibabe",
+        "de",
+        "aramaio"
+      ],
+      "categorias": [
+        "TIPO",
+        "CONECTOR",
+        "PROPIO",
+        "PROPIO",
+        "CONECTOR",
+        "PROPIO",
+        "CONECTOR",
+        "PROPIO"
+      ]
+    },
+    {
+      "estructura": "TIPO CONECTOR RELIG_GENERICO PROPIO CONECTOR PROPIO",
+      "ejemplo": "COFRADIA DE NUESTRA SEÑORA DE IBERNALO",
+      "tokens_reales": [
+        "cofradia",
+        "de",
+        "nuestra",
+        "senora",
+        "de",
+        "ibernalo"
+      ],
+      "categorias": [
+        "TIPO",
+        "CONECTOR",
+        "RELIG_GENERICO",
+        "PROPIO",
+        "CONECTOR",
+        "PROPIO"
+      ]
+    },
+    {
+      "estructura": "TIPO CONECTOR RELIG_GENERICO PROPIO CONECTOR PROPIO",
+      "ejemplo": "COFRADIA DE NUESTRA SEÑORA DE JUGATXI",
+      "tokens_reales": [
+        "cofradia",
+        "de",
+        "nuestra",
+        "senora",
+        "de",
+        "jugatxi"
+      ],
+      "categorias": [
+        "TIPO",
+        "CONECTOR",
+        "RELIG_GENERICO",
+        "PROPIO",
+        "CONECTOR",
+        "PROPIO"
+      ]
+    },
+    {
+      "estructura": "TIPO CONECTOR RELIG_GENERICO PROPIO CONECTOR CONECTOR PROPIO CONECTOR CONECTOR PROPIO PROPIO",
+      "ejemplo": "COFRADIA DE NUESTRA SEÑORA DE LA SOLEDAD EN LA VERA CRUZ",
+      "tokens_reales": [
+        "cofradia",
+        "de",
+        "nuestra",
+        "senora",
+        "de",
+        "la",
+        "soledad",
+        "en",
+        "la",
+        "vera",
+        "cruz"
+      ],
+      "categorias": [
+        "TIPO",
+        "CONECTOR",
+        "RELIG_GENERICO",
+        "PROPIO",
+        "CONECTOR",
+        "CONECTOR",
+        "PROPIO",
+        "CONECTOR",
+        "CONECTOR",
+        "PROPIO",
+        "PROPIO"
+      ]
+    },
+    {
+      "estructura": "TIPO CONECTOR RELIG_GENERICO PROPIO CONECTOR CONECTOR PROPIO CONECTOR PROPIO",
+      "ejemplo": "COFRADIA DE NUESTRA SEÑORA DE LOS DOLORES DE VITORIA-GASTEIZ",
+      "tokens_reales": [
+        "cofradia",
+        "de",
+        "nuestra",
+        "senora",
+        "de",
+        "los",
+        "dolores",
+        "de",
+        "vitoria-gasteiz"
+      ],
+      "categorias": [
+        "TIPO",
+        "CONECTOR",
+        "RELIG_GENERICO",
+        "PROPIO",
+        "CONECTOR",
+        "CONECTOR",
+        "PROPIO",
+        "CONECTOR",
+        "PROPIO"
+      ]
+    },
+    {
+      "estructura": "TIPO CONECTOR RELIG_GENERICO PROPIO CONECTOR PROPIO",
+      "ejemplo": "COFRADIA DE NUESTRA SEÑORA DE ORO",
+      "tokens_reales": [
+        "cofradia",
+        "de",
+        "nuestra",
+        "senora",
+        "de",
+        "oro"
+      ],
+      "categorias": [
+        "TIPO",
+        "CONECTOR",
+        "RELIG_GENERICO",
+        "PROPIO",
+        "CONECTOR",
+        "PROPIO"
+      ]
+    },
+    {
+      "estructura": "TIPO CONECTOR RELIG_GENERICO PROPIO CONECTOR RELIG_GENERICO PROPIO",
+      "ejemplo": "COFRADIA DE NUESTRA SEÑORA LA VIRGEN BLANCA",
+      "tokens_reales": [
+        "cofradia",
+        "de",
+        "nuestra",
+        "senora",
+        "la",
+        "virgen",
+        "blanca"
+      ],
+      "categorias": [
+        "TIPO",
+        "CONECTOR",
+        "RELIG_GENERICO",
+        "PROPIO",
+        "CONECTOR",
+        "RELIG_GENERICO",
+        "PROPIO"
+      ]
+    },
+    {
+      "estructura": "TIPO CONECTOR RELIG_GENERICO PROPIO CONECTOR RELIG_GENERICO CONECTOR PROPIO",
+      "ejemplo": "COFRADIA DE NUESTRA SEÑORA LA VIRGEN DE OCON",
+      "tokens_reales": [
+        "cofradia",
+        "de",
+        "nuestra",
+        "senora",
+        "la",
+        "virgen",
+        "de",
+        "ocon"
+      ],
+      "categorias": [
+        "TIPO",
+        "CONECTOR",
+        "RELIG_GENERICO",
+        "PROPIO",
+        "CONECTOR",
+        "RELIG_GENERICO",
+        "CONECTOR",
+        "PROPIO"
+      ]
+    },
+    {
+      "estructura": "TIPO CONECTOR TITULO PROPIO PROPIO CONECTOR PROPIO",
+      "ejemplo": "COFRADIA DE SAN VICENTE DIACONO Y MARTIR",
+      "tokens_reales": [
+        "cofradia",
+        "de",
+        "san",
+        "vicente",
+        "diacono",
+        "y",
+        "martir"
+      ],
+      "categorias": [
+        "TIPO",
+        "CONECTOR",
+        "TITULO",
+        "PROPIO",
+        "PROPIO",
+        "CONECTOR",
+        "PROPIO"
+      ]
+    },
+    {
+      "estructura": "TIPO CONECTOR TITULO PROPIO CONECTOR TITULO PROPIO CONECTOR PROPIO",
+      "ejemplo": "COFRADIA DE SAN VITOR Y SAN ISIDRO DE GAUNA",
+      "tokens_reales": [
+        "cofradia",
+        "de",
+        "san",
+        "vitor",
+        "y",
+        "san",
+        "isidro",
+        "de",
+        "gauna"
+      ],
+      "categorias": [
+        "TIPO",
+        "CONECTOR",
+        "TITULO",
+        "PROPIO",
+        "CONECTOR",
+        "TITULO",
+        "PROPIO",
+        "CONECTOR",
+        "PROPIO"
+      ]
+    },
+    {
+      "estructura": "TIPO CONECTOR TITULO RELIG_GENERICO CONECTOR PROPIO",
+      "ejemplo": "COFRADIA DE SANTA MARIA DE ESTIBALIZ",
+      "tokens_reales": [
+        "cofradia",
+        "de",
+        "santa",
+        "maria",
+        "de",
+        "estibaliz"
+      ],
+      "categorias": [
+        "TIPO",
+        "CONECTOR",
+        "TITULO",
+        "RELIG_GENERICO",
+        "CONECTOR",
+        "PROPIO"
+      ]
+    },
+    {
+      "estructura": "TIPO CONECTOR TITULO PROPIO",
+      "ejemplo": "COFRADIA DE SANTA TEODOSIA",
+      "tokens_reales": [
+        "cofradia",
+        "de",
+        "santa",
+        "teodosia"
+      ],
+      "categorias": [
+        "TIPO",
+        "CONECTOR",
+        "TITULO",
+        "PROPIO"
+      ]
+    },
+    {
+      "estructura": "TIPO CONECTOR PROPIO PROPIO PROPIO",
+      "ejemplo": "COFRADIA DEL SEÑOR SANT ROQUE",
+      "tokens_reales": [
+        "cofradia",
+        "del",
+        "senor",
+        "sant",
+        "roque"
+      ],
+      "categorias": [
+        "TIPO",
+        "CONECTOR",
+        "PROPIO",
+        "PROPIO",
+        "PROPIO"
+      ]
+    },
+    {
+      "estructura": "PROPIO TITULO CONECTOR PROPIO CONECTOR PROPIO",
+      "ejemplo": "COMISION DIOCESANA DE JUSTICIA Y PAZ",
+      "tokens_reales": [
+        "comision",
+        "diocesana",
+        "de",
+        "justicia",
+        "y",
+        "paz"
+      ],
+      "categorias": [
+        "PROPIO",
+        "TITULO",
+        "CONECTOR",
+        "PROPIO",
+        "CONECTOR",
+        "PROPIO"
+      ]
+    },
+    {
+      "estructura": "TIPO PROPIO",
+      "ejemplo": "COMUNIDAD AGURAIN-SALVATIERRA",
+      "tokens_reales": [
+        "comunidad",
+        "agurain-salvatierra"
+      ],
+      "categorias": [
+        "TIPO",
+        "PROPIO"
+      ]
+    },
+    {
+      "estructura": "TIPO CONECTOR RELIG_GENERICO PROPIO CONECTOR CONECTOR PROPIO CONECTOR PROPIO PROPIO",
+      "ejemplo": "COMUNIDAD DE HERMANAS MERCEDARIAS DE LA CARIDAD DE ZUMAQUERA -VITORIA-",
+      "tokens_reales": [
+        "comunidad",
+        "de",
+        "hermanas",
+        "mercedarias",
+        "de",
+        "la",
+        "caridad",
+        "de",
+        "zumaquera",
+        "-vitoria-"
+      ],
+      "categorias": [
+        "TIPO",
+        "CONECTOR",
+        "RELIG_GENERICO",
+        "PROPIO",
+        "CONECTOR",
+        "CONECTOR",
+        "PROPIO",
+        "CONECTOR",
+        "PROPIO",
+        "PROPIO"
+      ]
+    },
+    {
+      "estructura": "TIPO CONECTOR PROPIO CONECTOR TITULO PROPIO PROPIO",
+      "ejemplo": "COMUNIDAD DE OBLATAS DEL SANTISIMO REDENTOR VITORIA",
+      "tokens_reales": [
+        "comunidad",
+        "de",
+        "oblatas",
+        "del",
+        "santisimo",
+        "redentor",
+        "vitoria"
+      ],
+      "categorias": [
+        "TIPO",
+        "CONECTOR",
+        "PROPIO",
+        "CONECTOR",
+        "TITULO",
+        "PROPIO",
+        "PROPIO"
+      ]
+    },
+    {
+      "estructura": "TIPO CONECTOR TIPO CONECTOR PROPIO CONECTOR PROPIO",
+      "ejemplo": "COMUNIDAD EN CASA DE ESPIRITUALIDAD DE EGINO",
+      "tokens_reales": [
+        "comunidad",
+        "en",
+        "casa",
+        "de",
+        "espiritualidad",
+        "de",
+        "egino"
+      ],
+      "categorias": [
+        "TIPO",
+        "CONECTOR",
+        "TIPO",
+        "CONECTOR",
+        "PROPIO",
+        "CONECTOR",
+        "PROPIO"
+      ]
+    },
+    {
+      "estructura": "TIPO CONECTOR TIPO PROPIO PROPIO CONECTOR CONECTOR PROPIO CONECTOR PROPIO",
+      "ejemplo": "COMUNIDAD EN COLEGIO `NUESTRA SEÑORA DE LAS MERCEDES` DE VITORIA",
+      "tokens_reales": [
+        "comunidad",
+        "en",
+        "colegio",
+        "`nuestra",
+        "senora",
+        "de",
+        "las",
+        "mercedes`",
+        "de",
+        "vitoria"
+      ],
+      "categorias": [
+        "TIPO",
+        "CONECTOR",
+        "TIPO",
+        "PROPIO",
+        "PROPIO",
+        "CONECTOR",
+        "CONECTOR",
+        "PROPIO",
+        "CONECTOR",
+        "PROPIO"
+      ]
+    },
+    {
+      "estructura": "TIPO CONECTOR TIPO PROPIO PROPIO CONECTOR CONECTOR PROPIO CONECTOR PROPIO",
+      "ejemplo": "COMUNIDAD EN RESIDENCIA `NUESTRA SEÑORA DE LAS MERCEDES` DE VITORIA",
+      "tokens_reales": [
+        "comunidad",
+        "en",
+        "residencia",
+        "`nuestra",
+        "senora",
+        "de",
+        "las",
+        "mercedes`",
+        "de",
+        "vitoria"
+      ],
+      "categorias": [
+        "TIPO",
+        "CONECTOR",
+        "TIPO",
+        "PROPIO",
+        "PROPIO",
+        "CONECTOR",
+        "CONECTOR",
+        "PROPIO",
+        "CONECTOR",
+        "PROPIO"
+      ]
+    },
+    {
+      "estructura": "TIPO TITULO PROPIO",
+      "ejemplo": "COMUNIDAD SANTA LUCIA",
+      "tokens_reales": [
+        "comunidad",
+        "santa",
+        "lucia"
+      ],
+      "categorias": [
+        "TIPO",
+        "TITULO",
+        "PROPIO"
+      ]
+    },
+    {
+      "estructura": "TIPO PROPIO",
+      "ejemplo": "COMUNIDAD VEDRUNA",
+      "tokens_reales": [
+        "comunidad",
+        "vedruna"
+      ],
+      "categorias": [
+        "TIPO",
+        "PROPIO"
+      ]
+    },
+    {
+      "estructura": "TIPO PROPIO",
+      "ejemplo": "COMUNIDAD VEDRUNA",
+      "tokens_reales": [
+        "comunidad",
+        "vedruna"
+      ],
+      "categorias": [
+        "TIPO",
+        "PROPIO"
+      ]
+    },
+    {
+      "estructura": "TIPO PROPIO",
+      "ejemplo": "COMUNIDAD VITORIA-GASTEIZ",
+      "tokens_reales": [
+        "comunidad",
+        "vitoria-gasteiz"
+      ],
+      "categorias": [
+        "TIPO",
+        "PROPIO"
+      ]
+    },
+    {
+      "estructura": "PROPIO TITULO CONECTOR CONECTOR TIPO PROPIO CONECTOR CONECTOR PROPIO PROPIO TIPO TITULO PROPIO CONECTOR PROPIO",
+      "ejemplo": "CONSEJO PROVINCIAL DE LA ORDEN SEGLAR DE LOS CARMELITAS DESCALZOS. PROVINCIA SAN JOAQUIN DE NAVARRA",
+      "tokens_reales": [
+        "consejo",
+        "provincial",
+        "de",
+        "la",
+        "orden",
+        "seglar",
+        "de",
+        "los",
+        "carmelitas",
+        "descalzos.",
+        "provincia",
+        "san",
+        "joaquin",
+        "de",
+        "navarra"
+      ],
+      "categorias": [
+        "PROPIO",
+        "TITULO",
+        "CONECTOR",
+        "CONECTOR",
+        "TIPO",
+        "PROPIO",
+        "CONECTOR",
+        "CONECTOR",
+        "PROPIO",
+        "PROPIO",
+        "TIPO",
+        "TITULO",
+        "PROPIO",
+        "CONECTOR",
+        "PROPIO"
+      ]
+    },
+    {
+      "estructura": "TIPO CONECTOR PROPIO PROPIO CONECTOR PROPIO PROPIO",
+      "ejemplo": "Comunidad en  Centro Acogida y Urgencias Hazaldi",
+      "tokens_reales": [
+        "comunidad",
+        "en",
+        "centro",
+        "acogida",
+        "y",
+        "urgencias",
+        "hazaldi"
+      ],
+      "categorias": [
+        "TIPO",
+        "CONECTOR",
+        "PROPIO",
+        "PROPIO",
+        "CONECTOR",
+        "PROPIO",
+        "PROPIO"
+      ]
+    },
+    {
+      "estructura": "TIPO CONECTOR TIPO CONECTOR CONECTOR PROPIO",
+      "ejemplo": "Comunidad en  Colegio de la Milagrosa",
+      "tokens_reales": [
+        "comunidad",
+        "en",
+        "colegio",
+        "de",
+        "la",
+        "milagrosa"
+      ],
+      "categorias": [
+        "TIPO",
+        "CONECTOR",
+        "TIPO",
+        "CONECTOR",
+        "CONECTOR",
+        "PROPIO"
+      ]
+    },
+    {
+      "estructura": "TIPO CONECTOR PROPIO TITULO PROPIO",
+      "ejemplo": "Comunidad en  Colegio-Hogar San José",
+      "tokens_reales": [
+        "comunidad",
+        "en",
+        "colegio-hogar",
+        "san",
+        "jose"
+      ],
+      "categorias": [
+        "TIPO",
+        "CONECTOR",
+        "PROPIO",
+        "TITULO",
+        "PROPIO"
+      ]
+    },
+    {
+      "estructura": "TIPO CONECTOR TIPO PROPIO TITULO PROPIO",
+      "ejemplo": "Comunidad en  Obra Social Santa Luisa",
+      "tokens_reales": [
+        "comunidad",
+        "en",
+        "obra",
+        "social",
+        "santa",
+        "luisa"
+      ],
+      "categorias": [
+        "TIPO",
+        "CONECTOR",
+        "TIPO",
+        "PROPIO",
+        "TITULO",
+        "PROPIO"
+      ]
+    },
+    {
+      "estructura": "TIPO CONECTOR TIPO PROPIO",
+      "ejemplo": "Comunidad en  Residencia Paúl-enea",
+      "tokens_reales": [
+        "comunidad",
+        "en",
+        "residencia",
+        "paul-enea"
+      ],
+      "categorias": [
+        "TIPO",
+        "CONECTOR",
+        "TIPO",
+        "PROPIO"
+      ]
+    },
+    {
+      "estructura": "TIPO CONECTOR TIPO PROPIO PROPIO",
+      "ejemplo": "Comunidad en  Residencia Purísima Concepción",
+      "tokens_reales": [
+        "comunidad",
+        "en",
+        "residencia",
+        "purisima",
+        "concepcion"
+      ],
+      "categorias": [
+        "TIPO",
+        "CONECTOR",
+        "TIPO",
+        "PROPIO",
+        "PROPIO"
+      ]
+    },
+    {
+      "estructura": "PROPIO CONECTOR CONECTOR PROPIO",
+      "ejemplo": "DAMAS DE LA CARIDAD",
+      "tokens_reales": [
+        "damas",
+        "de",
+        "la",
+        "caridad"
+      ],
+      "categorias": [
+        "PROPIO",
+        "CONECTOR",
+        "CONECTOR",
+        "PROPIO"
+      ]
+    },
+    {
+      "estructura": "PROPIO TITULO CONECTOR PROPIO CONECTOR PROPIO PROPIO PROPIO PROPIO",
+      "ejemplo": "DELEGACION DIOCESANA DE ESCULTISMO DE VITORIA -EUSKALERRIKO ESKAUTAK ARABA",
+      "tokens_reales": [
+        "delegacion",
+        "diocesana",
+        "de",
+        "escultismo",
+        "de",
+        "vitoria",
+        "-euskalerriko",
+        "eskautak",
+        "araba"
+      ],
+      "categorias": [
+        "PROPIO",
+        "TITULO",
+        "CONECTOR",
+        "PROPIO",
+        "CONECTOR",
+        "PROPIO",
+        "PROPIO",
+        "PROPIO",
+        "PROPIO"
+      ]
+    },
+    {
+      "estructura": "PROPIO TITULO CONECTOR PROPIO CONECTOR PROPIO CONECTOR CONECTOR PROPIO PROPIO CONECTOR PROPIO PROPIO CONECTOR PROPIO",
+      "ejemplo": "ESCUELA DIOCESANA DE EDUCACION Y ANIMACION EN EL TIEMPO LIBRE DE AT-SEDEN TALDEAK DE VITORIA",
+      "tokens_reales": [
+        "escuela",
+        "diocesana",
+        "de",
+        "educacion",
+        "y",
+        "animacion",
+        "en",
+        "el",
+        "tiempo",
+        "libre",
+        "de",
+        "at-seden",
+        "taldeak",
+        "de",
+        "vitoria"
+      ],
+      "categorias": [
+        "PROPIO",
+        "TITULO",
+        "CONECTOR",
+        "PROPIO",
+        "CONECTOR",
+        "PROPIO",
+        "CONECTOR",
+        "CONECTOR",
+        "PROPIO",
+        "PROPIO",
+        "CONECTOR",
+        "PROPIO",
+        "PROPIO",
+        "CONECTOR",
+        "PROPIO"
+      ]
+    },
+    {
+      "estructura": "PROPIO PROPIO CONECTOR PROPIO PROPIO",
+      "ejemplo": "ESCUELA SUPERIOR DE ESTUDIOS TEOLOGICOS",
+      "tokens_reales": [
+        "escuela",
+        "superior",
+        "de",
+        "estudios",
+        "teologicos"
+      ],
+      "categorias": [
+        "PROPIO",
+        "PROPIO",
+        "CONECTOR",
+        "PROPIO",
+        "PROPIO"
+      ]
+    },
+    {
+      "estructura": "TIPO TITULO PROPIO CONECTOR PROPIO RELIG_GENERICO",
+      "ejemplo": "FUNDACION SANTA TERESA DEL NIÑO JESUS",
+      "tokens_reales": [
+        "fundacion",
+        "santa",
+        "teresa",
+        "del",
+        "nino",
+        "jesus"
+      ],
+      "categorias": [
+        "TIPO",
+        "TITULO",
+        "PROPIO",
+        "CONECTOR",
+        "PROPIO",
+        "RELIG_GENERICO"
+      ]
+    },
+    {
+      "estructura": "TIPO CONECTOR RELIG_GENERICO PROPIO CONECTOR PROPIO CONECTOR PROPIO",
+      "ejemplo": "HERMANDAD DE NUESTRA SEÑORA DEL ROCIO DE VITORIA-GASTEIZ",
+      "tokens_reales": [
+        "hermandad",
+        "de",
+        "nuestra",
+        "senora",
+        "del",
+        "rocio",
+        "de",
+        "vitoria-gasteiz"
+      ],
+      "categorias": [
+        "TIPO",
+        "CONECTOR",
+        "RELIG_GENERICO",
+        "PROPIO",
+        "CONECTOR",
+        "PROPIO",
+        "CONECTOR",
+        "PROPIO"
+      ]
+    }
+  ],
+  "patrones_problematicos": [
+    {
+      "estructura": "TIPO CONECTOR RELIG_GENERICO RELIG_GENERICO",
+      "ratio_genericos": 0.75,
+      "count": 22,
+      "ejemplos": [
+        "CASA DEL SAGRADO CORAZON",
+        "MONASTERIO DE JESUS MARIA"
+      ]
+    },
+    {
+      "estructura": "TIPO CONECTOR CONECTOR RELIG_GENERICO CONECTOR CONECTOR PROPIO",
+      "ratio_genericos": 0.7142857142857143,
+      "count": 30,
+      "ejemplos": [
+        "ARCHICOFRADIA DE LA VIRGEN DE LOS LIRIOS",
+        "COFRADIA DE LA VIRGEN DE LA SOLEDAD"
+      ]
+    },
+    {
+      "estructura": "TIPO RELIG_GENERICO RELIG_GENERICO CONECTOR RELIG_GENERICO",
+      "ratio_genericos": 0.8,
+      "count": 19,
+      "ejemplos": [
+        "COFRADIA SAGRADO CORAZON DE JESUS",
+        "COMUNIDAD SAGRADO CORAZON DE JESUS"
+      ]
+    },
+    {
+      "estructura": "TIPO CONECTOR RELIG_GENERICO RELIG_GENERICO CONECTOR RELIG_GENERICO CONECTOR PROPIO",
+      "ratio_genericos": 0.75,
+      "count": 6,
+      "ejemplos": [
+        "HERMANDAD DEL SAGRADO CORAZON DE JESUS DE CATRAL",
+        "ARCHICOFRADIA DEL SAGRADO CORAZON DE JESUS DE GUAREÑA"
+      ]
+    },
+    {
+      "estructura": "TIPO CONECTOR RELIG_GENERICO RELIG_GENERICO CONECTOR RELIG_GENERICO",
+      "ratio_genericos": 0.8333333333333334,
+      "count": 15,
+      "ejemplos": [
+        "CONVENTO DEL SAGRADO CORAZON DE JESUS",
+        "CASA DEL SAGRADO CORAZON DE JESUS"
+      ]
+    },
+    {
+      "estructura": "TIPO CONECTOR RELIG_GENERICO CONECTOR RELIG_GENERICO",
+      "ratio_genericos": 0.8,
+      "count": 4,
+      "ejemplos": [
+        "CASA DEL CORAZON DE MARIA",
+        "HERMANDAD DE JESUS Y MARIA"
+      ]
+    },
+    {
+      "estructura": "TIPO CONECTOR CONECTOR RELIG_GENERICO PROPIO CONECTOR RELIG_GENERICO RELIG_GENERICO CONECTOR RELIG_GENERICO",
+      "ratio_genericos": 0.8,
+      "count": 7,
+      "ejemplos": [
+        "CASA DE LAS HERMANAS HOSPITALARIAS DEL SAGRADO CORAZON DE JESUS",
+        "CASA DE LAS HERMANAS HOSPITALARIAS DEL SAGRADO CORAZON DE JESUS"
+      ]
+    }
+  ]
+}

@@ -12,20 +12,22 @@ class ScraperEntidadesReligiosas:
         self.download_dir = os.getcwd()
         self.headless = headless
         
+        # Mapeo código web -> (nombre, codigo_ine)
+        # Los códigos INE son los oficiales del Instituto Nacional de Estadística
         self.provincias = {
-            'P01': 'ÁLAVA', 'P02': 'ALBACETE', 'P03': 'ALICANTE', 'P04': 'ALMERÍA',
-            'P05': 'ÁVILA', 'P06': 'BADAJOZ', 'P07': 'BALEARES', 'P08': 'BARCELONA',
-            'P09': 'BURGOS', 'P10': 'CÁCERES', 'P11': 'CÁDIZ', 'P12': 'CASTELLON',
-            'P13': 'CIUDAD REAL', 'P14': 'CÓRDOBA', 'P15': 'LA CORUÑA', 'P16': 'CUENCA',
-            'P17': 'GERONA', 'P18': 'GRANADA', 'P19': 'GUADALAJARA', 'P20': 'GUIPUZCOA',
-            'P21': 'HUELVA', 'P22': 'HUESCA', 'P23': 'JAÉN', 'P24': 'LEON',
-            'P25': 'LÉRIDA', 'P26': 'LA RIOJA', 'P27': 'LUGO', 'P28': 'MADRID',
-            'P29': 'MÁLAGA', 'P30': 'MURCIA', 'P31': 'NAVARRA', 'P32': 'ORENSE',
-            'P33': 'ASTURIAS', 'P34': 'PALENCIA', 'P35': 'LAS PALMAS', 'P36': 'PONTEVEDRA',
-            'P37': 'SALAMANCA', 'P38': 'S.C. TENERIFE', 'P39': 'CANTABRIA', 'P40': 'SEGOVIA',
-            'P41': 'SEVILLA', 'P42': 'SORIA', 'P43': 'TARRAGONA', 'P44': 'TERUEL',
-            'P45': 'TOLEDO', 'P46': 'VALENCIA', 'P47': 'VALLADOLID', 'P48': 'VIZCAYA',
-            'P49': 'ZAMORA', 'P50': 'ZARAGOZA', 'P51': 'CEUTA', 'P52': 'MELILLA'
+            'P01': ('ÁLAVA', '01'), 'P02': ('ALBACETE', '02'), 'P03': ('ALICANTE', '03'), 'P04': ('ALMERÍA', '04'),
+            'P05': ('ÁVILA', '05'), 'P06': ('BADAJOZ', '06'), 'P07': ('BALEARES', '07'), 'P08': ('BARCELONA', '08'),
+            'P09': ('BURGOS', '09'), 'P10': ('CÁCERES', '10'), 'P11': ('CÁDIZ', '11'), 'P12': ('CASTELLON', '12'),
+            'P13': ('CIUDAD REAL', '13'), 'P14': ('CÓRDOBA', '14'), 'P15': ('LA CORUÑA', '15'), 'P16': ('CUENCA', '16'),
+            'P17': ('GERONA', '17'), 'P18': ('GRANADA', '18'), 'P19': ('GUADALAJARA', '19'), 'P20': ('GUIPUZCOA', '20'),
+            'P21': ('HUELVA', '21'), 'P22': ('HUESCA', '22'), 'P23': ('JAÉN', '23'), 'P24': ('LEON', '24'),
+            'P25': ('LÉRIDA', '25'), 'P26': ('LA RIOJA', '26'), 'P27': ('LUGO', '27'), 'P28': ('MADRID', '28'),
+            'P29': ('MÁLAGA', '29'), 'P30': ('MURCIA', '30'), 'P31': ('NAVARRA', '31'), 'P32': ('ORENSE', '32'),
+            'P33': ('ASTURIAS', '33'), 'P34': ('PALENCIA', '34'), 'P35': ('LAS PALMAS', '35'), 'P36': ('PONTEVEDRA', '36'),
+            'P37': ('SALAMANCA', '37'), 'P38': ('S.C. TENERIFE', '38'), 'P39': ('CANTABRIA', '39'), 'P40': ('SEGOVIA', '40'),
+            'P41': ('SEVILLA', '41'), 'P42': ('SORIA', '42'), 'P43': ('TARRAGONA', '43'), 'P44': ('TERUEL', '44'),
+            'P45': ('TOLEDO', '45'), 'P46': ('VALENCIA', '46'), 'P47': ('VALLADOLID', '47'), 'P48': ('VIZCAYA', '48'),
+            'P49': ('ZAMORA', '49'), 'P50': ('ZARAGOZA', '50'), 'P51': ('CEUTA', '51'), 'P52': ('MELILLA', '52')
         }
         
         options = webdriver.ChromeOptions()
@@ -50,8 +52,15 @@ class ScraperEntidadesReligiosas:
         self.driver.implicitly_wait(10)
         self.wait = WebDriverWait(self.driver, 30)
     
-    def procesar_provincia(self, codigo_provincia, nombre_provincia, confesion='CAT'):
-        """Procesa una provincia"""
+    def procesar_provincia(self, codigo_provincia, datos_provincia, confesion='CAT'):
+        """Procesa una provincia
+
+        Args:
+            codigo_provincia: Código web (P01, P02, etc.)
+            datos_provincia: Tupla (nombre_provincia, codigo_ine)
+            confesion: Código de confesión religiosa
+        """
+        nombre_provincia, codigo_ine = datos_provincia
         try:
             self.driver.get("https://maper.mjusticia.gob.es/Maper/buscarRER.action")
             self.wait.until(EC.presence_of_element_located((By.ID, "formBusqRER")))
@@ -137,7 +146,7 @@ class ScraperEntidadesReligiosas:
                 
                 if excel:
                     archivo = excel[0]
-                    nuevo_nombre = f"entidades_{codigo_provincia}_{nombre_provincia.replace(' ', '_')}.xls"
+                    nuevo_nombre = f"entidades_{codigo_ine}_{nombre_provincia.replace(' ', '_')}.xls"
                     ruta_nueva = os.path.join(self.download_dir, nuevo_nombre)
                     
                     # ELIMINAR SI YA EXISTE
@@ -157,14 +166,19 @@ class ScraperEntidadesReligiosas:
             return None
     
     def combinar_excels(self, archivos):
-        """Combina archivos"""
+        """Combina archivos y añade codigo_ine_provincia"""
         print(f"\n{'='*60}")
         print(f"Combinando {len(archivos)} archivos...")
-        
+
         dfs = []
         for archivo in archivos:
             try:
                 df = pd.read_excel(os.path.join(self.download_dir, archivo))
+                # Extraer codigo_ine del nombre de archivo: entidades_{codigo_ine}_{nombre}.xls
+                partes = archivo.replace('.xls', '').split('_')
+                if len(partes) >= 2:
+                    codigo_ine = partes[1]  # El segundo elemento es el codigo_ine
+                    df['codigo_ine_provincia'] = codigo_ine
                 dfs.append(df)
             except Exception as e:
                 print(f"  ✗ {archivo}: {e}")
@@ -213,9 +227,10 @@ class ScraperEntidadesReligiosas:
         try:
             self._inicializar_sesion(confesion)
 
-            for i, (codigo, nombre) in enumerate(self.provincias.items(), 1):
+            for i, (codigo, datos) in enumerate(self.provincias.items(), 1):
+                nombre, codigo_ine = datos
                 print(f"[{i}/{len(self.provincias)}] ", end="")
-                archivo = self.procesar_provincia(codigo, nombre, confesion)
+                archivo = self.procesar_provincia(codigo, datos, confesion)
                 if archivo:
                     archivos.append(archivo)
             

@@ -1,0 +1,14 @@
+{
+  "fecha": "2026-01-27T13:10:52.565908",
+  "archivo_origen": "c:\\Users\\Jose\\dev\\sipi-api\\ETL\\notarios\\notarios_espana.csv",
+  "estadisticas": {
+    "total_filas_csv": 2697,
+    "notarias_creadas": 0,
+    "titulares_creados": 0,
+    "errores": 2697,
+    "codigos_duplicados": 0
+  },
+  "provincias_no_encontradas": [],
+  "municipios_no_encontrados": [],
+  "codigos_notaria_duplicados": []
+}

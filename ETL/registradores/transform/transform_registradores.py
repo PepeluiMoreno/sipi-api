@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-transform_registradores.py - Usa el mismo sistema de conexión que load_geografia.py
+transform_registradores.py - Usa INEResolver para resolución geográfica por código INE.
 """
 
 import sys
@@ -13,11 +13,16 @@ from typing import Dict, List, Tuple, Optional
 from datetime import datetime
 import uuid
 import json
+from pathlib import Path
 
-# Importar el mismo sistema de conexión
+# Importar el sistema de conexión
 from sipi.db.sessions.async_session import db_manager
 from sqlalchemy import select
 import asyncio
+
+# Agregar path para módulo common
+sys.path.insert(0, str(Path(__file__).parent.parent.parent))
+from common.ine_resolver import INEResolver
 
 # Configuración de logging
 logging.basicConfig(
@@ -27,231 +32,92 @@ logging.basicConfig(
 logger = logging.getLogger(__name__)
 
 
-class BuscadorGeografico:
-    """Búsqueda inteligente de nombres geográficos"""
-    
-    CASOS_ESPECIALES = {
-        'ALAVA': 'ARABA',
-        'ARABA': 'ALAVA',
-        'GUIPUZCOA': 'GIPUZKOA', 
-        'GIPUZKOA': 'GUIPUZCOA',
-        'VIZCAYA': 'BIZKAIA',
-        'BIZKAIA': 'VIZCAYA',
-        'ORENSE': 'OURENSE',
-        'OURENSE': 'ORENSE',
-        'GERONA': 'GIRONA',
-        'GIRONA': 'GERONA',
-        'LERIDA': 'LLEIDA',
-        'LLEIDA': 'LERIDA',
-    }
-    
-    @staticmethod
-    def limpiar_nombre(nombre: str) -> str:
-        """Limpia un nombre para comparación básica"""
-        if not nombre:
-            return ""
-        
-        # Asegurar que es string
-        if isinstance(nombre, bytes):
-            try:
-                nombre = nombre.decode('utf-8', errors='ignore')
-            except:
-                nombre = str(nombre)
-        
-        # Mayúsculas
-        nombre = nombre.upper().strip()
-        
-        # Quitar acentos básicos
-        reemplazos = {
-            'Á': 'A', 'É': 'E', 'Í': 'I', 'Ó': 'O', 'Ú': 'U', 'Ü': 'U',
-            'Ñ': 'N'
-        }
-        
-        for old, new in reemplazos.items():
-            nombre = nombre.replace(old, new)
-        
-        # Quitar puntuación
-        nombre = re.sub(r'[^\w\s]', ' ', nombre)
-        
-        # Normalizar espacios
-        nombre = re.sub(r'\s+', ' ', nombre).strip()
-        
-        return nombre
-    
-    @staticmethod
-    def es_coincidencia(a: str, b: str) -> bool:
-        """Determina si dos nombres son coincidentes"""
-        if not a or not b:
-            return False
-        
-        a_limpio = BuscadorGeografico.limpiar_nombre(a)
-        b_limpio = BuscadorGeografico.limpiar_nombre(b)
-        
-        # 1. Coincidencia exacta
-        if a_limpio == b_limpio:
-            return True
-        
-        # 2. Casos especiales conocidos
-        if a_limpio in BuscadorGeografico.CASOS_ESPECIALES:
-            if BuscadorGeografico.CASOS_ESPECIALES[a_limpio] == b_limpio:
-                return True
-        
-        # 3. Uno contiene al otro
-        if a_limpio in b_limpio or b_limpio in a_limpio:
-            return True
-        
-        return False
-
-
 class CSVTransformer:
-    """Transformador de CSV usando el mismo sistema de conexión"""
-    
+    """Transformador de CSV usando INEResolver para resolución geográfica"""
+
     def __init__(self):
-        self.buscador = BuscadorGeografico()
-        
-        # Cache
-        self.cache_provincias = {}      # nombre -> id
-        self.cache_municipios = {}      # (nombre_muni, nombre_prov) -> id
-        self.lista_provincias = []      # Para búsquedas
-        self.lista_municipios = {}      # provincia -> [municipios]
-        
+        # Resolver INE para resolución geográfica
+        self.ine_resolver = INEResolver()
+
         self.stats = {
             'total': 0,
             'ok': 0,
             'error': 0,
             'provincias_no_encontradas': [],
-            'municipios_no_encontrados': []
+            'municipios_no_encontrados': [],
+            'resoluciones_por_ine': 0,
+            'resoluciones_por_nombre': 0,
         }
     
     async def cargar_datos_geograficos(self):
-        """Carga provincias y municipios de la BD usando db_manager"""
-        logger.info("📥 Cargando datos geográficos desde la BD...")
-        
+        """Carga mapeos INE desde la BD usando INEResolver"""
+        logger.info("📥 Cargando datos geográficos con INEResolver...")
+
         try:
             async with db_manager.session() as session:
-                # Importar modelos aquí para evitar import circulares
-                from sipi.db.models.geografia import Provincia, Municipio
-                
-                # Provincias
-                result = await session.execute(select(Provincia))
-                provincias = result.scalars().all()
-                
-                for provincia in provincias:
-                    nombre = provincia.nombre
-                    self.cache_provincias[nombre.upper()] = str(provincia.id)
-                    self.lista_provincias.append(nombre)
-                
-                logger.info(f"  Provincias cargadas: {len(self.cache_provincias)}")
-                
-                # Municipios por provincia
-                result = await session.execute(
-                    select(Municipio, Provincia.nombre)
-                    .join(Provincia, Municipio.provincia_id == Provincia.id)
-                )
-                
-                for municipio, provincia_nombre in result:
-                    provincia = provincia_nombre
-                    municipio_nombre = municipio.nombre
-                    
-                    clave = (municipio_nombre.upper(), provincia.upper())
-                    self.cache_municipios[clave] = str(municipio.id)
-                    
-                    if provincia not in self.lista_municipios:
-                        self.lista_municipios[provincia] = []
-                    self.lista_municipios[provincia].append(municipio_nombre)
-                
-                logger.info(f"  Municipios cargados: {len(self.cache_municipios)}")
-                
-                # Log de ejemplo
-                logger.debug("Ejemplo de provincias cargadas:")
-                for i, (nombre, id) in enumerate(list(self.cache_provincias.items())[:3]):
-                    logger.debug(f"  {nombre} -> {id}")
-                    
+                await self.ine_resolver.cargar_desde_bd(session)
+
+                stats = self.ine_resolver.get_stats()
+                logger.info(f"  ✅ {stats['ccaa_cargadas']} CCAA cargadas")
+                logger.info(f"  ✅ {stats['provincias_cargadas']} provincias cargadas")
+                logger.info(f"  ✅ {stats['municipios_cargados']} municipios cargados")
+
         except Exception as e:
             logger.error(f"❌ Error cargando datos geográficos: {e}")
             raise
     
-    def buscar_provincia(self, nombre_provincia_csv: str) -> Optional[str]:
-        """Busca provincia con lógica inteligente"""
-        if not nombre_provincia_csv:
-            return None
-        
-        nombre_busqueda = nombre_provincia_csv.upper()
-        
-        # 1. Buscar exacto
-        if nombre_busqueda in self.cache_provincias:
-            return self.cache_provincias[nombre_busqueda]
-        
-        # 2. Buscar con limpieza
-        nombre_limpio = self.buscador.limpiar_nombre(nombre_busqueda)
-        for provincia_bd, provincia_id in self.cache_provincias.items():
-            if self.buscador.limpiar_nombre(provincia_bd) == nombre_limpio:
-                return provincia_id
-        
-        # 3. Buscar coincidencia
-        for provincia_bd in self.lista_provincias:
-            if self.buscador.es_coincidencia(nombre_busqueda, provincia_bd):
-                return self.cache_provincias[provincia_bd.upper()]
-        
-        # 4. Guardar para reporte
-        if nombre_busqueda not in self.stats['provincias_no_encontradas']:
-            self.stats['provincias_no_encontradas'].append(nombre_busqueda)
-        
-        return None
-    
-    def buscar_municipio(self, nombre_municipio_csv: str, nombre_provincia_csv: str) -> Optional[str]:
-        """Busca municipio con lógica inteligente"""
-        if not nombre_municipio_csv or not nombre_provincia_csv:
-            return None
-        
-        # Primero buscar la provincia
-        provincia_id = self.buscar_provincia(nombre_provincia_csv)
-        if not provincia_id:
-            return None
-        
-        # Buscar nombre de provincia en BD
-        provincia_nombre_bd = None
-        for prov_nombre, prov_id in self.cache_provincias.items():
-            if prov_id == provincia_id:
-                provincia_nombre_bd = prov_nombre
-                break
-        
-        if not provincia_nombre_bd:
-            return None
-        
-        nombre_muni_busqueda = nombre_municipio_csv.upper()
-        nombre_prov_busqueda = provincia_nombre_bd
-        
-        # 1. Buscar exacto en cache
-        clave_exacta = (nombre_muni_busqueda, nombre_prov_busqueda)
-        if clave_exacta in self.cache_municipios:
-            return self.cache_municipios[clave_exacta]
-        
-        # 2. Buscar en municipios de esa provincia
-        if provincia_nombre_bd in self.lista_municipios:
-            municipios_provincia = self.lista_municipios[provincia_nombre_bd]
-            
-            for municipio_bd in municipios_provincia:
-                if self.buscador.es_coincidencia(nombre_muni_busqueda, municipio_bd):
-                    clave = (municipio_bd.upper(), nombre_prov_busqueda)
-                    return self.cache_municipios.get(clave)
-        
-        # 3. Buscar en todo el cache
-        for (muni_bd, prov_bd), muni_id in self.cache_municipios.items():
-            if self.buscador.es_coincidencia(prov_bd, provincia_nombre_bd):
-                if self.buscador.es_coincidencia(muni_bd, nombre_muni_busqueda):
-                    return muni_id
-        
-        # 4. Guardar para reporte
-        error_key = f"{nombre_muni_busqueda} ({nombre_provincia_csv.upper()})"
+    def resolver_geografia(
+        self,
+        nombre_municipio: str,
+        nombre_provincia: str,
+        codigo_ine_municipio: Optional[str] = None
+    ) -> Tuple[Optional[str], Optional[str], Optional[str], Optional[str]]:
+        """
+        Resuelve geografía usando código INE (preferido) o nombres (fallback).
+
+        Args:
+            nombre_municipio: Nombre del municipio
+            nombre_provincia: Nombre de la provincia
+            codigo_ine_municipio: Código INE del municipio (5 dígitos) si está disponible
+
+        Returns:
+            Tupla (ccaa_uuid, provincia_uuid, municipio_uuid, codigo_ine_usado)
+        """
+        # 1. Si tenemos código INE, usar resolución directa
+        if codigo_ine_municipio:
+            ccaa_uuid, prov_uuid, muni_uuid = self.ine_resolver.resolver_completo(codigo_ine_municipio)
+            if muni_uuid:
+                self.stats['resoluciones_por_ine'] += 1
+                return (ccaa_uuid, prov_uuid, muni_uuid, codigo_ine_municipio)
+
+        # 2. Fallback: resolver por nombre
+        ccaa_uuid, prov_uuid, muni_uuid = self.ine_resolver.resolver_por_nombre(
+            nombre_municipio,
+            nombre_provincia
+        )
+
+        if muni_uuid:
+            self.stats['resoluciones_por_nombre'] += 1
+            # Obtener el código INE usado
+            codigo_ine = self.ine_resolver.municipio_uuid_to_ine.get(muni_uuid)
+            return (ccaa_uuid, prov_uuid, muni_uuid, codigo_ine)
+
+        # No encontrado - registrar en stats
+        if nombre_provincia.upper() not in self.stats['provincias_no_encontradas']:
+            # Verificar si es problema de provincia
+            codigo_prov = self.ine_resolver.buscar_codigo_provincia_por_nombre(nombre_provincia)
+            if not codigo_prov:
+                self.stats['provincias_no_encontradas'].append(nombre_provincia.upper())
+
+        error_key = f"{nombre_municipio.upper()} ({nombre_provincia.upper()})"
         if error_key not in self.stats['municipios_no_encontrados']:
             self.stats['municipios_no_encontrados'].append(error_key)
-        
-        return None
+
+        return (None, None, None, None)
     
     def leer_csv(self, file_path: str) -> List[Dict]:
         """Lee CSV con manejo robusto de encoding"""
-        encodings = ['utf-8', 'latin-1', 'cp1252', 'iso-8859-1']
+        encodings = ['utf-8-sig', 'utf-8', 'latin-1', 'cp1252', 'iso-8859-1']
         
         for encoding in encodings:
             try:
@@ -314,7 +180,19 @@ class CSVTransformer:
                     
                     municipio = self._obtener_valor(fila_normalizada,
                                                    ['municipio', 'localidad', 'municipio/s', 'poblacion'])
-                    
+
+                    # Si no hay municipio directo, extraerlo de la URL
+                    if not municipio:
+                        url = self._obtener_valor(fila_normalizada, ['url'])
+                        if url:
+                            # URL format: .../propiedad/{provincia}/{municipio}/registro-...
+                            parts = url.rstrip('/').split('/')
+                            if len(parts) >= 3:
+                                # municipio está en posición -2 (antes del nombre del registro)
+                                municipio_slug = parts[-2]
+                                # Convertir slug a nombre (ej: "donostia-san-sebastian" -> "Donostia-San Sebastián")
+                                municipio = municipio_slug.replace('-', ' ').title()
+
                     provincia = self._obtener_valor(fila_normalizada,
                                                    ['provincia', 'provincia/s', 'prov'])
                     
@@ -333,19 +211,30 @@ class CSVTransformer:
                         logger.warning(f"  Fila {idx}: Sin provincia")
                         continue
                     
-                    # Buscar IDs geográficos
-                    municipio_id = self.buscar_municipio(municipio, provincia)
-                    
+                    # Buscar IDs geográficos usando INEResolver
+                    codigo_ine_csv = self._obtener_valor(fila_normalizada,
+                                                         ['codigo_ine_municipio', 'codigo_ine', 'ine'])
+
+                    ccaa_uuid, prov_uuid, municipio_id, codigo_ine_usado = self.resolver_geografia(
+                        municipio,
+                        provincia,
+                        codigo_ine_csv if codigo_ine_csv else None
+                    )
+
                     if not municipio_id:
                         self.stats['error'] += 1
                         logger.warning(f"  Fila {idx}: No encontrado '{municipio}' en '{provincia}'")
                         continue
-                    
+
+                    # Derivar códigos INE
+                    codigo_ine_prov = codigo_ine_usado[:2] if codigo_ine_usado else ''
+                    codigo_ine_ccaa = self.ine_resolver.derivar_ccaa_de_provincia(codigo_ine_prov) if codigo_ine_prov else ''
+
                     # Crear fila procesada
                     fila_procesada = {
                         'id': str(uuid.uuid4()),
                         'nombre': nombre.strip(),
-                        'identificacion': self._obtener_valor(fila_normalizada, 
+                        'identificacion': self._obtener_valor(fila_normalizada,
                                                             ['identificacion', 'cif', 'nif', 'dni']).strip(),
                         'tipo_identificacion_id': 'NIF',
                         'direccion': self._obtener_valor(fila_normalizada,
@@ -357,6 +246,9 @@ class CSVTransformer:
                         'email': self._obtener_valor(fila_normalizada,
                                                     ['email', 'correo', 'e-mail']).strip(),
                         'municipio_id': municipio_id,
+                        'codigo_ine_ccaa': codigo_ine_ccaa,
+                        'codigo_ine_provincia': codigo_ine_prov,
+                        'codigo_ine_municipio': codigo_ine_usado or '',
                         'audit_creado_en': datetime.utcnow().isoformat(),
                         'audit_creado_por': 'transform_registradores.py',
                     }
@@ -377,7 +269,8 @@ class CSVTransformer:
                 campos = [
                     'id', 'nombre', 'identificacion', 'tipo_identificacion_id',
                     'direccion', 'codigo_postal', 'telefono', 'email',
-                    'municipio_id', 'audit_creado_en', 'audit_creado_por'
+                    'municipio_id', 'codigo_ine_ccaa', 'codigo_ine_provincia', 'codigo_ine_municipio',
+                    'audit_creado_en', 'audit_creado_por'
                 ]
                 
                 os.makedirs(os.path.dirname(output_file), exist_ok=True)
@@ -487,6 +380,8 @@ async def main_async():
         logger.info("RESUMEN:")
         logger.info(f"  Total filas: {transformer.stats['total']}")
         logger.info(f"  ✅ Procesadas: {transformer.stats['ok']}")
+        logger.info(f"  Resoluciones por código INE: {transformer.stats['resoluciones_por_ine']}")
+        logger.info(f"  Resoluciones por nombre (fallback): {transformer.stats['resoluciones_por_nombre']}")
         logger.info(f"  ❌ Errores: {transformer.stats['error']}")
         
         if transformer.stats['provincias_no_encontradas']:

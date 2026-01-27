@@ -33,19 +33,28 @@ class listado_ceeBulkLoader:
     def __init__(self, dsn, schema="sipi"):
         self.dsn = dsn
         self.schema = schema
-        
+
         # Caches para búsqueda por nombre
         self.ca_by_name = {}      # nombre -> ID
         self.prov_by_name = {}    # nombre -> ID
         self.muni_by_name = {}    # (nombre, prov_id) -> ID
         self.reg_by_name = {}     # nombre -> ID
-        
+
+        # Cache para deduplicación (upsert)
+        self.inmuebles_existentes = set()  # (nombre_lower, municipio_id)
+
         # Contadores de incidencias
         self.incidencias = {
             'ca_no_encontrada': [],
             'prov_no_encontrada': [],
             'muni_no_encontrado': [],
             'reg_no_encontrado': []
+        }
+
+        # Estadísticas de upsert
+        self.upsert_stats = {
+            'duplicados_omitidos': 0,
+            'nuevos_insertados': 0
         }
 
     async def load_caches(self, conn):
@@ -112,6 +121,30 @@ class listado_ceeBulkLoader:
             self.reg_by_name[r['nombre'].lower()] = r['id']
         
         print(f"  Registros: {len(self.reg_by_name)} nombres cargados")
+
+    async def load_existing_inmuebles(self, conn):
+        """Carga inmuebles existentes para deduplicación (upsert)"""
+        print("🔍 Cargando inmuebles existentes para deduplicación...")
+
+        rows = await conn.fetch("""
+            SELECT nombre, municipio_id
+            FROM inmuebles
+            WHERE activo = true AND municipio_id IS NOT NULL
+        """)
+
+        for r in rows:
+            if r['nombre'] and r['municipio_id']:
+                key = (r['nombre'].lower().strip(), r['municipio_id'])
+                self.inmuebles_existentes.add(key)
+
+        print(f"  Inmuebles existentes: {len(self.inmuebles_existentes):,}")
+
+    def is_duplicate(self, nombre, municipio_id):
+        """Verifica si un inmueble ya existe (por nombre + municipio)"""
+        if not nombre or not municipio_id:
+            return False
+        key = (nombre.lower().strip(), municipio_id)
+        return key in self.inmuebles_existentes
 
     def find_geographic_ids(self, ca_val, prov_val, muni_val):
         """Encuentra IDs usando nombres"""
@@ -261,10 +294,15 @@ class listado_ceeBulkLoader:
                 # Saltar este registro si tiene errores
                 continue
             
-            inmueble_id = str(uuid.uuid4())
-            
             # Record for 'inmuebles'
             nombre_inmueble = clean_value(row.get(col_mapping['nombre_inmueble'])) or "Inmueble Desconocido"
+
+            # UPSERT: Verificar si ya existe este inmueble
+            if self.is_duplicate(nombre_inmueble, muni_id):
+                self.upsert_stats['duplicados_omitidos'] += 1
+                continue  # Omitir duplicado
+
+            inmueble_id = str(uuid.uuid4())
             inmueble_records.append((
                 inmueble_id,
                 nombre_inmueble,
@@ -275,6 +313,10 @@ class listado_ceeBulkLoader:
                 now,
                 True  # activo
             ))
+
+            # Agregar a cache para evitar duplicados dentro del mismo CSV
+            key = (nombre_inmueble.lower().strip(), muni_id)
+            self.inmuebles_existentes.add(key)
 
             # Record for 'inmatriculaciones'
             inmat_records.append((
@@ -288,6 +330,8 @@ class listado_ceeBulkLoader:
                 now,
                 now
             ))
+
+            self.upsert_stats['nuevos_insertados'] += 1
             
             # Mostrar progreso cada 1000 registros
             if (idx + 1) % 1000 == 0:
@@ -296,7 +340,8 @@ class listado_ceeBulkLoader:
         # Estadísticas del archivo
         print(f"\n  📊 Estadísticas de {file_path.name}:")
         print(f"    - Total registros en CSV: {total_rows:,}")
-        print(f"    - Registros procesados: {len(inmueble_records):,}")
+        print(f"    - Registros nuevos a insertar: {len(inmueble_records):,}")
+        print(f"    - Duplicados omitidos (upsert): {self.upsert_stats['duplicados_omitidos']:,}")
         print(f"    - Registros con errores: {registros_con_errores:,}")
         
         if registros_con_errores > 0:
@@ -357,6 +402,7 @@ async def main():
 
         loader = listado_ceeBulkLoader(dsn, schema)
         await loader.load_caches(conn)
+        await loader.load_existing_inmuebles(conn)  # Cargar para upsert
         
         data_output_dir = script_dir.parent / 'census' / 'data' / 'output'
         csv_files = list(data_output_dir.glob("*.csv"))
@@ -386,6 +432,9 @@ async def main():
         await conn.close()
     
     print("\n🏁 Carga completada exitosamente.")
+    print(f"\n📊 Resumen upsert:")
+    print(f"   - Nuevos insertados: {loader.upsert_stats['nuevos_insertados']:,}")
+    print(f"   - Duplicados omitidos: {loader.upsert_stats['duplicados_omitidos']:,}")
 
 if __name__ == '__main__':
     if sys.platform == 'win32':

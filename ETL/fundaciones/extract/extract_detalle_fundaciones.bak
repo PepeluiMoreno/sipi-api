@@ -1,0 +1,369 @@
+"""
+EXTRACT_DETALLE_FUNDACIONES.py
+Fase 2: Extracción paralela de detalles de fundaciones
+"""
+
+import pandas as pd
+import re
+import time
+from datetime import datetime
+from pathlib import Path
+from typing import Dict, List
+from multiprocessing import Process, Queue, Manager
+import os
+
+from playwright.sync_api import sync_playwright
+
+
+def worker_extractor(worker_id: int, enlaces_asignados: List[Dict], resultado_queue: Queue):
+    try:
+        extractor = ExtractorDetalles(worker_id)
+        csv_path = extractor.procesar_enlaces(enlaces_asignados)
+        resultado_queue.put((worker_id, csv_path, True))
+    except Exception as e:
+        resultado_queue.put((worker_id, "", False))
+
+
+class ExtractorDetalles:
+    
+    def __init__(self, worker_id: int):
+        self.worker_id = worker_id
+        self.timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+        self.csv_temp = f"detalles_worker_{worker_id}_{self.timestamp}.csv"
+    
+    def iniciar_navegador(self):
+        try:
+            self.playwright = sync_playwright().start()
+            self.browser = self.playwright.chromium.launch(headless=True)
+            self.context = self.browser.new_context()
+            self.page = self.context.new_page()
+            self.page.set_default_timeout(15000)
+            return True
+        except:
+            return False
+    
+    def cerrar_navegador(self):
+        try:
+            if self.page: self.page.close()
+            if self.context: self.context.close()
+            if self.browser: self.browser.close()
+            if self.playwright: self.playwright.stop()
+        except:
+            pass
+    
+    def extraer_detalle(self, enlace_info: Dict) -> Dict:
+        if not enlace_info.get('enlace_detalle'):
+            return enlace_info
+        
+        try:
+            self.page.goto(enlace_info['enlace_detalle'], wait_until="domcontentloaded")
+            time.sleep(0.5)
+            
+            datos = enlace_info.copy()
+            
+            campos = self._extraer_campos()
+            datos.update(campos)
+            
+            textos = self._extraer_textos()
+            datos.update(textos)
+            
+            datos['fecha_extraccion'] = datetime.now().isoformat()
+            datos['url_detalle'] = self.page.url
+            
+            return datos
+            
+        except:
+            enlace_info['error'] = True
+            return enlace_info
+    
+    def _extraer_campos(self) -> Dict:
+        campos = {}
+        mapeo = {
+            'NIF': 'nif',
+            'Nº de registro': 'numero_registro',
+            'Fecha de extinción': 'fecha_extincion',
+            'Fecha de constitución': 'fecha_constitucion',
+            'Fecha de inscripción': 'fecha_inscripcion',
+            'Domicilio': 'domicilio',
+            'Localidad': 'localidad',
+            'Código postal': 'codigo_postal',
+            'Provincia': 'provincia_detalle',
+            'Teléfono': 'telefono',
+            'Fax': 'fax',
+            'Correo electrónico': 'email',
+            'Web': 'web'
+        }
+        
+        elementos_li = self.page.query_selector_all("//div[contains(@class, 'detalleFundacion')]//li")
+        
+        for li in elementos_li:
+            texto = li.inner_text().strip()
+            if ':' in texto:
+                etiqueta, valor = texto.split(':', 1)
+                etiqueta = etiqueta.strip()
+                valor = valor.strip()
+                
+                if etiqueta in mapeo:
+                    campo = mapeo[etiqueta]
+                    
+                    if etiqueta == 'Correo electrónico':
+                        try:
+                            link = li.query_selector("a")
+                            if link:
+                                href = link.get_attribute("href")
+                                if href and 'mailto:' in href:
+                                    valor = href.replace('mailto:', '')
+                        except:
+                            pass
+                    elif etiqueta == 'Web':
+                        try:
+                            link = li.query_selector("a")
+                            if link:
+                                valor = link.get_attribute("href")
+                        except:
+                            pass
+                    
+                    if etiqueta in ['Teléfono', 'Fax', 'Código postal', 'NIF', 'Nº de registro']:
+                        valor = str(valor) if valor else None
+                    
+                    campos[campo] = valor if valor else None
+        
+        return campos
+    
+    def _extraer_textos(self) -> Dict:
+        textos = {'fines_completo': None, 'actividades_completo': None}
+        
+        try:
+            fines_h3 = self.page.query_selector("//h3[contains(text(), 'Fines')]")
+            if fines_h3:
+                ul_fines = self.page.evaluate("""
+                    (h3) => {
+                        let elem = h3.nextElementSibling;
+                        while (elem && elem.tagName !== 'UL') {
+                            elem = elem.nextElementSibling;
+                        }
+                        return elem ? elem.innerText : '';
+                    }
+                """, fines_h3)
+                textos['fines_completo'] = ul_fines
+        except:
+            pass
+        
+        try:
+            act_h3 = self.page.query_selector("//h3[contains(text(), 'Actividades')]")
+            if act_h3:
+                ul_act = self.page.evaluate("""
+                    (h3) => {
+                        let elem = h3.nextElementSibling;
+                        while (elem && elem.tagName !== 'UL') {
+                            elem = elem.nextElementSibling;
+                        }
+                        return elem ? elem.innerText : '';
+                    }
+                """, act_h3)
+                textos['actividades_completo'] = ul_act
+        except:
+            pass
+        
+        return textos
+    
+    def procesar_enlaces(self, enlaces: List[Dict]) -> str:
+        try:
+            if not self.iniciar_navegador():
+                return ""
+            
+            resultados = []
+            procesadas = 0
+            total = len(enlaces)
+            
+            print(f"Worker {self.worker_id}: Procesando {total} fundaciones")
+            
+            for i, enlace in enumerate(enlaces):
+                try:
+                    detalle = self.extraer_detalle(enlace)
+                    resultados.append(detalle)
+                    procesadas += 1
+                    
+                    if procesadas % 50 == 0 or procesadas == total:
+                        print(f"Worker {self.worker_id}: {procesadas}/{total}")
+                    
+                    if i < total - 1:
+                        time.sleep(0.3)
+                        
+                except:
+                    continue
+            
+            if resultados:
+                df = pd.DataFrame(resultados)
+                df.to_csv(self.csv_temp, index=False, encoding='utf-8-sig')
+                print(f"Worker {self.worker_id}: Completado - {procesadas}/{total}")
+                return self.csv_temp
+            else:
+                print(f"Worker {self.worker_id}: Falló - 0/{total}")
+                return ""
+                
+        except Exception as e:
+            print(f"Worker {self.worker_id}: Error")
+            return ""
+        finally:
+            self.cerrar_navegador()
+
+
+class ProcesadorDetalles:
+    
+    def __init__(self, num_workers=5):
+        self.num_workers = num_workers
+        self.timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+        self.output_final = f"fundaciones_completas_{self.timestamp}.csv"
+    
+    def encontrar_csv_mas_reciente(self):
+        archivos = list(Path(".").glob("enlaces_fundaciones_*.csv"))
+        if not archivos:
+            return None
+        
+        archivos.sort(key=lambda x: x.stat().st_mtime, reverse=True)
+        return str(archivos[0])
+    
+    def procesar(self) -> str:
+        archivo_enlaces = self.encontrar_csv_mas_reciente()
+        
+        if not archivo_enlaces or not Path(archivo_enlaces).exists():
+            print("No se encontró archivo de enlaces")
+            return ""
+        
+        print(f"Usando archivo: {archivo_enlaces}")
+        
+        df_enlaces = pd.read_csv(archivo_enlaces, encoding='utf-8-sig')
+        total_enlaces = len(df_enlaces)
+        
+        if total_enlaces == 0:
+            print("Archivo vacío")
+            return ""
+        
+        print(f"{total_enlaces} fundaciones para procesar")
+        print(f"{self.num_workers} workers")
+        
+        enlaces_por_worker = total_enlaces // self.num_workers
+        enlaces_lista = df_enlaces.to_dict('records')
+        
+        grupos = []
+        inicio = 0
+        for i in range(self.num_workers):
+            fin = inicio + enlaces_por_worker + (1 if i < total_enlaces % self.num_workers else 0)
+            grupo = enlaces_lista[inicio:fin]
+            if grupo:
+                grupos.append(grupo)
+                print(f"Worker {i+1}: {len(grupo)} fundaciones")
+            inicio = fin
+        
+        print("\nIniciando workers...")
+        manager = Manager()
+        resultado_queue = manager.Queue()
+        procesos = []
+        
+        for i, grupo in enumerate(grupos):
+            proceso = Process(
+                target=worker_extractor,
+                args=(i+1, grupo, resultado_queue),
+                daemon=True
+            )
+            proceso.start()
+            procesos.append(proceso)
+            time.sleep(0.5)
+        
+        print(f"\n{len(procesos)} workers en ejecución")
+        
+        csv_temporales = []
+        tiempo_inicio = time.time()
+        ultimo_update = tiempo_inicio
+        
+        while len(csv_temporales) < len(procesos):
+            time.sleep(5)
+            
+            while not resultado_queue.empty():
+                try:
+                    worker_id, csv_path, exito = resultado_queue.get_nowait()
+                    if exito and csv_path:
+                        csv_temporales.append(csv_path)
+                        tiempo_worker = (time.time() - tiempo_inicio) / 60
+                        print(f"Worker {worker_id} completado ({tiempo_worker:.1f}min)")
+                    else:
+                        print(f"Worker {worker_id} falló")
+                except:
+                    break
+            
+            ahora = time.time()
+            if ahora - ultimo_update > 30:
+                activos = sum(1 for p in procesos if p.is_alive())
+                completados = len(csv_temporales)
+                tiempo_trans = (ahora - tiempo_inicio) / 60
+                print(f"Activos: {activos}, Completados: {completados}/{len(procesos)}, Tiempo: {tiempo_trans:.1f}min")
+                ultimo_update = ahora
+            
+            if (ahora - tiempo_inicio) > 10800:
+                print("Timeout de 3 horas")
+                break
+        
+        if csv_temporales:
+            print(f"\n{len(csv_temporales)}/{len(procesos)} workers completados")
+        else:
+            print("\nNingún worker completado")
+            return ""
+        
+        for proceso in procesos:
+            proceso.join(timeout=300)
+        
+        print(f"\nCombinando {len(csv_temporales)} archivos...")
+        
+        dataframes = []
+        for csv_path in csv_temporales:
+            if Path(csv_path).exists():
+                try:
+                    df = pd.read_csv(csv_path, encoding='utf-8-sig')
+                    dataframes.append(df)
+                    print(f"{csv_path}: {len(df)} registros")
+                except Exception as e:
+                    print(f"Error leyendo {csv_path}")
+        
+        if dataframes:
+            df_final = pd.concat(dataframes, ignore_index=True)
+            
+            columnas_duplicado = ['codigo_registro', 'nif']
+            columnas_existentes = [c for c in columnas_duplicado if c in df_final.columns]
+            if columnas_existentes:
+                antes = len(df_final)
+                df_final = df_final.drop_duplicates(subset=columnas_existentes, keep='first')
+            
+            df_final.to_csv(self.output_final, index=False, encoding='utf-8-sig')
+            
+            for csv_path in csv_temporales:
+                try:
+                    Path(csv_path).unlink()
+                except:
+                    pass
+            
+            print(f"\nProceso completado")
+            print(f"Archivo: {self.output_final}")
+            print(f"Registros: {len(df_final)}")
+            
+            if 'nif' in df_final.columns:
+                nif_validos = df_final['nif'].notna().sum()
+                print(f"Con NIF: {nif_validos}")
+            if 'telefono' in df_final.columns:
+                tel_validos = df_final['telefono'].notna().sum()
+                print(f"Con teléfono: {tel_validos}")
+            
+            return self.output_final
+        
+        print("No se pudieron combinar los archivos")
+        return ""
+
+
+if __name__ == "__main__":
+    procesador = ProcesadorDetalles(num_workers=5)
+    archivo_final = procesador.procesar()
+    
+    if archivo_final:
+        print(f"\nExtracción completada: {archivo_final}")
+    else:
+        print("\nExtracción falló")

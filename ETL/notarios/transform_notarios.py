@@ -1,7 +1,7 @@
 # transform_notarios.py
 """
 Transforma CSV de notarios a dos tablas: notarias y notarias_titulares
-Usa el mismo sistema de conexión que load_geografia.py
+Usa INEResolver para resolución geográfica por código INE.
 """
 
 import sys
@@ -14,12 +14,16 @@ from typing import Dict, List, Tuple, Optional
 from datetime import datetime
 import uuid
 import json
-from collections import defaultdict
+from pathlib import Path
 
-# Importar el mismo sistema de conexión
+# Importar el sistema de conexión y el resolver INE
 from sipi.db.sessions.async_session import db_manager
 from sqlalchemy import select
 import asyncio
+
+# Agregar path para módulo common
+sys.path.insert(0, str(Path(__file__).parent.parent))
+from common.ine_resolver import INEResolver
 
 # Configuración de logging
 logging.basicConfig(
@@ -29,90 +33,17 @@ logging.basicConfig(
 logger = logging.getLogger(__name__)
 
 
-class BuscadorGeografico:
-    """Búsqueda inteligente de nombres geográficos"""
-    
-    CASOS_ESPECIALES = {
-        'ALAVA': 'ARABA',
-        'ARABA': 'ALAVA',
-        'GUIPUZCOA': 'GIPUZKOA', 
-        'GIPUZKOA': 'GUIPUZCOA',
-        'VIZCAYA': 'BIZKAIA',
-        'BIZKAIA': 'VIZCAYA',
-        'ORENSE': 'OURENSE',
-        'OURENSE': 'ORENSE',
-        'GERONA': 'GIRONA',
-        'GIRONA': 'GERONA',
-        'LERIDA': 'LLEIDA',
-        'LLEIDA': 'LERIDA',
-        'LA CORUÑA': 'A CORUÑA',
-        'A CORUÑA': 'LA CORUÑA',
-    }
-    
-    @staticmethod
-    def limpiar_nombre(nombre: str) -> str:
-        """Limpia un nombre para comparación básica"""
-        if not nombre:
-            return ""
-        
-        nombre = str(nombre).upper().strip()
-        
-        # Quitar acentos
-        reemplazos = {
-            'Á': 'A', 'É': 'E', 'Í': 'I', 'Ó': 'O', 'Ú': 'U', 'Ü': 'U', 'Ñ': 'N'
-        }
-        for old, new in reemplazos.items():
-            nombre = nombre.replace(old, new)
-        
-        # Quitar puntuación
-        nombre = re.sub(r'[^\w\s]', ' ', nombre)
-        
-        # Normalizar espacios
-        nombre = re.sub(r'\s+', ' ', nombre).strip()
-        
-        return nombre
-    
-    @staticmethod
-    def es_coincidencia(a: str, b: str) -> bool:
-        """Determina si dos nombres coinciden"""
-        if not a or not b:
-            return False
-        
-        a_limpio = BuscadorGeografico.limpiar_nombre(a)
-        b_limpio = BuscadorGeografico.limpiar_nombre(b)
-        
-        # 1. Coincidencia exacta
-        if a_limpio == b_limpio:
-            return True
-        
-        # 2. Casos especiales
-        if a_limpio in BuscadorGeografico.CASOS_ESPECIALES:
-            if BuscadorGeografico.CASOS_ESPECIALES[a_limpio] == b_limpio:
-                return True
-        
-        # 3. Uno contiene al otro (para casos como "La Coruña" vs "Coruña")
-        if a_limpio in b_limpio or b_limpio in a_limpio:
-            return True
-        
-        return False
-
-
 class TransformadorNotarios:
-    """Transforma CSV de notarios a dos tablas relacionadas"""
-    
+    """Transforma CSV de notarios a dos tablas relacionadas usando INEResolver"""
+
     def __init__(self):
-        self.buscador = BuscadorGeografico()
-        
-        # Cache geográfico
-        self.cache_provincias = {}
-        self.cache_municipios = {}
-        self.lista_provincias = []
-        self.lista_municipios = {}
-        
+        # Resolver INE para resolución geográfica
+        self.ine_resolver = INEResolver()
+
         # Datos procesados
         self.notarias = {}  # codigo_notaria -> datos
         self.titulares = []  # lista de titulares
-        
+
         self.stats = {
             'total_filas': 0,
             'notarias_creadas': 0,
@@ -120,121 +51,74 @@ class TransformadorNotarios:
             'errores': 0,
             'provincias_no_encontradas': set(),
             'municipios_no_encontrados': set(),
-            'codigos_notaria_duplicados': []
+            'codigos_notaria_duplicados': [],
+            'resoluciones_por_ine': 0,
+            'resoluciones_por_nombre': 0,
         }
     
     async def cargar_datos_geograficos(self):
-        """Carga provincias y municipios de la BD"""
-        logger.info("📥 Cargando datos geográficos...")
-        
+        """Carga mapeos INE desde la BD usando INEResolver"""
+        logger.info("📥 Cargando datos geográficos con INEResolver...")
+
         try:
             async with db_manager.session() as session:
-                from sipi.db.models.geografia import Provincia, Municipio
-                
-                # Provincias
-                result = await session.execute(select(Provincia))
-                provincias = result.scalars().all()
-                
-                for provincia in provincias:
-                    nombre = provincia.nombre
-                    self.cache_provincias[nombre.upper()] = str(provincia.id)
-                    self.lista_provincias.append(nombre)
-                
-                logger.info(f"  ✅ {len(self.cache_provincias)} provincias cargadas")
-                
-                # Municipios
-                result = await session.execute(
-                    select(Municipio, Provincia.nombre)
-                    .join(Provincia, Municipio.provincia_id == Provincia.id)
-                )
-                
-                for municipio, provincia_nombre in result:
-                    clave = (municipio.nombre.upper(), provincia_nombre.upper())
-                    self.cache_municipios[clave] = str(municipio.id)
-                    
-                    if provincia_nombre not in self.lista_municipios:
-                        self.lista_municipios[provincia_nombre] = []
-                    self.lista_municipios[provincia_nombre].append(municipio.nombre)
-                
-                logger.info(f"  ✅ {len(self.cache_municipios)} municipios cargados")
-                
+                await self.ine_resolver.cargar_desde_bd(session)
+
+                stats = self.ine_resolver.get_stats()
+                logger.info(f"  ✅ {stats['ccaa_cargadas']} CCAA cargadas")
+                logger.info(f"  ✅ {stats['provincias_cargadas']} provincias cargadas")
+                logger.info(f"  ✅ {stats['municipios_cargados']} municipios cargados")
+
         except Exception as e:
             logger.error(f"❌ Error cargando datos geográficos: {e}")
             raise
     
-    def buscar_provincia(self, nombre_provincia: str) -> Optional[str]:
-        """Busca provincia con lógica inteligente"""
-        if not nombre_provincia:
-            return None
-        
-        nombre_busqueda = nombre_provincia.upper()
-        
-        # 1. Búsqueda exacta
-        if nombre_busqueda in self.cache_provincias:
-            return self.cache_provincias[nombre_busqueda]
-        
-        # 2. Búsqueda con limpieza
-        nombre_limpio = self.buscador.limpiar_nombre(nombre_busqueda)
-        for provincia_bd, provincia_id in self.cache_provincias.items():
-            if self.buscador.limpiar_nombre(provincia_bd) == nombre_limpio:
-                return provincia_id
-        
-        # 3. Búsqueda por coincidencia
-        for provincia_bd in self.lista_provincias:
-            if self.buscador.es_coincidencia(nombre_busqueda, provincia_bd):
-                return self.cache_provincias[provincia_bd.upper()]
-        
+    def resolver_geografia(
+        self,
+        nombre_municipio: str,
+        nombre_provincia: str,
+        codigo_ine_municipio: Optional[str] = None
+    ) -> Tuple[Optional[str], Optional[str], Optional[str], Optional[str]]:
+        """
+        Resuelve geografía usando código INE (preferido) o nombres (fallback).
+
+        Args:
+            nombre_municipio: Nombre del municipio
+            nombre_provincia: Nombre de la provincia
+            codigo_ine_municipio: Código INE del municipio (5 dígitos) si está disponible
+
+        Returns:
+            Tupla (ccaa_uuid, provincia_uuid, municipio_uuid, codigo_ine_usado)
+        """
+        # 1. Si tenemos código INE, usar resolución directa
+        if codigo_ine_municipio:
+            ccaa_uuid, prov_uuid, muni_uuid = self.ine_resolver.resolver_completo(codigo_ine_municipio)
+            if muni_uuid:
+                self.stats['resoluciones_por_ine'] += 1
+                return (ccaa_uuid, prov_uuid, muni_uuid, codigo_ine_municipio)
+
+        # 2. Fallback: resolver por nombre
+        ccaa_uuid, prov_uuid, muni_uuid = self.ine_resolver.resolver_por_nombre(
+            nombre_municipio,
+            nombre_provincia
+        )
+
+        if muni_uuid:
+            self.stats['resoluciones_por_nombre'] += 1
+            # Obtener el código INE usado
+            codigo_ine = self.ine_resolver.municipio_uuid_to_ine.get(muni_uuid)
+            return (ccaa_uuid, prov_uuid, muni_uuid, codigo_ine)
+
         # No encontrado
-        self.stats['provincias_no_encontradas'].add(nombre_busqueda)
-        return None
-    
-    def buscar_municipio(self, nombre_municipio: str, nombre_provincia: str) -> Optional[str]:
-        """Busca municipio con lógica inteligente"""
-        if not nombre_municipio or not nombre_provincia:
-            return None
-        
-        # Buscar provincia primero
-        provincia_id = self.buscar_provincia(nombre_provincia)
-        if not provincia_id:
-            return None
-        
-        # Encontrar nombre de provincia en BD
-        provincia_nombre_bd = None
-        for prov_nombre, prov_id in self.cache_provincias.items():
-            if prov_id == provincia_id:
-                provincia_nombre_bd = prov_nombre
-                break
-        
-        if not provincia_nombre_bd:
-            return None
-        
-        nombre_muni_busqueda = nombre_municipio.upper()
-        
-        # 1. Búsqueda exacta
-        clave_exacta = (nombre_muni_busqueda, provincia_nombre_bd)
-        if clave_exacta in self.cache_municipios:
-            return self.cache_municipios[clave_exacta]
-        
-        # 2. Búsqueda en municipios de esa provincia
-        if provincia_nombre_bd in self.lista_municipios:
-            for municipio_bd in self.lista_municipios[provincia_nombre_bd]:
-                if self.buscador.es_coincidencia(nombre_muni_busqueda, municipio_bd):
-                    clave = (municipio_bd.upper(), provincia_nombre_bd)
-                    return self.cache_municipios.get(clave)
-        
-        # 3. Búsqueda en todo el cache
-        for (muni_bd, prov_bd), muni_id in self.cache_municipios.items():
-            if self.buscador.es_coincidencia(prov_bd, provincia_nombre_bd):
-                if self.buscador.es_coincidencia(muni_bd, nombre_muni_busqueda):
-                    return muni_id
-        
-        # No encontrado
-        self.stats['municipios_no_encontrados'].add(f"{nombre_muni_busqueda} ({nombre_provincia.upper()})")
-        return None
+        self.stats['municipios_no_encontrados'].add(
+            f"{nombre_municipio.upper()} ({nombre_provincia.upper()})"
+        )
+        return (None, None, None, None)
     
     def leer_csv(self, file_path: str) -> List[Dict]:
         """Lee CSV con manejo robusto de encoding"""
-        encodings = ['utf-8', 'latin-1', 'cp1252', 'iso-8859-1']
+        # utf-8-sig handles BOM automatically
+        encodings = ['utf-8-sig', 'utf-8', 'latin-1', 'cp1252', 'iso-8859-1']
         
         for encoding in encodings:
             try:
@@ -320,8 +204,16 @@ class TransformadorNotarios:
                     self.stats['errores'] += 1
                     continue
                 
-                # Resolver municipio
-                municipio_id = self.buscar_municipio(municipio, provincia)
+                # Resolver geografía usando INEResolver
+                # Intentar obtener codigo_ine del CSV si existe
+                codigo_ine_csv = fila.get('codigo_ine_municipio', '').strip()
+
+                ccaa_uuid, prov_uuid, municipio_id, codigo_ine_usado = self.resolver_geografia(
+                    municipio,
+                    provincia,
+                    codigo_ine_csv if codigo_ine_csv else None
+                )
+
                 if not municipio_id:
                     logger.warning(f"  Fila {idx}: Municipio no encontrado: {municipio} ({provincia})")
                     self.stats['errores'] += 1
@@ -334,7 +226,11 @@ class TransformadorNotarios:
                 if codigo_notaria not in self.notarias:
                     # Nueva notaría
                     notaria_id = str(uuid.uuid4())
-                    
+
+                    # Derivar códigos INE de provincia y CCAA desde el código de municipio
+                    codigo_ine_prov = codigo_ine_usado[:2] if codigo_ine_usado else ''
+                    codigo_ine_ccaa = self.ine_resolver.derivar_ccaa_de_provincia(codigo_ine_prov) if codigo_ine_prov else ''
+
                     self.notarias[codigo_notaria] = {
                         'id': notaria_id,
                         'codigo_notaria': codigo_notaria,
@@ -344,11 +240,14 @@ class TransformadorNotarios:
                         'fax': fax,
                         'email': email_notaria,
                         'municipio_id': municipio_id,
+                        'codigo_ine_ccaa': codigo_ine_ccaa,
+                        'codigo_ine_provincia': codigo_ine_prov,
+                        'codigo_ine_municipio': codigo_ine_usado or '',
                         'activa': True,  # Por defecto activa
                         'audit_creado_en': datetime.utcnow().isoformat(),
                         'audit_creado_por': 'transform_notarios.py',
                     }
-                    
+
                     self.stats['notarias_creadas'] += 1
                 else:
                     # Notaría duplicada (mismo código)
@@ -396,8 +295,9 @@ class TransformadorNotarios:
             
             campos_notarias = [
                 'id', 'codigo_notaria', 'direccion', 'codigo_postal',
-                'telefono', 'fax', 'email', 'municipio_id', 'activa',
-                'audit_creado_en', 'audit_creado_por'
+                'telefono', 'fax', 'email', 'municipio_id',
+                'codigo_ine_ccaa', 'codigo_ine_provincia', 'codigo_ine_municipio',
+                'activa', 'audit_creado_en', 'audit_creado_por'
             ]
             
             with open(notarias_file, 'w', newline='', encoding='utf-8') as f:
@@ -465,13 +365,17 @@ def encontrar_csv_mas_reciente(directorio: str, patron: str = "notarios_espana*.
 async def main_async():
     """Función principal async"""
     script_dir = os.path.dirname(os.path.abspath(__file__))
-    extract_dir = os.path.join(script_dir, '../extract')
-    transform_dir = os.path.join(script_dir, '../transform')
+    # Buscar CSV en el mismo directorio o en subdirectorio extract
+    extract_dir = script_dir  # El CSV puede estar en el mismo directorio
+    extract_subdir = os.path.join(script_dir, 'extract')
+    transform_dir = os.path.join(script_dir, 'transform')
     
-    # Buscar CSV
+    # Buscar CSV - primero en el mismo directorio, luego en subdirectorio extract
     csv_path = encontrar_csv_mas_reciente(extract_dir)
+    if not csv_path and os.path.exists(extract_subdir):
+        csv_path = encontrar_csv_mas_reciente(extract_subdir)
     if not csv_path:
-        logger.error(f"❌ No hay CSVs de notarios en {extract_dir}")
+        logger.error(f"❌ No hay CSVs de notarios en {extract_dir} ni en {extract_subdir}")
         return
     
     logger.info(f"📂 CSV encontrado: {csv_path}")
@@ -500,6 +404,8 @@ async def main_async():
         logger.info(f"  Total filas CSV: {transformador.stats['total_filas']}")
         logger.info(f"  Notarías creadas: {transformador.stats['notarias_creadas']}")
         logger.info(f"  Titulares creados: {transformador.stats['titulares_creados']}")
+        logger.info(f"  Resoluciones por código INE: {transformador.stats['resoluciones_por_ine']}")
+        logger.info(f"  Resoluciones por nombre (fallback): {transformador.stats['resoluciones_por_nombre']}")
         logger.info(f"  Errores: {transformador.stats['errores']}")
         
         if transformador.stats['provincias_no_encontradas']:

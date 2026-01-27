@@ -1,12 +1,10 @@
 #!/usr/bin/env python3
 """
-load_listado_cee.py
+transform_listado_cee.py
 
-Bulk Loader para datos de Inmatriculaciones CEE desde CSV generados.
-Carga todos los archivos CSV del directorio output/ que fueron generados
-por la transformación del Excel original.
+Transforma el listado de inmatriculaciones CEE desde excel a CSV 
 
-Usa nombres para referencias geográficas y reporta incidencias detalladas.
+Usa INEResolver para resolución geográfica por código INE.
 Usa protocolo COPY de PostgreSQL para máxima velocidad de carga.
 """
 
@@ -24,6 +22,10 @@ script_dir = Path(__file__).parent
 SIPI_CORE_PATH = script_dir.parent.parent.parent / "sipi-core"
 sys.path.insert(0, str(SIPI_CORE_PATH / "src"))
 
+# Agregar path para módulo common
+sys.path.insert(0, str(script_dir.parent.parent))
+from common.ine_resolver import INEResolver
+
 # Importar configuración ya cargada de sipi-core
 from sipi.db.sessions.async_session import DATABASE_URL
 
@@ -34,18 +36,18 @@ def clean_value(val):
     return str(val).strip()
 
 class InmatriculacionesCEELoader:
-    """Loader para datos de inmatriculaciones CEE desde archivos CSV"""
-    
+    """Loader para datos de inmatriculaciones CEE desde archivos CSV usando INEResolver"""
+
     def __init__(self, dsn, schema="sipi"):
         self.dsn = dsn
         self.schema = schema
-        
-        # Caches para búsqueda por nombre
-        self.ca_by_name = {}      # nombre -> ID
-        self.prov_by_name = {}    # nombre -> ID
-        self.muni_by_name = {}    # (nombre, prov_id) -> ID
+
+        # INEResolver para resolución geográfica
+        self.ine_resolver = INEResolver()
+
+        # Cache adicional para registros de propiedad (no está en INEResolver)
         self.reg_by_name = {}     # nombre -> ID
-        
+
         # Contadores de incidencias (acumulados para todos los archivos)
         self.incidencias_totales = {
             'ca_no_encontrada': [],
@@ -53,7 +55,7 @@ class InmatriculacionesCEELoader:
             'muni_no_encontrado': [],
             'reg_no_encontrado': []
         }
-        
+
         # Estadísticas generales
         self.estadisticas_totales = {
             'total_archivos': 0,
@@ -61,116 +63,161 @@ class InmatriculacionesCEELoader:
             'registros_procesados': 0,
             'registros_con_errores': 0,
             'inmuebles_insertados': 0,
-            'inmatriculaciones_insertadas': 0
+            'inmatriculaciones_insertadas': 0,
+            'resoluciones_por_ine': 0,
+            'resoluciones_por_nombre': 0,
         }
 
     async def load_caches(self, conn):
-        """Carga todos los diccionarios geográficos desde la base de datos"""
-        print("Cargando diccionarios geográficos...")
-        
+        """Carga mapeos geográficos usando INEResolver y registros de propiedad"""
+        print("Cargando diccionarios geográficos con INEResolver...")
+
+        # Usar INEResolver para cargar mapeos desde BD via asyncpg
+        # Como INEResolver usa SQLAlchemy, necesitamos cargar manualmente aquí
+
         # 1. CARGAR COMUNIDADES AUTÓNOMAS
         rows = await conn.fetch("""
-            SELECT id, nombre, nombre_oficial 
-            FROM comunidades_autonomas 
+            SELECT id, codigo_ine, nombre, nombre_oficial
+            FROM comunidades_autonomas
             WHERE activo = true
             ORDER BY nombre
         """)
-        
+
         for r in rows:
-            # Por nombre principal
-            if r['nombre']:
-                self.ca_by_name[r['nombre'].lower()] = r['id']
-            
-            # Por nombre oficial (si es diferente)
-            if r['nombre_oficial'] and r['nombre_oficial'] != r['nombre']:
-                self.ca_by_name[r['nombre_oficial'].lower()] = r['id']
-        
-        print(f"  Comunidades Autónomas: {len(self.ca_by_name)} nombres cargados")
-        
+            if r['codigo_ine']:
+                codigo = r['codigo_ine'].zfill(2)
+                self.ine_resolver.ccaa_ine_to_uuid[codigo] = r['id']
+                self.ine_resolver.ccaa_uuid_to_ine[r['id']] = codigo
+                self.ine_resolver.stats['ccaa_cargadas'] += 1
+
+        print(f"  Comunidades Autónomas: {self.ine_resolver.stats['ccaa_cargadas']} cargadas")
+
         # 2. CARGAR PROVINCIAS
         rows = await conn.fetch("""
-            SELECT p.id, p.nombre, p.nombre_oficial, p.comunidad_autonoma_id
+            SELECT p.id, p.codigo_ine, p.nombre, p.nombre_oficial
             FROM provincias p
             WHERE p.activo = true
             ORDER BY p.nombre
         """)
-        
+
         for r in rows:
-            # Por nombre principal
-            if r['nombre']:
-                self.prov_by_name[r['nombre'].lower()] = r['id']
-            
-            # Por nombre oficial
-            if r['nombre_oficial'] and r['nombre_oficial'] != r['nombre']:
-                self.prov_by_name[r['nombre_oficial'].lower()] = r['id']
-        
-        print(f"  Provincias: {len(self.prov_by_name)} nombres cargados")
-        
+            if r['codigo_ine']:
+                codigo = r['codigo_ine'].zfill(2)
+                self.ine_resolver.provincia_ine_to_uuid[codigo] = r['id']
+                self.ine_resolver.provincia_uuid_to_ine[r['id']] = codigo
+
+                # Cache por nombre
+                if r['nombre']:
+                    nombre_norm = self.ine_resolver._normalizar_nombre(r['nombre'])
+                    self.ine_resolver.nombre_provincia_to_ine[nombre_norm] = codigo
+                if r['nombre_oficial']:
+                    nombre_oficial_norm = self.ine_resolver._normalizar_nombre(r['nombre_oficial'])
+                    self.ine_resolver.nombre_provincia_to_ine[nombre_oficial_norm] = codigo
+
+                self.ine_resolver.stats['provincias_cargadas'] += 1
+
+        print(f"  Provincias: {self.ine_resolver.stats['provincias_cargadas']} cargadas")
+
         # 3. CARGAR MUNICIPIOS
         rows = await conn.fetch("""
-            SELECT m.id, m.nombre, m.nombre_oficial, m.provincia_id
+            SELECT m.id, m.codigo_ine, m.nombre, m.nombre_oficial, m.provincia_id
             FROM municipios m
             WHERE m.activo = true
             ORDER BY m.nombre
         """)
-        
+
         for r in rows:
-            # Por nombre principal + provincia_id
-            key = (r['nombre'].lower(), r['provincia_id'])
-            self.muni_by_name[key] = r['id']
-            
-            # Por nombre oficial (si es diferente)
-            if r['nombre_oficial'] and r['nombre_oficial'] != r['nombre']:
-                key_oficial = (r['nombre_oficial'].lower(), r['provincia_id'])
-                self.muni_by_name[key_oficial] = r['id']
-        
-        print(f"  Municipios: {len(self.muni_by_name)} nombres cargados")
-        
-        # 4. CARGAR REGISTROS DE PROPIEDAD
+            if r['codigo_ine']:
+                codigo = r['codigo_ine'].zfill(5)
+                self.ine_resolver.municipio_ine_to_uuid[codigo] = r['id']
+                self.ine_resolver.municipio_uuid_to_ine[r['id']] = codigo
+
+                # Cache por nombre + provincia
+                prov_ine = codigo[:2]
+                if r['nombre']:
+                    nombre_norm = self.ine_resolver._normalizar_nombre(r['nombre'])
+                    self.ine_resolver.nombre_municipio_to_ine[(nombre_norm, prov_ine)] = codigo
+                if r['nombre_oficial']:
+                    nombre_oficial_norm = self.ine_resolver._normalizar_nombre(r['nombre_oficial'])
+                    self.ine_resolver.nombre_municipio_to_ine[(nombre_oficial_norm, prov_ine)] = codigo
+
+                self.ine_resolver.stats['municipios_cargados'] += 1
+
+        print(f"  Municipios: {self.ine_resolver.stats['municipios_cargados']} cargados")
+
+        # 4. CARGAR REGISTROS DE PROPIEDAD (no está en INEResolver)
         rows = await conn.fetch("""
-            SELECT id, nombre 
-            FROM registros_propiedad 
+            SELECT id, nombre
+            FROM registros_propiedad
             ORDER BY nombre
         """)
         for r in rows:
-            self.reg_by_name[r['nombre'].lower()] = r['id']
-        
+            if r['nombre']:
+                self.reg_by_name[r['nombre'].lower()] = r['id']
+
         print(f"  Registros: {len(self.reg_by_name)} nombres cargados")
 
-    def find_geographic_ids(self, ca_val, prov_val, muni_val, incidencias_archivo):
-        """Encuentra IDs usando nombres"""
+    def find_geographic_ids(self, ca_val, prov_val, muni_val, codigo_ine_muni, incidencias_archivo):
+        """
+        Encuentra IDs usando código INE (preferido) o nombres (fallback).
+
+        Args:
+            ca_val: Nombre de comunidad autónoma
+            prov_val: Nombre de provincia
+            muni_val: Nombre de municipio
+            codigo_ine_muni: Código INE del municipio (5 dígitos) si está disponible
+            incidencias_archivo: Dict para acumular incidencias
+
+        Returns:
+            Tupla (ca_id, prov_id, muni_id, codigo_ine_usado)
+        """
         ca_id = None
         prov_id = None
         muni_id = None
-        
-        # 1. BUSCAR COMUNIDAD AUTÓNOMA
+        codigo_ine_usado = None
+
+        # 1. Si tenemos código INE, usar resolución directa
+        if codigo_ine_muni:
+            codigo_ine_clean = clean_value(codigo_ine_muni)
+            if codigo_ine_clean:
+                ca_id, prov_id, muni_id = self.ine_resolver.resolver_completo(codigo_ine_clean)
+                if muni_id:
+                    self.estadisticas_totales['resoluciones_por_ine'] += 1
+                    codigo_ine_usado = codigo_ine_clean.zfill(5)
+                    return ca_id, prov_id, muni_id, codigo_ine_usado
+
+        # 2. Fallback: resolver por nombre usando INEResolver
+        muni_clean = clean_value(muni_val)
+        prov_clean = clean_value(prov_val)
+
+        if muni_clean and prov_clean:
+            ca_id, prov_id, muni_id = self.ine_resolver.resolver_por_nombre(
+                muni_clean,
+                prov_clean
+            )
+
+            if muni_id:
+                self.estadisticas_totales['resoluciones_por_nombre'] += 1
+                codigo_ine_usado = self.ine_resolver.municipio_uuid_to_ine.get(muni_id)
+                return ca_id, prov_id, muni_id, codigo_ine_usado
+
+        # 3. Registrar incidencias si no se encontró
         if ca_val:
             ca_clean = clean_value(ca_val)
-            if ca_clean:
-                ca_id = self.ca_by_name.get(ca_clean.lower())
-                if not ca_id:
-                    # Registrar incidencia
-                    incidencias_archivo['ca_no_encontrada'].append(ca_clean)
-        
-        # 2. BUSCAR PROVINCIA
+            if ca_clean and not ca_id:
+                incidencias_archivo['ca_no_encontrada'].append(ca_clean)
+
         if prov_val:
             prov_clean = clean_value(prov_val)
-            if prov_clean:
-                prov_id = self.prov_by_name.get(prov_clean.lower())
-                if not prov_id:
-                    # Registrar incidencia
-                    incidencias_archivo['prov_no_encontrada'].append(prov_clean)
-        
-        # 3. BUSCAR MUNICIPIO (necesita provincia_id)
-        if muni_val and prov_id:
+            if prov_clean and not prov_id:
+                incidencias_archivo['prov_no_encontrada'].append(prov_clean)
+
+        if muni_val:
             muni_clean = clean_value(muni_val)
-            if muni_clean:
-                muni_id = self.muni_by_name.get((muni_clean.lower(), prov_id))
-                if not muni_id:
-                    # Registrar incidencia
-                    incidencias_archivo['muni_no_encontrado'].append(muni_clean)
-        
-        return ca_id, prov_id, muni_id
+            if muni_clean and not muni_id:
+                incidencias_archivo['muni_no_encontrado'].append(muni_clean)
+
+        return ca_id, prov_id, muni_id, codigo_ine_usado
 
     def print_incidencias_archivo(self, file_name, incidencias_archivo):
         """Imprime las incidencias de un archivo específico"""
@@ -233,6 +280,7 @@ class InmatriculacionesCEELoader:
             'comunidad_autonoma': ['comunidad_autonoma', 'comunidad', 'ccaa', 'ca', 'autonomia'],
             'provincia': ['provincia', 'prov', 'provincias'],
             'municipio': ['municipio', 'municipios', 'localidad', 'localidades'],
+            'codigo_ine_municipio': ['codigo_ine_municipio', 'codigo_ine', 'ine', 'cod_ine'],
             'registro': ['registro', 'registro_propiedad', 'registros', 'registro de la propiedad'],
             'nombre_inmueble': ['denominacion', 'bien', 'inmueble', 'titulo', 'nombre', 'descripcion'],
             'tomo': ['tomo', 'tomo_num', 'tomo_numero'],
@@ -293,8 +341,13 @@ class InmatriculacionesCEELoader:
                 muni_val = row.get(col_mapping.get('municipio'))
                 reg_val = row.get(col_mapping.get('registro'))
                 
-                # Encontrar IDs usando nombres
-                ca_id, prov_id, muni_id = self.find_geographic_ids(ca_val, prov_val, muni_val, incidencias_archivo)
+                # Obtener codigo_ine si existe en el CSV
+                codigo_ine_csv = row.get(col_mapping.get('codigo_ine_municipio'))
+
+                # Encontrar IDs usando INEResolver
+                ca_id, prov_id, muni_id, codigo_ine_usado = self.find_geographic_ids(
+                    ca_val, prov_val, muni_val, codigo_ine_csv, incidencias_archivo
+                )
                 
                 # Buscar registro por nombre
                 reg_id = None
@@ -445,6 +498,8 @@ class InmatriculacionesCEELoader:
         print(f"  - Total registros en CSV: {self.estadisticas_totales['total_registros']:,}")
         print(f"  - Inmuebles insertados: {self.estadisticas_totales['inmuebles_insertados']:,}")
         print(f"  - Inmatriculaciones insertadas: {self.estadisticas_totales['inmatriculaciones_insertadas']:,}")
+        print(f"  - Resoluciones por código INE: {self.estadisticas_totales['resoluciones_por_ine']:,}")
+        print(f"  - Resoluciones por nombre (fallback): {self.estadisticas_totales['resoluciones_por_nombre']:,}")
         print(f"  - Registros con errores: {self.estadisticas_totales['registros_con_errores']:,}")
         
         if self.estadisticas_totales['total_registros'] > 0:
