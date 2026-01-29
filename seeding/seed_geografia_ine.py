@@ -27,7 +27,7 @@ from uuid import uuid4
 sys.path.insert(0, str(Path(__file__).parent.parent.parent))
 
 from sipi.db.sessions import async_session_maker
-from sipi.db.models.geografia import ComunidadAutonoma, Provincia, Municipio
+from sipi.models.geografia import ComunidadAutonoma, Provincia, Municipio
 from sqlalchemy import select
 from sqlalchemy.exc import IntegrityError
 

@@ -1,61 +1,58 @@
 #!/usr/bin/env python3
 """
-transform_geografia.py
+TRANSFORMACIÓN GEOGRÁFICA - ETAPA DE TRANSFORMACIÓN
 
-Transforma datos geográficos del INE.
-Lee el Excel de ../extract/ y genera CSV en la carpeta transform/.
-Genera log en transform/geografia_transform.log
+ENTRADA:
+  - Archivo: ../extract/geografia_ine.xlsx
+    Contenido: Datos geográficos del INE descargados por extract_geografia.py
+    Formato: Excel con columnas CODAUTO, CPRO, CMUN, DC, NOMBRE
+
+SALIDA (en carpeta transform/):
+  - comunidades_autonomas.csv
+    Columnas: codigo_ine, nombre_oficial, nombre_alternativo, nombre_cooficial, activo
+    Entregable a: Proceso de carga a base de datos
+  
+  - provincias.csv
+    Columnas: codigo_ine, nombre_oficial, nombre_alternativo, nombre_cooficial, 
+              comunidad_autonoma_codigo, activo
+    Entregable a: Proceso de carga a base de datos
+  
+  - municipios.csv
+    Columnas: comunidad_autonoma_codigo, codigo_ine, codigo_ine_completo,
+              nombre_oficial, nombre_alternativo, nombre_cooficial,
+              provincia_codigo, activo
+    Entregable a: Proceso de carga a base de datos y georeferenciación
+
+Log: transform/geografia_transform.log
+Usa constantes de: common/ine_constants.py
 """
 
 import pandas as pd
 import sys
 from pathlib import Path
-from typing import Optional
+from typing import Optional, Tuple
 import logging
 
-# Diccionarios de mapeo
-CCAA_OFICIAL = {
-    '01': 'Andalucía', '02': 'Aragón', '03': 'Asturias, Principado de',
-    '04': 'Balears, Illes', '05': 'Canarias', '06': 'Cantabria',
-    '07': 'Castilla y León', '08': 'Castilla-La Mancha', '09': 'Cataluña',
-    '10': 'Comunitat Valenciana', '11': 'Extremadura', '12': 'Galicia',
-    '13': 'Madrid, Comunidad de', '14': 'Murcia, Región de',
-    '15': 'Navarra, Comunidad Foral de', '16': 'País Vasco',
-    '17': 'Rioja, La', '18': 'Ceuta', '19': 'Melilla',
-}
+# --- Importaciones ---
+# Añadir el directorio parent al path para poder importar desde common/
+current_dir = Path(__file__).parent
+project_root = current_dir.parent.parent  # ETL/
+common_dir = project_root / 'common'  # ETL/common/
 
-PROVINCIA_A_CCAA = {
-    '04': '01', '11': '01', '14': '01', '18': '01', '21': '01', '23': '01', '29': '01', '41': '01',
-    '22': '02', '44': '02', '50': '02', '33': '03', '07': '04', '35': '05', '38': '05',
-    '39': '06', '05': '07', '09': '07', '24': '07', '34': '07', '37': '07', '40': '07',
-    '42': '07', '47': '07', '49': '07', '02': '08', '13': '08', '16': '08', '19': '08',
-    '45': '08', '08': '09', '17': '09', '25': '09', '43': '09', '03': '10', '12': '10',
-    '46': '10', '06': '11', '10': '11', '15': '12', '27': '12', '32': '12', '36': '12',
-    '28': '13', '30': '14', '31': '15', '01': '16', '20': '16', '48': '16', '26': '17',
-    '51': '18', '52': '19',
-}
+sys.path.insert(0, str(project_root))
 
-NOMBRES_PROVINCIAS = {
-    '01': 'Araba/Álava', '02': 'Albacete', '03': 'Alicante/Alacant', '04': 'Almería',
-    '05': 'Ávila', '06': 'Badajoz', '07': 'Balears, Illes', '08': 'Barcelona',
-    '09': 'Burgos', '10': 'Cáceres', '11': 'Cádiz', '12': 'Castellón/Castelló',
-    '13': 'Ciudad Real', '14': 'Córdoba', '15': 'Coruña, A', '16': 'Cuenca',
-    '17': 'Girona', '18': 'Granada', '19': 'Guadalajara', '20': 'Gipuzkoa',
-    '21': 'Huelva', '22': 'Huesca', '23': 'Jaén', '24': 'León', '25': 'Lleida',
-    '26': 'Rioja, La', '27': 'Lugo', '28': 'Madrid', '29': 'Málaga', '30': 'Murcia',
-    '31': 'Navarra', '32': 'Ourense', '33': 'Asturias', '34': 'Palencia',
-    '35': 'Palmas, Las', '36': 'Pontevedra', '37': 'Salamanca',
-    '38': 'Santa Cruz de Tenerife', '39': 'Cantabria', '40': 'Segovia',
-    '41': 'Sevilla', '42': 'Soria', '43': 'Tarragona', '44': 'Teruel',
-    '45': 'Toledo', '46': 'Valencia/València', '47': 'Valladolid', '48': 'Bizkaia',
-    '49': 'Zamora', '50': 'Zaragoza', '51': 'Ceuta', '52': 'Melilla',
-}
+from common.ine_constants import (
+    CCAA_NOMBRE_OFICIAL,
+    CCAA_NOMBRE_ALTERNATIVO,
+    CCAA_NOMBRE_COOFICIAL,
+    PROVINCIA_A_CCAA,
+    NOMBRES_PROVINCIAS
+)
 
-
-def setup_logging():
-    """Configura logging específico para transformación"""
-    script_dir = Path(__file__).parent
-    log_file = script_dir / 'geografia_transform.log'
+# Configurar logging
+def setup_logging(log_file_name: str):
+    """Configura logging básico"""
+    log_file = current_dir / log_file_name
     
     logging.basicConfig(
         level=logging.INFO,
@@ -67,12 +64,8 @@ def setup_logging():
     )
     return logging.getLogger(__name__)
 
-
-logger = setup_logging()
-
-
 def safe_print(message):
-    """Imprime mensajes de forma segura en Windows"""
+    """Imprime mensajes de forma segura"""
     try:
         print(message)
     except UnicodeEncodeError:
@@ -80,70 +73,196 @@ def safe_print(message):
         print(safe_message)
 
 
-def transformar_excel_ine(excel_path: Path, year: Optional[int] = None) -> tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame]:
-    """Transforma el Excel del INE en DataFrames estructurados"""
-    safe_print(f"Transformando Excel del INE{' ' + str(year) if year else ''}...")
-    logger.info(f"Transformando Excel del INE{' ' + str(year) if year else ''}")
+# ========== FUNCIONES DE TRANSFORMACIÓN ==========
+
+def detectar_cabecera_excel(excel_path: Path) -> int:
+    """Detecta automáticamente la fila de cabeceras en el Excel del INE"""
+    df_prueba = pd.read_excel(excel_path, header=None, nrows=15)
+    
+    patrones_cabecera = ['CODAUTO', 'CPRO', 'CMUN', 'DC', 'NOMBRE']
+    
+    for i in range(len(df_prueba)):
+        fila_str = ' '.join(str(cell).upper() for cell in df_prueba.iloc[i].fillna('').tolist())
+        
+        if any(patron in fila_str for patron in patrones_cabecera):
+            return i
+    
+    return 0
+
+
+def procesar_nombre_provincia(codigo_provincia: str) -> Tuple[str, str, str]:
+    """
+    Procesa el nombre de provincia y determina nombre_oficial, nombre_alternativo, nombre_cooficial.
+    """
+    nombre_oficial = NOMBRES_PROVINCIAS.get(codigo_provincia, f'Provincia {codigo_provincia}')
+    
+    if '/' in nombre_oficial:
+        partes = nombre_oficial.split('/')
+        if len(partes) == 2:
+            # Para provincias con nombres bilingües
+            nombre_cooficial = partes[0].strip()  # Ej: "Araba" (euskera)
+            nombre_alternativo = partes[1].strip()  # Ej: "Álava" (español)
+            return nombre_oficial, nombre_alternativo, nombre_cooficial
+    
+    # Sin separador - los tres nombres iguales
+    return nombre_oficial, nombre_oficial, nombre_oficial
+
+
+def procesar_nombre_municipio(nombre_ine: str, codigo_provincia: str = None) -> Tuple[str, str, str]:
+    """
+    Procesa el nombre del municipio del INE y determina nombre_oficial, nombre_alternativo, nombre_cooficial.
+    """
+    if not isinstance(nombre_ine, str):
+        nombre_ine = str(nombre_ine)
+    
+    nombre_ine = nombre_ine.strip()
+    nombre_oficial = nombre_ine
+    
+    for separador in ['/', '-']:
+        if separador in nombre_ine:
+            partes = nombre_ine.split(separador)
+            if len(partes) == 2:
+                nombre_alternativo = partes[0].strip()
+                nombre_cooficial = partes[1].strip()
+                return nombre_oficial, nombre_alternativo, nombre_cooficial
+    
+    # Sin separador - los tres nombres iguales
+    return nombre_oficial, nombre_oficial, nombre_oficial
+
+
+def transformar_excel_ine(excel_path: Path, year: Optional[int] = None) -> Tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame]:
+    """
+    TRANSFORMACIÓN PRINCIPAL
+    
+    Convierte Excel del INE en 3 DataFrames estructurados:
+    1. Comunidades Autónomas (19 registros)
+    2. Provincias (52 registros)  
+    3. Municipios (~8,132 registros)
+    """
+    safe_print(f"Transformando Excel del INE...")
+    logger.info(f"Transformando Excel del INE")
     logger.info(f"Leyendo archivo: {excel_path}")
     
-    df = pd.read_excel(excel_path, header=1)
+    # Detectar cabecera automáticamente
+    fila_cabecera = detectar_cabecera_excel(excel_path)
+    
+    # Leer Excel con cabecera correcta
+    df = pd.read_excel(excel_path, header=fila_cabecera)
+    
+    # Limpiar datos
+    df = df.dropna(how='all')
+    df = df.reset_index(drop=True)
+    
     safe_print(f"Registros cargados: {len(df):,}")
-    logger.info(f"Registros cargados del Excel: {len(df):,}")
     
     # Detección de columnas
     col_mapping = {}
     for col in df.columns:
-        col_upper = str(col).upper()
-        if 'CPRO' in col_upper or 'PROV' in col_upper:
+        col_str = str(col).upper()
+        if 'CODAUTO' in col_str or 'CCAA' in col_str:
+            col_mapping['ccaa'] = col
+        elif 'CPRO' in col_str or 'PROV' in col_str:
             col_mapping['provincia'] = col
-        elif 'CMUN' in col_upper or 'MUNI' in col_upper:
+        elif 'CMUN' in col_str or 'MUNI' in col_str:
             col_mapping['municipio'] = col
-        elif 'NOMBRE' in col_upper or 'LITERAL' in col_upper:
+        elif 'DC' in col_str or 'DIGITO' in col_str or 'CONTROL' in col_str:
+            col_mapping['digito_control'] = col
+        elif 'NOMBRE' in col_str or 'LITERAL' in col_str:
             col_mapping['nombre'] = col
     
-    logger.info(f"Columnas detectadas: {col_mapping}")
-    
-    # Si no encontramos las columnas, usar las primeras 3
-    if len(col_mapping) < 3:
+    # Si no detectamos todas las columnas, asumir nombres estándar
+    if len(col_mapping) < 5:
+        logger.warning(f"No se detectaron todas las columnas automáticamente. Mapeo: {col_mapping}")
+        
         columns = list(df.columns)
-        col_mapping['provincia'] = columns[0] if len(columns) > 0 else 'CPRO'
-        col_mapping['municipio'] = columns[1] if len(columns) > 1 else 'CMUN'
-        col_mapping['nombre'] = columns[2] if len(columns) > 2 else 'NOMBRE'
-        logger.warning(f"Columnas no detectadas automáticamente. Usando: {col_mapping}")
+        if len(columns) >= 5:
+            col_mapping['ccaa'] = columns[0]
+            col_mapping['provincia'] = columns[1]
+            col_mapping['municipio'] = columns[2]
+            col_mapping['digito_control'] = columns[3]
+            col_mapping['nombre'] = columns[4]
     
-    # Limpiar y formatear
+    logger.info(f"Columnas mapeadas: {col_mapping}")
+    
+    # Verificar columnas mínimas
+    columnas_requeridas = ['provincia', 'municipio', 'nombre']
+    for col in columnas_requeridas:
+        if col not in col_mapping:
+            safe_print(f"ERROR: No se encontró la columna '{col}' en el Excel")
+            logger.error(f"No se encontró la columna '{col}' en el Excel")
+            sys.exit(1)
+    
+    # Limpiar y formatear datos
     df[col_mapping['provincia']] = df[col_mapping['provincia']].astype(str).str.zfill(2)
     df[col_mapping['municipio']] = df[col_mapping['municipio']].astype(str).str.zfill(3)
-    df['codigo_completo'] = df[col_mapping['provincia']] + df[col_mapping['municipio']]
     
-    # Generar DataFrames
-    df_ccaa = pd.DataFrame([
-        {'codigo_ine': k, 'nombre': v, 'nombre_oficial': v, 'activo': True}
-        for k, v in CCAA_OFICIAL.items()
-    ])
+    # Generar código INE de 5 dígitos
+    df['codigo_ine_5'] = df[col_mapping['provincia']] + df[col_mapping['municipio']]
     
-    df_provincias = pd.DataFrame([
-        {
-            'codigo_ine': codigo,
-            'nombre': NOMBRES_PROVINCIAS.get(codigo, f'Provincia {codigo}'),
-            'nombre_oficial': NOMBRES_PROVINCIAS.get(codigo, f'Provincia {codigo}'),
-            'comunidad_autonoma_codigo': PROVINCIA_A_CCAA.get(codigo, '00'),
+    # Generar código INE completo de 7 dígitos
+    if 'digito_control' in col_mapping:
+        df['digito_control'] = df[col_mapping['digito_control']].astype(str).str.zfill(2)
+        df['codigo_ine_7'] = df['codigo_ine_5'] + df['digito_control']
+    else:
+        safe_print("ADVERTENCIA: No se encontró columna de dígito de control")
+        logger.warning("No se encontró columna de dígito de control en el Excel")
+        df['codigo_ine_7'] = df['codigo_ine_5'] + '00'
+    
+    # 1. DataFrame de CCAA
+    ccaa_data = []
+    for codigo_ccaa in CCAA_NOMBRE_OFICIAL.keys():
+        ccaa_data.append({
+            'codigo_ine': codigo_ccaa,
+            'nombre_oficial': CCAA_NOMBRE_OFICIAL.get(codigo_ccaa, ''),
+            'nombre_alternativo': CCAA_NOMBRE_ALTERNATIVO.get(codigo_ccaa, ''),
+            'nombre_cooficial': CCAA_NOMBRE_COOFICIAL.get(codigo_ccaa, ''),
             'activo': True
-        }
-        for codigo in df[col_mapping['provincia']].unique()
-    ])
+        })
     
-    df_municipios = pd.DataFrame([
-        {
-            'codigo_ine': row['codigo_completo'],
-            'nombre': str(row[col_mapping['nombre']]).strip(),
-            'nombre_oficial': str(row[col_mapping['nombre']]).strip(),
-            'provincia_codigo': row[col_mapping['provincia']],
+    df_ccaa = pd.DataFrame(ccaa_data)
+    
+    # 2. DataFrame de Provincias
+    provincias_data = []
+    for codigo_prov in sorted(df[col_mapping['provincia']].unique()):
+        nombre_oficial, nombre_alternativo, nombre_cooficial = procesar_nombre_provincia(codigo_prov)
+        
+        provincias_data.append({
+            'codigo_ine': codigo_prov,
+            'nombre_oficial': nombre_oficial,
+            'nombre_alternativo': nombre_alternativo,
+            'nombre_cooficial': nombre_cooficial,
+            'comunidad_autonoma_codigo': PROVINCIA_A_CCAA.get(codigo_prov, '00'),
             'activo': True
-        }
-        for _, row in df.iterrows()
-    ])
+        })
     
+    df_provincias = pd.DataFrame(provincias_data)
+    
+    # 3. DataFrame de Municipios
+    municipios_data = []
+    for _, row in df.iterrows():
+        codigo_provincia = row[col_mapping['provincia']]
+        nombre_ine = str(row[col_mapping['nombre']]).strip()
+        
+        nombre_oficial, nombre_alternativo, nombre_cooficial = procesar_nombre_municipio(
+            nombre_ine, codigo_provincia
+        )
+        
+        comunidad_autonoma_codigo = PROVINCIA_A_CCAA.get(codigo_provincia, '00')
+        
+        municipios_data.append({
+            'comunidad_autonoma_codigo': comunidad_autonoma_codigo,
+            'codigo_ine': row['codigo_ine_5'],
+            'codigo_ine_completo': row['codigo_ine_7'],
+            'nombre_oficial': nombre_oficial,
+            'nombre_alternativo': nombre_alternativo,
+            'nombre_cooficial': nombre_cooficial,
+            'provincia_codigo': codigo_provincia,
+            'activo': True
+        })
+    
+    df_municipios = pd.DataFrame(municipios_data)
+    
+    # Estadísticas
     safe_print(f"{len(df_ccaa)} CCAA, {len(df_provincias)} provincias, "
                f"{len(df_municipios):,} municipios generados")
     
@@ -156,42 +275,59 @@ def transformar_excel_ine(excel_path: Path, year: Optional[int] = None) -> tuple
 
 
 def guardar_csvs(df_ccaa: pd.DataFrame, df_provincias: pd.DataFrame, 
-                 df_municipios: pd.DataFrame, output_dir: Path):
-    """Guarda los DataFrames transformados en archivos CSV en la carpeta transform/"""
+                 df_municipios: pd.DataFrame, output_dir: Path) -> Tuple[Path, Path, Path]:
+    """
+    GUARDADO DE ARCHIVOS CSV
     
+    Guarda los 3 DataFrames como archivos CSV en la carpeta transform/
+    Retorna las rutas de los archivos generados.
+    """
     # Guardar CSV de Comunidades Autónomas
     ccaa_path = output_dir / 'comunidades_autonomas.csv'
-    df_ccaa.to_csv(ccaa_path, index=False, encoding='utf-8')
+    df_ccaa_sorted = df_ccaa[['codigo_ine', 'nombre_oficial', 'nombre_alternativo', 
+                              'nombre_cooficial', 'activo']]
+    df_ccaa_sorted.to_csv(ccaa_path, index=False, encoding='utf-8-sig')
     ccaa_size = ccaa_path.stat().st_size
-    safe_print(f"  - {ccaa_path.name}: {len(df_ccaa)} registros")
-    logger.info(f"Archivo generado: {ccaa_path.name}")
-    logger.info(f"  Ruta: {ccaa_path}")
-    logger.info(f"  Registros: {len(df_ccaa)}")
-    logger.info(f"  Tamaño: {ccaa_size:,} bytes")
+    safe_print(f"  ✓ {ccaa_path.name}: {len(df_ccaa)} registros ({ccaa_size:,} bytes)")
+    logger.info(f"Archivo generado: {ccaa_path.name} ({ccaa_size:,} bytes)")
     
     # Guardar CSV de Provincias
     prov_path = output_dir / 'provincias.csv'
-    df_provincias.to_csv(prov_path, index=False, encoding='utf-8')
+    df_provincias_sorted = df_provincias[['codigo_ine', 'nombre_oficial', 'nombre_alternativo', 
+                                         'nombre_cooficial', 'comunidad_autonoma_codigo', 'activo']]
+    df_provincias_sorted.to_csv(prov_path, index=False, encoding='utf-8-sig')
     prov_size = prov_path.stat().st_size
-    safe_print(f"  - {prov_path.name}: {len(df_provincias)} registros")
-    logger.info(f"Archivo generado: {prov_path.name}")
-    logger.info(f"  Ruta: {prov_path}")
-    logger.info(f"  Registros: {len(df_provincias)}")
-    logger.info(f"  Tamaño: {prov_size:,} bytes")
+    safe_print(f"  ✓ {prov_path.name}: {len(df_provincias)} registros ({prov_size:,} bytes)")
+    logger.info(f"Archivo generado: {prov_path.name} ({prov_size:,} bytes)")
     
     # Guardar CSV de Municipios
     muni_path = output_dir / 'municipios.csv'
-    df_municipios.to_csv(muni_path, index=False, encoding='utf-8')
+    df_municipios_sorted = df_municipios[['comunidad_autonoma_codigo',
+                                         'codigo_ine',
+                                         'codigo_ine_completo',
+                                         'nombre_oficial',
+                                         'nombre_alternativo',
+                                         'nombre_cooficial',
+                                         'provincia_codigo',
+                                         'activo']]
+    df_municipios_sorted.to_csv(muni_path, index=False, encoding='utf-8-sig')
     muni_size = muni_path.stat().st_size
-    safe_print(f"  - {muni_path.name}: {len(df_municipios):,} registros")
-    logger.info(f"Archivo generado: {muni_path.name}")
-    logger.info(f"  Ruta: {muni_path}")
-    logger.info(f"  Registros: {len(df_municipios):,}")
-    logger.info(f"  Tamaño: {muni_size:,} bytes")
+    safe_print(f"  ✓ {muni_path.name}: {len(df_municipios):,} registros ({muni_size:,} bytes)")
+    logger.info(f"Archivo generado: {muni_path.name} ({muni_size:,} bytes)")
+    
+    return ccaa_path, prov_path, muni_path
 
 
 def transformar_geografia():
-    """Función principal de transformación"""
+    """
+    FUNCIÓN PRINCIPAL DE TRANSFORMACIÓN
+    
+    Orquesta todo el proceso:
+    1. Lee archivo de entrada desde extract/
+    2. Transforma datos
+    3. Guarda CSVs en transform/
+    4. Reporta resultados
+    """
     safe_print("=" * 80)
     safe_print("TRANSFORMACIÓN DE DATOS GEOGRÁFICOS DEL INE")
     safe_print("=" * 80)
@@ -200,7 +336,7 @@ def transformar_geografia():
     logger.info("INICIANDO TRANSFORMACIÓN DE DATOS GEOGRÁFICOS")
     logger.info("=" * 80)
     
-    # Configurar rutas - input desde extract/, output en transform/
+    # Configurar rutas
     script_dir = Path(__file__).parent
     extract_dir = script_dir.parent / 'extract'
     excel_path = extract_dir / 'geografia_ine.xlsx'
@@ -208,16 +344,17 @@ def transformar_geografia():
     logger.info(f"Script ejecutado desde: {script_dir}")
     logger.info(f"Buscando archivo de entrada: {excel_path}")
     
+    # Verificar archivo de entrada
     if not excel_path.exists():
         safe_print(f"ERROR: No se encuentra el archivo Excel: {excel_path}")
         logger.error(f"No se encuentra el archivo Excel: {excel_path}")
         logger.error("Ejecuta primero extract_geografia.py desde la carpeta extract/")
         sys.exit(1)
     
-    # Verificar tamaño del archivo de entrada
-    input_size = excel_path.stat().st_size
-    logger.info(f"Archivo de entrada encontrado: {excel_path.name}")
-    logger.info(f"Tamaño del archivo de entrada: {input_size:,} bytes")
+    input_size = excel_path.stat().st_size / (1024 * 1024)  # MB
+    safe_print(f"Archivo de entrada encontrado: {excel_path.name}")
+    safe_print(f"Tamaño: {input_size:.2f} MB")
+    logger.info(f"Tamaño del archivo de entrada: {input_size:.2f} MB")
     
     # Transformar Excel
     try:
@@ -227,27 +364,26 @@ def transformar_geografia():
         logger.error(f"Error transformando Excel: {e}", exc_info=True)
         sys.exit(1)
     
-    # Guardar CSV en la carpeta transform/
-    safe_print(f"\nGuardando CSV en {script_dir}:")
+    # Guardar CSV
+    safe_print(f"\nGuardando CSVs en {script_dir}:")
     logger.info(f"Guardando archivos CSV en: {script_dir}")
     
     try:
-        guardar_csvs(df_ccaa, df_provincias, df_municipios, script_dir)
+        ccaa_path, prov_path, muni_path = guardar_csvs(df_ccaa, df_provincias, df_municipios, script_dir)
     except Exception as e:
         safe_print(f"ERROR guardando CSV: {e}")
         logger.error(f"Error guardando CSV: {e}", exc_info=True)
         sys.exit(1)
     
-    # Resumen final en log
+    # Resumen final
     logger.info("=" * 50)
     logger.info("RESUMEN DE TRANSFORMACIÓN")
     logger.info("=" * 50)
-    logger.info(f"Archivo de entrada: {excel_path.name}")
-    logger.info(f"Tamaño entrada: {input_size:,} bytes")
+    logger.info(f"Archivo de entrada: {excel_path.name} ({input_size:.2f} MB)")
     logger.info("Archivos generados:")
-    logger.info(f"  1. comunidades_autonomas.csv: {len(df_ccaa)} registros")
-    logger.info(f"  2. provincias.csv: {len(df_provincias)} registros")
-    logger.info(f"  3. municipios.csv: {len(df_municipios):,} registros")
+    logger.info(f"  1. {ccaa_path.name}: {len(df_ccaa)} registros")
+    logger.info(f"  2. {prov_path.name}: {len(df_provincias)} registros")
+    logger.info(f"  3. {muni_path.name}: {len(df_municipios):,} registros")
     logger.info(f"Total registros transformados: {len(df_ccaa) + len(df_provincias) + len(df_municipios):,}")
     logger.info("=" * 50)
     
@@ -261,4 +397,5 @@ def transformar_geografia():
 
 
 if __name__ == '__main__':
+    logger = setup_logging('geografia_transform.log')
     transformar_geografia()

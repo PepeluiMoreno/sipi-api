@@ -5,9 +5,10 @@ Fuente: https://www.ine.es/daco/daco42/codmun/cod_ccaa_provincia.htm
 
 Centraliza los diccionarios de mapeo usados por todos los scripts ETL.
 """
+# ========== NOMBRES DE COMUNIDADES AUTÓNOMAS ==========
 
-# Comunidades Autónomas: codigo_ine (2 dígitos) -> nombre oficial
-CCAA_OFICIAL = {
+# 1. NOMBRE OFICIAL (según INE/BOE)
+CCAA_NOMBRE_OFICIAL = {
     '01': 'Andalucía',
     '02': 'Aragón',
     '03': 'Asturias, Principado de',
@@ -28,6 +29,53 @@ CCAA_OFICIAL = {
     '18': 'Ceuta',
     '19': 'Melilla',
 }
+
+# 2. NOMBRE ALTERNATIVO (versión común en español)
+CCAA_NOMBRE_ALTERNATIVO = {
+    '01': 'Andalucía',
+    '02': 'Aragón',
+    '03': 'Asturias',
+    '04': 'Baleares',
+    '05': 'Canarias',
+    '06': 'Cantabria',
+    '07': 'Castilla y León',
+    '08': 'Castilla-La Mancha',
+    '09': 'Cataluña',
+    '10': 'Comunidad Valenciana',
+    '11': 'Extremadura',
+    '12': 'Galicia',
+    '13': 'Madrid',
+    '14': 'Murcia',
+    '15': 'Navarra',
+    '16': 'País Vasco',
+    '17': 'La Rioja',
+    '18': 'Ceuta',
+    '19': 'Melilla',
+}
+
+# 3. NOMBRE COOFICIAL (en lengua cooficial de la comunidad)
+CCAA_NOMBRE_COOFICIAL = {
+    '01': 'Andalucía',           # Español (única lengua oficial)
+    '02': 'Aragón',              # Español (única lengua oficial)
+    '03': 'Asturies',            # Asturiano (cooficial en algunas zonas)
+    '04': 'Illes Balears',       # Catalán (cooficial)
+    '05': 'Canarias',            # Español (única lengua oficial)
+    '06': 'Cantabria',           # Español (única lengua oficial)
+    '07': 'Castilla y León',     # Español (única lengua oficial)
+    '08': 'Castilla-La Mancha',  # Español (única lengua oficial)
+    '09': 'Catalunya',           # Catalán (cooficial)
+    '10': 'Comunitat Valenciana', # Valenciano (cooficial)
+    '11': 'Extremadura',         # Español (única lengua oficial)
+    '12': 'Galicia',             # Gallego (cooficial)
+    '13': 'Comunidad de Madrid', # Español (única lengua oficial)
+    '14': 'Región de Murcia',    # Español (única lengua oficial)
+    '15': 'Nafarroa',            # Euskera (cooficial en zona vascófona)
+    '16': 'Euskadi',             # Euskera (cooficial)
+    '17': 'La Rioja',            # Español (única lengua oficial)
+    '18': 'Ceuta',               # Español (única lengua oficial)
+    '19': 'Melilla',             # Español (única lengua oficial)
+}
+
 
 # Mapeo provincia (2 dígitos) -> comunidad autónoma (2 dígitos)
 PROVINCIA_A_CCAA = {

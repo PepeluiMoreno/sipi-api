@@ -5,7 +5,9 @@ Contiene utilidades comunes para resolución geográfica usando códigos INE.
 """
 
 from .ine_constants import (
-    CCAA_OFICIAL,
+    CCAA_NOMBRE_OFICIAL,
+    CCAA_NOMBRE_ALTERNATIVO,
+    CCAA_NOMBRE_COOFICIAL,
     PROVINCIA_A_CCAA,
     NOMBRES_PROVINCIAS,
     ALIAS_PROVINCIAS,
@@ -14,7 +16,9 @@ from .ine_constants import (
 from .ine_resolver import INEResolver
 
 __all__ = [
-    'CCAA_OFICIAL',
+    'CCAA_NOMBRE_OFICIAL',
+    'CCAA_NOMBRE_ALTERNATIVO',
+    'CCAA_NOMBRE_COOFICIAL',
     'PROVINCIA_A_CCAA',
     'NOMBRES_PROVINCIAS',
     'ALIAS_PROVINCIAS',

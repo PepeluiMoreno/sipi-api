@@ -47,14 +47,14 @@ def get_graphql_type_for_column(column):
         # Manejar tipos especiales (geometry, json, etc.)
         return Optional[str] if column.nullable else str
 
-def load_all_models(folder: str = "sipi.db.models"):
+def load_all_models(folder: str = "sipi.models"):
     """Carga todos los modelos SQLAlchemy sin duplicados"""
     models_dict = {}  # Usar dict para deduplicar por nombre
 
-    # Si es un paquete Python (formato: sipi.db.models), importar directamente
+    # Si es un paquete Python (formato: sipi.models), importar directamente
     if "." in folder:
         try:
-            import sipi.db.models as models_module
+            import sipi.models as models_module
             for attr_name in dir(models_module):
                 if attr_name.startswith("_"):
                     continue
@@ -657,7 +657,7 @@ def create_mutations(models, type_registry, input_registry):
     ) -> bool:
         try:
             db = info.context["db"]
-            from sipi.db.models.discovery import DeteccionAnuncio, InmuebleRaw
+            from sipi.models.discovery import DeteccionAnuncio, InmuebleRaw
 
             # 1. Verificar existencia
             res_ad = await db.execute(select(InmuebleRaw).where(InmuebleRaw.id == ad_id))
@@ -683,7 +683,7 @@ def create_mutations(models, type_registry, input_registry):
                 det.confirmed_at = datetime.utcnow()
 
             # 3. Marcar el inmueble del censo como 'en_venta'
-            from sipi.db.models.inmuebles import Inmueble
+            from sipi.models.inmuebles import Inmueble
             res_census = await db.execute(select(Inmueble).where(Inmueble.id == listado_cee_id))
             listado_cee_item = res_census.scalar_one_or_none()
             if listado_cee_item:
@@ -700,7 +700,7 @@ def create_mutations(models, type_registry, input_registry):
     
     return mutations
 
-def create_schema(models_folder: str = "sipi.db.models") -> strawberry.Schema:
+def create_schema(models_folder: str = "sipi.models") -> strawberry.Schema:
     """Función principal que crea el schema GraphQL completo"""
     logger.info("🚀 Iniciando creación de schema GraphQL")
     

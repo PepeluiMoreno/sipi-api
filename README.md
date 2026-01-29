@@ -495,7 +495,7 @@ Al crear un nuevo modelo:
 
 ```python
 from app.db.base import Base
-from app.db.mixins import UUIDPKMixin, AuditMixin
+from app.mixins import UUIDPKMixin, AuditMixin
 
 class MiModelo(UUIDPKMixin, AuditMixin, Base):
     __tablename__ = "mi_tabla"

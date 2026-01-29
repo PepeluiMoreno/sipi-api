@@ -97,6 +97,27 @@ async def check_database_connection():
 # 5. RUTAS
 # ============================================================================
 
+@app.get("/api/health/db")
+async def health_db():
+    """Health check específico para base de datos"""
+    start_time = time.time()
+    
+    db_connected = await check_database_connection()
+    
+    response_time = (time.time() - start_time) * 1000
+    
+    return JSONResponse({
+        "status": "connected" if db_connected else "disconnected",
+        "timestamp": datetime.now().isoformat(),
+        "response_time_ms": round(response_time, 2),
+        "database": {
+            "connected": db_connected,
+            "check_query": "SELECT 1",
+            "status": "online" if db_connected else "offline"
+        }
+    })
+
+
 @app.get("/", response_class=HTMLResponse)
 async def root():
     """Página principal - Solo información REAL verificada"""
