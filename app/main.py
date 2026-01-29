@@ -16,7 +16,7 @@ from strawberry.fastapi import GraphQLRouter
 # ============================================================================
 
 try:
-    from sipi.db.sessions.async_session import db_manager
+    from sipi_core.db.sessions.async_session import db_manager
     print("✅ Conexión a base de datos configurada")
 except ImportError as e:
     print(f"❌ Error importando conexión: {e}")

@@ -17,7 +17,7 @@ from sqlalchemy import and_, or_
 from geoalchemy2.shape import from_shape
 from shapely.geometry import Point
 
-from sipi.models import (
+from sipi_core.models import (
     Inmueble, 
     InmuebleOSMExt,
     TipoInmueble,

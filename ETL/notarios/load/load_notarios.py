@@ -19,8 +19,8 @@ import hashlib
 import logging
 
 # Importar desde sipi-core
-from sipi.db.sessions.async_session import db_manager
-from sipi.models.actores import Notaria, NotariaTitular
+from sipi_core.db.sessions.async_session import db_manager
+from sipi_core.models.actores import Notaria, NotariaTitular
 
 
 def setup_logging():

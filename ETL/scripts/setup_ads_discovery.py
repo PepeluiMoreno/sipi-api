@@ -17,7 +17,7 @@ SIPI_CORE_PATH = script_dir.parent.parent.parent / "sipi-core"
 sys.path.insert(0, str(SIPI_CORE_PATH / "src"))
 
 # Importar db_manager ya configurado
-from sipi.db.sessions.async_session import db_manager
+from sipi_core.db.sessions.async_session import db_manager
 
 # Proyecto sipi-etl hermano
 etl_project_root = script_dir.parent.parent.parent / 'sipi-etl'

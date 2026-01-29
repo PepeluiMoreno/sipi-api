@@ -54,7 +54,7 @@ def load_all_models(folder: str = "sipi.models"):
     # Si es un paquete Python (formato: sipi.models), importar directamente
     if "." in folder:
         try:
-            import sipi.models as models_module
+            import sipi_core.models as models_module
             for attr_name in dir(models_module):
                 if attr_name.startswith("_"):
                     continue
@@ -657,7 +657,7 @@ def create_mutations(models, type_registry, input_registry):
     ) -> bool:
         try:
             db = info.context["db"]
-            from sipi.models.discovery import DeteccionAnuncio, InmuebleRaw
+            from sipi_core.models.discovery import DeteccionAnuncio, InmuebleRaw
 
             # 1. Verificar existencia
             res_ad = await db.execute(select(InmuebleRaw).where(InmuebleRaw.id == ad_id))
@@ -683,7 +683,7 @@ def create_mutations(models, type_registry, input_registry):
                 det.confirmed_at = datetime.utcnow()
 
             # 3. Marcar el inmueble del censo como 'en_venta'
-            from sipi.models.inmuebles import Inmueble
+            from sipi_core.models.inmuebles import Inmueble
             res_census = await db.execute(select(Inmueble).where(Inmueble.id == listado_cee_id))
             listado_cee_item = res_census.scalar_one_or_none()
             if listado_cee_item:

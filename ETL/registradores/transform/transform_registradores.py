@@ -16,7 +16,7 @@ import json
 from pathlib import Path
 
 # Importar el sistema de conexión
-from sipi.db.sessions.async_session import db_manager
+from sipi_core.db.sessions.async_session import db_manager
 from sqlalchemy import select
 import asyncio
 

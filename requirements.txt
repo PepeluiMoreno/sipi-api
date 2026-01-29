@@ -70,15 +70,3 @@ structlog~=24.3.0
 # Manipulación de fechas
 python-dateutil~=2.9.0
 
-# ===========================================
-# GRUPOS DE DEPENDENCIAS (para instalación selectiva)
-# ===========================================
-# Instalar todo: pip install -r requirements.txt
-# 
-# Solo base: pip install sqlalchemy[asyncio] alembic asyncpg psycopg[binary] GeoAlchemy2
-# 
-# Solo scraping: pip install aiohttp beautifulsoup4 pandas requests
-# 
-# Solo ETL: pip install pandas openpyxl xlrd tqdm chardet python-dateutil
-# 
-# Solo utilidades: pip install python-dotenv unidecode psutil

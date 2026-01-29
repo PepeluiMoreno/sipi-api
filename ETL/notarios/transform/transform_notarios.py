@@ -10,7 +10,7 @@ import uuid
 import json
 from pathlib import Path
 
-from sipi.db.sessions.async_session import db_manager
+from sipi_core.db.sessions.async_session import db_manager
 from sqlalchemy import select
 import asyncio
 

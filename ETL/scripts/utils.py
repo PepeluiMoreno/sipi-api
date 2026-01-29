@@ -6,8 +6,8 @@ SIPI_CORE_PATH = Path(__file__).parent.parent.parent.parent / "sipi-core"
 sys.path.insert(0, str(SIPI_CORE_PATH / "src"))
 
 from sqlalchemy import select
-from sipi.models.geografia import ComunidadAutonoma, Provincia, Municipio
-from sipi.models.actores import RegistroPropiedad
+from sipi_core.models.geografia import ComunidadAutonoma, Provincia, Municipio
+from sipi_core.models.actores import RegistroPropiedad
 
 def generate_code(name, length=2):
     """Genera código dummy basado en hash del nombre"""

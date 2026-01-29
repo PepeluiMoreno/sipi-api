@@ -26,8 +26,8 @@ from uuid import uuid4
 # Agregar el directorio raíz al path
 sys.path.insert(0, str(Path(__file__).parent.parent.parent))
 
-from sipi.db.sessions import async_session_maker
-from sipi.models.geografia import ComunidadAutonoma, Provincia, Municipio
+from sipi_core.db.sessions import async_session_maker
+from sipi_core.models.geografia import ComunidadAutonoma, Provincia, Municipio
 from sqlalchemy import select
 from sqlalchemy.exc import IntegrityError
 

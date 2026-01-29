@@ -27,7 +27,7 @@ sys.path.insert(0, str(script_dir.parent.parent))
 from common.ine_resolver import INEResolver
 
 # Importar configuración ya cargada de sipi-core
-from sipi.db.sessions.async_session import DATABASE_URL
+from sipi_core.db.sessions.async_session import DATABASE_URL
 
 def clean_value(val):
     """Limpia valores: convierte NaN/empty a None y elimina espacios"""

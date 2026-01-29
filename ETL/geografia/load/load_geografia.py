@@ -20,8 +20,8 @@ import hashlib
 import logging
 
 # Importar desde sipi-core
-from sipi.db.sessions.async_session import db_manager
-from sipi.models.geografia import ComunidadAutonoma, Provincia, Municipio
+from sipi_core.db.sessions.async_session import db_manager
+from sipi_core.db.models.geografia import ComunidadAutonoma, Provincia, Municipio
 
 
 def setup_logging():
@@ -842,4 +842,21 @@ async def cargar_datos(
 def cargar_desde_csv():
     """Carga datos desde archivos CSV"""
     safe_print("=" * 80)
-    safe_print("CARGA DE GEOGRAFÍA DE ESPA
+    safe_print("CARGA DE DATOS GEOGRÁFICOS DESDE CSV")
+    safe_print("=" * 80)        
+    loop = asyncio.get_event_loop()
+    async def main():
+        async with AsyncSessionLocal() as session:
+            # Cargar DataFrames desde CSV
+            df_ccaa = pd.read_csv('data/geografia/comunidades_autonomas.csv', dtype={'codigo_ine': str, 'activo': bool})
+            df_provincias = pd.read_csv('data/geografia/provincias.csv', dtype={'codigo_ine': str, 'comunidad_autonoma_codigo': str, 'activo': bool})
+            df_municipios = pd.read_csv('data/geografia/municipios.csv', dtype={'codigo_ine': str, 'provincia_codigo': str, 'activo': bool})
+            
+            # Ejecutar carga de datos
+            resultado = await cargar_datos(session, df_ccaa, df_provincias, df_municipios)
+            if resultado:
+                safe_print("Carga de datos completada con éxito.")
+            else:
+                safe_print("La carga de datos falló.")  
+    loop.run_until_complete(main()) 
+ 

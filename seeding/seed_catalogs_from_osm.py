@@ -9,8 +9,8 @@ from typing import Set, Dict, List
 from sqlalchemy.orm import Session
 from sqlalchemy import func
 
-from sipi.db.sessions.sync_session import SessionLocal
-from sipi.models.tipologias import (
+from sipi_core.db.sessions.sync_session import SessionLocal
+from sipi_core.models.tipologias import (
     TipoInmueble,
     TipoEstadoConservacion,
     TipoDocumento

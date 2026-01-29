@@ -76,7 +76,7 @@ class INEResolver:
             session: Sesión de SQLAlchemy async
         """
         from sqlalchemy import select
-        from sipi.models.geografia import ComunidadAutonoma, Provincia, Municipio
+        from sipi_core.models.geografia import ComunidadAutonoma, Provincia, Municipio
 
         logger.info("Cargando mapeos INE desde base de datos...")
 

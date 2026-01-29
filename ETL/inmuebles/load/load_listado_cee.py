@@ -22,7 +22,7 @@ SIPI_CORE_PATH = script_dir.parent.parent.parent / "sipi-core"
 sys.path.insert(0, str(SIPI_CORE_PATH / "src"))
 
 # Importar configuración ya cargada de sipi-core
-from sipi.db.sessions.async_session import DATABASE_URL
+from sipi_core.db.sessions.async_session import DATABASE_URL
 
 def clean_value(val):
     if pd.isna(val) or val == '' or str(val).lower() == 'nan':
